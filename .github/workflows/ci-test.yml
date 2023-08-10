@@ -1,0 +1,82 @@
+name: Spring Java CI with Gradle
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+	contents: read
+    
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    # Java 17버전 설정
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'zulu'
+          
+      # CI Test를 위한 properties 생성
+      - name: create application.properties for CI Test
+        run: |
+					mkdir -p src/main/resources
+          cd src/main/resources
+          pwd
+          echo "${{ secrets.DEVELOPMENT_APPLICATION_PROPERTIES }}" > application.properties
+
+      - name: create cors.properties for CI Test
+        run: |
+					mkdir -p src/main/resources
+          cd src/main/resources
+          pwd
+          echo "${{ secrets.DEVELOPMENT_CORS_PROPERTIES }}" > cors.properties
+
+      - name: create redis.properties for CI Test
+        run: |
+					mkdir -p src/main/resources
+          cd src/main/resources
+          pwd
+          echo "${{ secrets.DEVELOPMENT_REDIS_PROPERTIES }}" > redis.properties
+
+      - name: create mysql.properties for CI Test
+        run: |
+					mkdir -p src/main/resources
+          cd src/main/resources
+          pwd
+          echo "${{ secrets.DEVELOPMENT_MYSQL_PROPERTIES }}" > mysql.properties
+          
+      # CI Test에서 사용할 MySQL 설정
+      - name: Setup MySQL
+        uses: samin/mysql-action@v1
+        with:
+          character set server: 'utf8'
+          mysql database: 'd_yes_db'
+          mysql user: ${{ secrets.DB_USER }}
+          mysql password: ${{ secrets.DB_PASSWORD }}
+      
+      # gradlew 실행 권한 부여
+      - name: Grant Permission to gradlew
+        run: chmod +x gradlew
+        
+      # 프로젝트 빌드
+      - name: Build Project with gradlew
+        run: ./gradlew clean build -x test
+       
+      # Mocking 테스트 구동
+      - name: Mocking Test with gradlew
+        run: |
+          ./gradlew --info test
+      
+      # TEST 완료 트리거 신호 전송
+      - name: send BACKEND_TEST_FINISH_TRIGGER
+        run: |
+          curl -X POST https://api.github.com/repos/${{ github.repository }}/dispatches \
+            -H 'Accept: application/vnd.github.v3+json' \
+            -u ${{ secrets.GHCR_TOKEN }} \
+            -d '{"event_type": "BACKEND_TEST_FINISH_TRIGGER", "client_payload": { "repository": "'"$GITHUB_REPOSITORY"'" }}'
