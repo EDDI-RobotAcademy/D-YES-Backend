@@ -63,11 +63,9 @@ jobs:
             echo "${{ secrets.DEPLOY_MYSQL_PROPERTIES }}" > src/main/resources/mysql.properties
             cat src/main/resources/mysql.properties 
 
-	## gradle build
         - name: Build with Gradle
           run: ./gradlew clean build -x test
 
-	## docker build & push to production
         - name: Docker build & push to prod
           run: |
               ehco ${{ secrets.GHCR_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
