@@ -73,6 +73,9 @@ jobs:
 #             echo "${{ secrets.DEPLOY_MYSQL_PROPERTIES }}" > src/main/resources/mysql.properties
 #             cat src/main/resources/mysql.properties 
 
+        - name: Grant Permission to gradlew
+          run: chmod +x gradlew
+
         - name: Build with Gradle
           run: ./gradlew clean build -x test
 
