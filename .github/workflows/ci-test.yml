@@ -25,6 +25,7 @@ jobs:
       # CI Test를 위한 properties 생성
       - name: create application.properties for CI Test
         run: |
+          cd ..
           pwd
           mkdir -p src/main/resources
           cd src/main/resources
