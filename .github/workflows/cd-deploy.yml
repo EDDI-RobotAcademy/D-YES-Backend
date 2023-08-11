@@ -33,11 +33,8 @@ jobs:
               
         - name: create application.properties for CD
           run: |
-            ls
-            pwd
             mkdir -p src/main/resources
             cd src/main/resources
-            pwd
             echo "${{ secrets.DEPLOY_APPLICATION_PROPERTIES_ALL }}" > application.properties
             ls
 
