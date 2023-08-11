@@ -30,38 +30,48 @@ jobs:
             key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
             restore-keys: |
               ${{ runner.os }}-gradle-
-
+              
         - name: create application.properties for CD
           run: |
-            mkdir -p src/main/resources
+            ls
             pwd
+            mkdir -p src/main/resources
             cd src/main/resources
-            echo "${{ secrets.DEPLOY_APPLICATION_PROPERTIES }}" > src/main/resources/application.properties
-            cat src/main/resources/application.properties 
+            pwd
+            echo "${{ secrets.DEPLOY_APPLICATION_PROPERTIES_ALL }}" > application.properties
+            ls
 
-        - name: create cors.properties for CD
-          run: |
-            mkdir -p src/main/resources
-            pwd
-            cd src/main/resources
-            echo "${{ secrets.DEPLOY_CORS_PROPERTIES }}" > src/main/resources/cors.properties
-            cat src/main/resources/cors.properties 
+#         - name: create application.properties for CD
+#           run: |
+#             mkdir -p src/main/resources
+#             pwd
+#             cd src/main/resources
+#             echo "${{ secrets.DEPLOY_APPLICATION_PROPERTIES }}" > src/main/resources/application.properties
+#             cat src/main/resources/application.properties 
 
-        - name: create redis.properties for CD
-          run: |
-            mkdir -p src/main/resources
-            pwd
-            cd src/main/resources
-            echo "${{ secrets.DEPLOY_REDIS_PROPERTIES }}" > src/main/resources/redis.properties
-            cat src/main/resources/redis.properties 
+#         - name: create cors.properties for CD
+#           run: |
+#             mkdir -p src/main/resources
+#             pwd
+#             cd src/main/resources
+#             echo "${{ secrets.DEPLOY_CORS_PROPERTIES }}" > src/main/resources/cors.properties
+#             cat src/main/resources/cors.properties 
 
-        - name: create mysql.properties for CD
-          run: |
-            mkdir -p src/main/resources
-            pwd
-            cd src/main/resources
-            echo "${{ secrets.DEPLOY_MYSQL_PROPERTIES }}" > src/main/resources/mysql.properties
-            cat src/main/resources/mysql.properties 
+#         - name: create redis.properties for CD
+#           run: |
+#             mkdir -p src/main/resources
+#             pwd
+#             cd src/main/resources
+#             echo "${{ secrets.DEPLOY_REDIS_PROPERTIES }}" > src/main/resources/redis.properties
+#             cat src/main/resources/redis.properties 
+
+#         - name: create mysql.properties for CD
+#           run: |
+#             mkdir -p src/main/resources
+#             pwd
+#             cd src/main/resources
+#             echo "${{ secrets.DEPLOY_MYSQL_PROPERTIES }}" > src/main/resources/mysql.properties
+#             cat src/main/resources/mysql.properties 
 
         - name: Build with Gradle
           run: ./gradlew clean build -x test
