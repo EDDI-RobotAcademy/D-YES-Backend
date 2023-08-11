@@ -7,7 +7,7 @@ import org.springframework.core.env.Environment;
 
 @Configuration
 @RequiredArgsConstructor
-@PropertySource(value = {"cors.properties"})
+@PropertySource(value = {"cors.properties, "redis.properties", "mysql.properties""})
 public class PropertyUtil {
 
     final private Environment environment;
