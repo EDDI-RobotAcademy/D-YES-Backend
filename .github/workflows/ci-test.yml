@@ -26,7 +26,6 @@ jobs:
       - name: create application.properties for CI Test
         run: |
           ls
-          cd ..
           pwd
           mkdir -p src/main/resources
           cd src/main/resources
@@ -36,6 +35,7 @@ jobs:
 
       - name: create cors.properties for CI Test
         run: |
+          pwd
           mkdir -p src/main/resources
           cd src/main/resources
           pwd
@@ -78,7 +78,8 @@ jobs:
       # Mocking 테스트 구동
       - name: Mocking Test with gradlew
         run: |
-          ./gradlew test
+          ./gradlew --stacktrace test
+          #./gradlew test
           #./gradlew --info test
 
       # TEST 완료 트리거 신호 전송
