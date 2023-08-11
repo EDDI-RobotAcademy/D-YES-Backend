@@ -6,9 +6,6 @@ on:
   pull_request:
     branches: ["main"]
 
-permissions:
-  contents: read
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -22,14 +19,12 @@ jobs:
           java-version: '17'
           distribution: 'zulu'
 
-      # CI Test를 위한 properties 생성
+      # CI Test를 위한 application.properties 생성(임시 방편)
       - name: create application.properties for CI Test
         run: |
-          ls
           pwd
           mkdir -p src/main/resources
           cd src/main/resources
-          pwd
           echo "${{ secrets.DEVELOPMENT_APPLICATION_PROPERTIES_ALL }}" > application.properties
           ls
           
