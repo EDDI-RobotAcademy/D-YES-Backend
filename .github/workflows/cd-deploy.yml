@@ -14,7 +14,6 @@ jobs:
       name: Build
       runs-on: ubuntu-latest
       steps:
-	## jdk setting
         - uses: actions/checkout@v3
         - name: Set up JDK 17
           uses: actions/setup-java@v3
@@ -22,7 +21,6 @@ jobs:
             java-version: '17'
             distribution: 'zulu' # https://github.com/actions/setup-java
 
-	## grable cacing
         - name: Gradle Caching
           uses: actions/cache@v3
           with:
@@ -33,7 +31,6 @@ jobs:
             restore-keys: |
               ${{ runner.os }}-gradle-
 
-	# CD를 위한 properties 생성
         - name: create application.properties for CD
           run: |
             mkdir -p src/main/resources
