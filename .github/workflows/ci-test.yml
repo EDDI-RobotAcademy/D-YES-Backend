@@ -80,9 +80,10 @@ jobs:
         run: |
           pwd
           ls
+          ./gradlew --stacktrace --info test
           #./gradlew --stacktrace test
           #./gradlew test
-          ./gradlew --info test
+          #./gradlew --info test
 
       # TEST 완료 트리거 신호 전송
       - name: send BACKEND_TEST_FINISH_TRIGGER
