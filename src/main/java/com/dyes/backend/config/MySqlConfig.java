@@ -13,7 +13,7 @@ import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import javax.sql.DataSource;
 import java.util.Properties;
 
-@PropertySource(value = "mysql.properties")
+@PropertySource(value = "classpath:mysql.properties")
 @Configuration
 public class MySqlConfig {
 
