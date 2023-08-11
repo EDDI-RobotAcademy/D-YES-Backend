@@ -9,7 +9,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 @RequiredArgsConstructor
-@PropertySource(value = "classpath:cors.properties")
+@PropertySource("classpath:cors.properties")
 public class CorsConfig implements WebMvcConfigurer {
 
     private final PropertyUtil propertyUtil;
