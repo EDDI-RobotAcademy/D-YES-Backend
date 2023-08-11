@@ -10,7 +10,7 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
-@PropertySource(value = "redis.properties")
+@PropertySource(value = "classpath:redis.properties")
 @Configuration
 public class RedisConfig {
 
