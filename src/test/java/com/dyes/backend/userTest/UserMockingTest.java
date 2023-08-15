@@ -1,6 +1,8 @@
 package com.dyes.backend.userTest;
 
 import com.dyes.backend.domain.user.entity.User;
+import com.dyes.backend.domain.user.entity.UserProfile;
+import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import com.dyes.backend.domain.user.repository.UserRepository;
 import com.dyes.backend.domain.user.service.UserServiceImpl;
 import com.dyes.backend.domain.user.service.response.GoogleOauthAccessTokenResponse;
@@ -43,6 +45,8 @@ public class UserMockingTest {
     @Mock
     private NaverOauthSecretsProvider mockNaverOauthSecretsProvider;
     @Mock
+    private UserProfileRepository mockUserProfileRepository;
+    @Mock
     private ObjectMapper mockObjectMapper;
     @InjectMocks
     private UserServiceImpl mockService;
@@ -55,9 +59,11 @@ public class UserMockingTest {
                 mockGoogleOauthSecretsProvider,
                 mockNaverOauthSecretsProvider,
                 mockUserRepository,
+                mockUserProfileRepository,
                 mockRedisService,
                 mockRestTemplate,
                 mockObjectMapper
+
         );
     }
 
@@ -132,10 +138,44 @@ public class UserMockingTest {
         )).thenReturn(new ResponseEntity<>(expectedInfoResponse, HttpStatus.OK));
 
         User user = new User(expectedInfoResponse.getId(), responseEntity.getBody().getAccessToken(), responseEntity.getBody().getRefreshToken());
-        when(mockService.userSave(expectedInfoResponse.getId(), responseEntity.getBody().getAccessToken(), responseEntity.getBody().getRefreshToken())).thenReturn(user);
+        UserProfile userProfile = new UserProfile();
+
+        when(mockService.googleUserSave(responseEntity.getBody(), expectedInfoResponse)).thenReturn(user);
+        when(mockUserProfileRepository.save(any(UserProfile.class))).thenReturn(userProfile);
 
         String result = mockService.googleUserLogin(authorizationCode);
         assertNotNull(result);
+    }
+    @Test
+    @DisplayName("userMockingTest: (google)userSave")
+    public void 구글_유저_아이디를_받으면_저장합니다 () {
+
+        GoogleOauthAccessTokenResponse expectedResponse = new GoogleOauthAccessTokenResponse();
+        ResponseEntity<GoogleOauthAccessTokenResponse> responseEntity = new ResponseEntity<>(expectedResponse, HttpStatus.OK);
+
+        when(mockRestTemplate.postForEntity(
+                eq(mockGoogleOauthSecretsProvider.getGOOGLE_TOKEN_REQUEST_URL()),
+                any(HttpEntity.class),
+                eq(GoogleOauthAccessTokenResponse.class)
+        )).thenReturn(responseEntity);
+
+        GoogleOauthUserInfoResponse expectedInfoResponse = new GoogleOauthUserInfoResponse();
+        when(mockRestTemplate.exchange(
+                eq(mockGoogleOauthSecretsProvider.getGOOGLE_USERINFO_REQUEST_URL()),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                eq(GoogleOauthUserInfoResponse.class)
+        )).thenReturn(new ResponseEntity<>(expectedInfoResponse, HttpStatus.OK));
+
+
+        User user = new User(expectedInfoResponse.getId(), expectedResponse.getAccessToken(), expectedResponse.getRefreshToken());
+        when(mockUserRepository.findByStringId(expectedInfoResponse.getId())).thenReturn(Optional.empty());
+
+        User savedUser = mockService.googleUserSave(expectedResponse, expectedInfoResponse);
+
+        when(mockUserRepository.save(user)).thenReturn(user);
+
+        assertEquals(user, savedUser);
     }
 
     /*
@@ -225,22 +265,45 @@ public class UserMockingTest {
         )).thenReturn(mockResponseEntity);
 
         User user = new User(expectedInfoResponse.getId(), responseEntity.getBody().getAccessToken(), responseEntity.getBody().getRefreshToken());
-        when(mockService.userSave(expectedInfoResponse.getId(), responseEntity.getBody().getAccessToken(), responseEntity.getBody().getRefreshToken())).thenReturn(user);
+        UserProfile userProfile = new UserProfile();
+        when(mockService.naverUserSave(responseEntity.getBody(), expectedInfoResponse)).thenReturn(user);
+        when(mockUserProfileRepository.save(any(UserProfile.class))).thenReturn(userProfile);
 
         String result = mockService.naverUserLogin(authorizationCode);
         assertNotNull(result);
     }
 
     @Test
-    @DisplayName("userMockingTest: userSave")
-    public void 유저_아이디를_받으면_저장합니다 () {
-        final String id = "아이디";
-        final String accessToken = "엑세스토큰";
-        final String refreshToken = "리프레시토큰";
-        User user = new User(id,accessToken,refreshToken);
-        when(mockUserRepository.findByStringId(id)).thenReturn(Optional.empty());
+    @DisplayName("userMockingTest: (naver)userSave")
+    public void 네이버_유저_아이디를_받으면_저장합니다 () {
+        NaverOauthAccessTokenResponse expectedResponse = new NaverOauthAccessTokenResponse();
+        ResponseEntity<NaverOauthAccessTokenResponse> responseEntity = new ResponseEntity<>(expectedResponse, HttpStatus.OK);
 
-        User savedUser = mockService.userSave(id, accessToken,refreshToken);
+        when(mockRestTemplate.postForEntity(
+                eq(mockNaverOauthSecretsProvider.getNAVER_TOKEN_REQUEST_URL()),
+                any(HttpEntity.class),
+                eq(NaverOauthAccessTokenResponse.class)
+        )).thenReturn(responseEntity);
+
+        NaverOauthUserInfoResponse expectedInfoResponse = new NaverOauthUserInfoResponse();
+
+        JsonNode mockResponseNode = mock(JsonNode.class);
+        JsonNode mockJsonNode = mock(JsonNode.class);
+        when(mockJsonNode.get("response")).thenReturn(mockResponseNode);
+        when(mockObjectMapper.convertValue(mockResponseNode, NaverOauthUserInfoResponse.class)).thenReturn(expectedInfoResponse);
+
+        ResponseEntity<JsonNode> mockResponseEntity = new ResponseEntity<>(mockJsonNode, HttpStatus.OK);
+        when(mockRestTemplate.exchange(
+                eq(mockNaverOauthSecretsProvider.getNAVER_USERINFO_REQUEST_URL()),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                eq(JsonNode.class)
+        )).thenReturn(mockResponseEntity);
+
+        User user = new User(expectedInfoResponse.getId(), expectedResponse.getAccessToken(), expectedResponse.getRefreshToken());
+        when(mockUserRepository.findByStringId(expectedInfoResponse.getId())).thenReturn(Optional.empty());
+
+        User savedUser = mockService.naverUserSave(expectedResponse, expectedInfoResponse);
 
         when(mockUserRepository.save(user)).thenReturn(user);
 

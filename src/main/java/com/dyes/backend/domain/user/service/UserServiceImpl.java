@@ -1,6 +1,8 @@
 package com.dyes.backend.domain.user.service;
 
 import com.dyes.backend.domain.user.entity.User;
+import com.dyes.backend.domain.user.entity.UserProfile;
+import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import com.dyes.backend.domain.user.repository.UserRepository;
 import com.dyes.backend.domain.user.service.response.GoogleOauthAccessTokenResponse;
 import com.dyes.backend.domain.user.service.response.GoogleOauthUserInfoResponse;
@@ -31,6 +33,7 @@ public class UserServiceImpl implements UserService {
     final private GoogleOauthSecretsProvider googleOauthSecretsProvider;
     final private NaverOauthSecretsProvider naverOauthSecretsProvider;
     final private UserRepository userRepository;
+    final private UserProfileRepository userProfileRepository;
     final private RedisService redisService;
     final private RestTemplate restTemplate;
     final private ObjectMapper objectMapper;
@@ -46,11 +49,11 @@ public class UserServiceImpl implements UserService {
                 googleRequestUserInfoWithAccessToken(accessTokenResponse.getAccessToken());
 
         log.info("userInfoResponse: " + userInfoResponse);
-        User user = userSave(userInfoResponse.getBody().getId(), accessTokenResponse.getAccessToken(), accessTokenResponse.getRefreshToken());
+        User user = googleUserSave(accessTokenResponse, userInfoResponse.getBody());
         log.info("user" + user);
 
         final String userToken = "google" + UUID.randomUUID();
-        redisService.setUUIDAndUser(userToken, user.getId());
+        redisService.setUserTokenAndUser(userToken, user.getId());
 
         final String redirectUrl = googleOauthSecretsProvider.getGOOGLE_REDIRECT_VIEW_URL();
         log.info("googleUserLogin end");
@@ -113,6 +116,32 @@ public class UserServiceImpl implements UserService {
         log.info("requestUserInfoWithAccessTokenForSignIn end");
         return response;
     }
+    public User googleUserSave (GoogleOauthAccessTokenResponse accessTokenResponse, GoogleOauthUserInfoResponse userInfoResponse) {
+        log.info("userCheckIsOurUser start");
+        Optional<User> maybeUser = userRepository.findByStringId(userInfoResponse.getId());
+        if (maybeUser.isPresent()) {
+            log.info("userCheckIsOurUser OurUser");
+            return maybeUser.get();
+        } else {
+            User user = User.builder()
+                    .id(userInfoResponse.getId())
+                    .accessToken(accessTokenResponse.getAccessToken())
+                    .refreshToken(accessTokenResponse.getRefreshToken())
+                    .build();
+            userRepository.save(user);
+
+            UserProfile userProfile = UserProfile.builder()
+                    .user(user)
+                    .id(userInfoResponse.getId())
+                    .email(userInfoResponse.getEmail())
+                    .profileImg(userInfoResponse.getPicture())
+                    .build();
+            userProfileRepository.save(userProfile);
+            log.info("userCheckIsOurUser NotOurUser");
+
+            return user;
+        }
+    }
 
     /*
     <------------------------------------------------------------------------------------------------------------------>
@@ -128,11 +157,11 @@ public class UserServiceImpl implements UserService {
                 naverRequestUserInfoWithAccessToken(accessTokenResponse.getAccessToken());
 
         log.info("userInfoResponse: " + userInfoResponse);
-        User user = userSave(userInfoResponse.getId(), accessTokenResponse.getAccessToken(), accessTokenResponse.getRefreshToken());
+        User user = naverUserSave(accessTokenResponse, userInfoResponse);
         log.info("user" + user);
 
         final String userToken = "naver" + UUID.randomUUID();
-        redisService.setUUIDAndUser(userToken, user.getId());
+        redisService.setUserTokenAndUser(userToken, user.getId());
 
         final String redirectUrl = naverOauthSecretsProvider.getNAVER_REDIRECT_VIEW_URL();
         log.info("naverUserLogin end");
@@ -205,19 +234,28 @@ public class UserServiceImpl implements UserService {
         return userInfoResponse;
     }
 
-    public User userSave (String id, String accessToken, String refreshToken) {
+    public User naverUserSave (NaverOauthAccessTokenResponse accessTokenResponse, NaverOauthUserInfoResponse userInfoResponse) {
         log.info("userCheckIsOurUser start");
-        Optional<User> maybeUser = userRepository.findByStringId(id);
+        Optional<User> maybeUser = userRepository.findByStringId(userInfoResponse.getId());
         if (maybeUser.isPresent()) {
             log.info("userCheckIsOurUser OurUser");
             return maybeUser.get();
         } else {
             User user = User.builder()
-                    .id(id)
-                    .accessToken(accessToken)
-                    .refreshToken(refreshToken)
+                    .id(userInfoResponse.getId())
+                    .accessToken(accessTokenResponse.getAccessToken())
+                    .refreshToken(accessTokenResponse.getRefreshToken())
                     .build();
             userRepository.save(user);
+
+            UserProfile userProfile = UserProfile.builder()
+                    .user(user)
+                    .id(userInfoResponse.getId())
+                    .contactNumber(userInfoResponse.getMobile_e164())
+                    .email(userInfoResponse.getEmail())
+                    .profileImg(userInfoResponse.getProfile_image())
+                    .build();
+            userProfileRepository.save(userProfile);
             log.info("userCheckIsOurUser NotOurUser");
             return user;
         }
