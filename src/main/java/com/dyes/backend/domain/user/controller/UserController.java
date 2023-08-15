@@ -1,6 +1,7 @@
 package com.dyes.backend.domain.user.controller;
 
 import com.dyes.backend.domain.user.service.UserService;
+import com.dyes.backend.domain.user.service.response.UserProfileResponseForm;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -51,5 +52,12 @@ public class UserController {
     public Boolean checkEmailDuplicate(@RequestParam("email") String email) {
 
         return userService.checkEmailDuplicate(email);
+    }
+
+    // 사용자 프로필 가져오기
+    @GetMapping("/userProfile")
+    public UserProfileResponseForm getUserProfile(@RequestParam("userToken") String userToken) {
+
+        return userService.getUserProfile(userToken);
     }
 }

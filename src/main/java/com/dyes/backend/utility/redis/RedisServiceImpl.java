@@ -20,4 +20,16 @@ public class RedisServiceImpl implements RedisService{
         value.set(UUID, userId, Duration.ofHours(1));
     }
 
+    @Override
+    public String getUserId(String userToken) {
+        ValueOperations<String, String> value = redisTemplateObject.opsForValue();
+        String accountId = value.get(userToken);
+
+        if(accountId == null) {
+            return null;
+        }
+
+        return accountId;
+    }
+
 }

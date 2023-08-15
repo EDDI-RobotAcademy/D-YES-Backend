@@ -365,6 +365,10 @@ public class UserServiceImpl implements UserService {
         return kakaoUserInfoResponseForm.getBody();
     }
 
+    /*
+    <------------------------------------------------------------------------------------------------------------------>
+     */
+
     public HttpHeaders setHeaders() {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -373,6 +377,7 @@ public class UserServiceImpl implements UserService {
         return httpHeaders;
     }
 
+    // 닉네임 중복 확인
     @Override
     public Boolean checkNicknameDuplicate(String nickname) {
         Optional<UserProfile> maybeUserProfile = userProfileRepository.findByNickName(nickname);
@@ -385,6 +390,7 @@ public class UserServiceImpl implements UserService {
         return true;
     }
 
+    // 이메일 중복 확인
     @Override
     public Boolean checkEmailDuplicate(String email) {
         Optional<UserProfile> maybeUserProfile = userProfileRepository.findByEmail(email);
@@ -395,5 +401,43 @@ public class UserServiceImpl implements UserService {
         }
 
         return true;
+    }
+
+    // 사용자 프로필 가져오기
+    @Override
+    public UserProfileResponseForm getUserProfile(String userToken) {
+        String accountId = redisService.getUserId(userToken);
+        if(accountId == null){
+            log.info("accountId is empty");
+            return null;
+        }
+
+        Optional<User> maybeUser = userRepository.findByStringId(accountId);
+
+        if(maybeUser.isEmpty()) {
+            log.info("user is empty");
+            return null;
+        }
+
+        User user = maybeUser.get();
+
+        Optional<UserProfile> maybeUserProfile = userProfileRepository.findByUser(user);
+
+        if(maybeUserProfile.isEmpty()) {
+            UserProfileResponseForm userProfileResponseForm = new UserProfileResponseForm(accountId);
+            return userProfileResponseForm;
+        }
+
+        UserProfile userProfile = maybeUserProfile.get();
+        UserProfileResponseForm userProfileResponseForm
+                = new UserProfileResponseForm(
+                    accountId,
+                    userProfile.getNickName(),
+                    userProfile.getEmail(),
+                    userProfile.getProfileImg(),
+                    userProfile.getContactNumber(),
+                    userProfile.getAddress());
+
+        return userProfileResponseForm;
     }
 }
