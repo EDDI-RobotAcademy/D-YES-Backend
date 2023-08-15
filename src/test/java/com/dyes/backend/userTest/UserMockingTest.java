@@ -5,11 +5,9 @@ import com.dyes.backend.domain.user.entity.UserProfile;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import com.dyes.backend.domain.user.repository.UserRepository;
 import com.dyes.backend.domain.user.service.UserServiceImpl;
-import com.dyes.backend.domain.user.service.response.GoogleOauthAccessTokenResponse;
-import com.dyes.backend.domain.user.service.response.GoogleOauthUserInfoResponse;
-import com.dyes.backend.domain.user.service.response.NaverOauthAccessTokenResponse;
-import com.dyes.backend.domain.user.service.response.NaverOauthUserInfoResponse;
+import com.dyes.backend.domain.user.service.response.*;
 import com.dyes.backend.utility.provider.GoogleOauthSecretsProvider;
+import com.dyes.backend.utility.provider.KakaoOauthSecretsProvider;
 import com.dyes.backend.utility.provider.NaverOauthSecretsProvider;
 import com.dyes.backend.utility.redis.RedisService;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -45,6 +43,8 @@ public class UserMockingTest {
     @Mock
     private NaverOauthSecretsProvider mockNaverOauthSecretsProvider;
     @Mock
+    private KakaoOauthSecretsProvider mockKakaoOauthSecretsProvider;
+    @Mock
     private UserProfileRepository mockUserProfileRepository;
     @Mock
     private ObjectMapper mockObjectMapper;
@@ -58,6 +58,7 @@ public class UserMockingTest {
         mockService = new UserServiceImpl(
                 mockGoogleOauthSecretsProvider,
                 mockNaverOauthSecretsProvider,
+                mockKakaoOauthSecretsProvider,
                 mockUserRepository,
                 mockUserProfileRepository,
                 mockRedisService,

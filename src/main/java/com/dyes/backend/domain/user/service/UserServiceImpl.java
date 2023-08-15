@@ -4,11 +4,9 @@ import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserProfile;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import com.dyes.backend.domain.user.repository.UserRepository;
-import com.dyes.backend.domain.user.service.response.GoogleOauthAccessTokenResponse;
-import com.dyes.backend.domain.user.service.response.GoogleOauthUserInfoResponse;
-import com.dyes.backend.domain.user.service.response.NaverOauthAccessTokenResponse;
-import com.dyes.backend.domain.user.service.response.NaverOauthUserInfoResponse;
+import com.dyes.backend.domain.user.service.response.*;
 import com.dyes.backend.utility.provider.GoogleOauthSecretsProvider;
+import com.dyes.backend.utility.provider.KakaoOauthSecretsProvider;
 import com.dyes.backend.utility.provider.NaverOauthSecretsProvider;
 import com.dyes.backend.utility.redis.RedisService;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -32,6 +30,7 @@ import java.util.UUID;
 public class UserServiceImpl implements UserService {
     final private GoogleOauthSecretsProvider googleOauthSecretsProvider;
     final private NaverOauthSecretsProvider naverOauthSecretsProvider;
+    final private KakaoOauthSecretsProvider kakaoOauthSecretsProvider;
     final private UserRepository userRepository;
     final private UserProfileRepository userProfileRepository;
     final private RedisService redisService;
@@ -60,6 +59,7 @@ public class UserServiceImpl implements UserService {
 
         return redirectUrl + userToken;
     }
+
     // 구글에서 인가 코드를 받으면 엑세스 코드 요청
     public GoogleOauthAccessTokenResponse googleRequestAccessTokenWithAuthorizationCode(String code) {
 
@@ -100,7 +100,8 @@ public class UserServiceImpl implements UserService {
 
         return null;
     }
-    // 구글 엑세스 코드로 유저 정보 요청
+
+    // 구글 엑세스 토큰으로 유저 정보 요청
     public ResponseEntity<GoogleOauthUserInfoResponse> googleRequestUserInfoWithAccessToken(String AccessToken) {
         log.info("requestUserInfoWithAccessTokenForSignIn start");
 
@@ -143,9 +144,37 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    public User googleUserSave (GoogleOauthAccessTokenResponse accessTokenResponse, GoogleOauthUserInfoResponse userInfoResponse) {
+        log.info("userCheckIsOurUser start");
+        Optional<User> maybeUser = userRepository.findByStringId(userInfoResponse.getId());
+        if (maybeUser.isPresent()) {
+            log.info("userCheckIsOurUser OurUser");
+            return maybeUser.get();
+        } else {
+            User user = User.builder()
+                    .id(userInfoResponse.getId())
+                    .accessToken(accessTokenResponse.getAccessToken())
+                    .refreshToken(accessTokenResponse.getRefreshToken())
+                    .build();
+            userRepository.save(user);
+
+            UserProfile userProfile = UserProfile.builder()
+                    .user(user)
+                    .id(userInfoResponse.getId())
+                    .email(userInfoResponse.getEmail())
+                    .profileImg(userInfoResponse.getPicture())
+                    .build();
+            userProfileRepository.save(userProfile);
+            log.info("userCheckIsOurUser NotOurUser");
+
+            return user;
+        }
+    }
+
     /*
     <------------------------------------------------------------------------------------------------------------------>
      */
+
     // 네이버 로그인
     @Override
     public String naverUserLogin(String code) {
@@ -210,7 +239,7 @@ public class UserServiceImpl implements UserService {
         return null;
     }
 
-    // 네이버 엑세스 코드로 유저 정보 요청
+    // 네이버 엑세스 토큰으로 유저 정보 요청
     public NaverOauthUserInfoResponse naverRequestUserInfoWithAccessToken(String AccessToken) {
         log.info("requestUserInfoWithAccessTokenForSignIn start");
 
@@ -259,5 +288,138 @@ public class UserServiceImpl implements UserService {
             log.info("userCheckIsOurUser NotOurUser");
             return user;
         }
+    }
+
+    /*
+    <------------------------------------------------------------------------------------------------------------------>
+     */
+
+    // 카카오 로그인
+    @Override
+    public String kakaoUserLogin(String code) {
+        // 카카오 서버에서 accessToken 받아오기
+        KakaoAccessTokenResponseForm kakaoAccessTokenResponseForm = getAccessTokenFromKakao(code);
+        String accessToken = kakaoAccessTokenResponseForm.getAccess_token();
+
+        // 카카오 서버에서 받아온 accessToken으로 사용자 정보 받아오기
+        KakaoUserInfoResponseForm kakaoUserInfoResponseForm = getUserInfoFromKakao(accessToken);
+
+        // 받아온 사용자 id로 우리 DB에서 조회하기
+        Optional<User> maybeUser = userRepository.findByStringId(kakaoUserInfoResponseForm.getId());
+
+        // 없다면 회원가입(사용자, 사용자 프로필 생성)
+        if(maybeUser.isEmpty()) {
+            User user = new User(
+                    kakaoUserInfoResponseForm.getId(),
+                    kakaoAccessTokenResponseForm.getAccess_token(),
+                    kakaoAccessTokenResponseForm.getRefresh_token());
+
+            userRepository.save(user);
+
+            UserProfile userProfile = UserProfile.builder()
+                    .user(user)
+                    .id(kakaoUserInfoResponseForm.getId())
+                    .nickName(kakaoUserInfoResponseForm.getProperties().getNickname())
+                    .profileImg(kakaoUserInfoResponseForm.getProperties().getProfile_image())
+                    .build();
+
+            userProfileRepository.save(userProfile);
+
+            final String userToken = "kakao" + UUID.randomUUID();
+            redisService.setUserTokenAndUser(userToken, user.getId());
+
+            final String redirectUrl = kakaoOauthSecretsProvider.getKAKAO_REDIRECT_VIEW_URL();
+
+            return redirectUrl + userToken;
+        }
+
+        // 있다면 로그인 해당 사용자 가져오기
+        User user = maybeUser.get();
+
+        final String userToken = "kakao" + UUID.randomUUID();
+        redisService.setUserTokenAndUser(userToken, user.getId());
+
+        final String redirectUrl = kakaoOauthSecretsProvider.getKAKAO_REDIRECT_VIEW_URL();
+
+        return redirectUrl + userToken;
+    }
+
+    // 카카오에서 인가 코드를 받으면 엑세스 코드 요청
+    public KakaoAccessTokenResponseForm getAccessTokenFromKakao(String code) {
+        // 헤더 설정
+        HttpHeaders httpHeaders = setHeaders();
+
+        // 바디 설정
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("grant_type", "authorization_code");
+        parameters.add("client_id", kakaoOauthSecretsProvider.getKAKAO_AUTH_RESTAPI_KEY());
+        parameters.add("redirect_uri", kakaoOauthSecretsProvider.getKAKAO_AUTH_REDIRECT_URL());
+        parameters.add("code", code);
+
+        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(parameters, httpHeaders);
+
+        ResponseEntity<KakaoAccessTokenResponseForm> kakaoAccessTokenResponseForm = restTemplate.postForEntity(
+                kakaoOauthSecretsProvider.getKAKAO_TOKEN_REQUEST_URL(),
+                requestEntity,
+                KakaoAccessTokenResponseForm.class);
+
+        return kakaoAccessTokenResponseForm.getBody();
+    }
+
+    // 카카오 엑세스 토큰으로 유저 정보 요청
+    public KakaoUserInfoResponseForm getUserInfoFromKakao(String accessToken) {
+        // 헤더 설정
+        HttpHeaders httpHeaders = setHeaders();
+        httpHeaders.add("Authorization", "Bearer " + accessToken);
+
+        // 바디 설정
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("ACCESS_TOKEN", accessToken);
+
+        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(parameters, httpHeaders);
+
+        // 카카오 서버에서 받아온 userInfo
+        ResponseEntity<KakaoUserInfoResponseForm> kakaoUserInfoResponseForm = restTemplate.postForEntity(
+                kakaoOauthSecretsProvider.getKAKAO_USERINFO_REQUEST_URL(),
+                requestEntity,
+                KakaoUserInfoResponseForm.class);
+
+        log.info("userInfo Id: " + kakaoUserInfoResponseForm.getBody().getId());
+        log.info("userInfo Nickname: " + kakaoUserInfoResponseForm.getBody().getProperties().getNickname());
+        log.info("userInfo Profile_image: " + kakaoUserInfoResponseForm.getBody().getProperties().getProfile_image());
+
+        return kakaoUserInfoResponseForm.getBody();
+    }
+
+    public HttpHeaders setHeaders() {
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        httpHeaders.add("Accept", "application/json");
+
+        return httpHeaders;
+    }
+
+    @Override
+    public Boolean checkNicknameDuplicate(String nickname) {
+        Optional<UserProfile> maybeUserProfile = userProfileRepository.findByNickName(nickname);
+
+        if(maybeUserProfile.isPresent()) {
+            log.info("nickname already exists");
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public Boolean checkEmailDuplicate(String email) {
+        Optional<UserProfile> maybeUserProfile = userProfileRepository.findByEmail(email);
+
+        if(maybeUserProfile.isPresent()) {
+            log.info("email already exists");
+            return false;
+        }
+
+        return true;
     }
 }
