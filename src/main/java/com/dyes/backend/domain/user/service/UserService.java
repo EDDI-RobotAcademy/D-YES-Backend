@@ -4,4 +4,5 @@ public interface UserService {
     String googleUserLogin(String code);
     String naverUserLogin(String code);
     String kakaoUserLogin(String code);
+    Boolean checkNicknameDuplicate(String nickname);
 }
