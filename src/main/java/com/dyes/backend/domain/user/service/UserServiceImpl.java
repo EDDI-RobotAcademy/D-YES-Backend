@@ -1,5 +1,7 @@
 package com.dyes.backend.domain.user.service;
 
+import com.dyes.backend.domain.user.controller.form.UserProfileModifyRequestForm;
+import com.dyes.backend.domain.user.entity.Address;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserProfile;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
@@ -440,4 +442,76 @@ public class UserServiceImpl implements UserService {
 
         return userProfileResponseForm;
     }
+
+    // 사용자 프로필 수정하기
+    @Override
+    public UserProfileResponseForm modifyUserProfile(UserProfileModifyRequestForm requestForm) {
+        String userToken = requestForm.getUserToken();
+        String accountId = redisService.getUserId(userToken);
+        if(accountId == null){
+            log.info("accountId is empty");
+            return null;
+        }
+
+        Optional<User> maybeUser = userRepository.findByStringId(accountId);
+
+        if(maybeUser.isEmpty()) {
+            log.info("user is empty");
+            return null;
+        }
+
+        User user = maybeUser.get();
+
+        Optional<UserProfile> maybeUserProfile = userProfileRepository.findByUser(user);
+        if(maybeUserProfile.isEmpty()) {
+
+            Address address = new Address(requestForm.getAddress(), requestForm.getZipCode(), requestForm.getAddressDetail());
+
+            UserProfile userProfile = UserProfile.builder()
+                    .id(user.getId())
+                    .nickName(requestForm.getNickName())
+                    .email(requestForm.getEmail())
+                    .profileImg(requestForm.getProfileImg())
+                    .contactNumber(requestForm.getContactNumber())
+                    .address(address)
+                    .user(user)
+                    .build();
+
+            userProfileRepository.save(userProfile);
+
+            UserProfileResponseForm userProfileResponseForm
+                    = new UserProfileResponseForm(
+                    user.getId(),
+                    userProfile.getNickName(),
+                    userProfile.getEmail(),
+                    userProfile.getProfileImg(),
+                    userProfile.getContactNumber(),
+                    userProfile.getAddress());
+
+            return userProfileResponseForm;
+        }
+
+        Address address = new Address(requestForm.getAddress(), requestForm.getZipCode(), requestForm.getAddressDetail());
+        UserProfile userProfile = maybeUserProfile.get();
+
+        userProfile.setNickName(requestForm.getNickName());
+        userProfile.setEmail(requestForm.getEmail());
+        userProfile.setProfileImg(requestForm.getProfileImg());
+        userProfile.setContactNumber(requestForm.getContactNumber());
+        userProfile.setAddress(address);
+
+        userProfileRepository.save(userProfile);
+
+        UserProfileResponseForm userProfileResponseForm
+                = new UserProfileResponseForm(
+                    user.getId(),
+                    userProfile.getNickName(),
+                    userProfile.getEmail(),
+                    userProfile.getProfileImg(),
+                    userProfile.getContactNumber(),
+                    userProfile.getAddress());
+
+        return userProfileResponseForm;
+    }
+
 }

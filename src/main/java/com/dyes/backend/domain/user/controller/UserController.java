@@ -1,5 +1,6 @@
 package com.dyes.backend.domain.user.controller;
 
+import com.dyes.backend.domain.user.controller.form.UserProfileModifyRequestForm;
 import com.dyes.backend.domain.user.service.UserService;
 import com.dyes.backend.domain.user.service.response.UserProfileResponseForm;
 import lombok.RequiredArgsConstructor;
@@ -59,5 +60,12 @@ public class UserController {
     public UserProfileResponseForm getUserProfile(@RequestParam("userToken") String userToken) {
 
         return userService.getUserProfile(userToken);
+    }
+
+    // 사용자 프로필 수정하기
+    @PutMapping("/updateInfo")
+    public UserProfileResponseForm modifyUserProfile(@RequestBody UserProfileModifyRequestForm requestForm) {
+
+        return userService.modifyUserProfile(requestForm);
     }
 }
