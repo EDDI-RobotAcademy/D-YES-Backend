@@ -6,5 +6,5 @@ import java.time.Duration;
 
 public interface RedisService {
 
-    void setUUIDAndUser(String UUID, String userId);
+    void setUserTokenAndUser (String UUID, String userId);
 }
