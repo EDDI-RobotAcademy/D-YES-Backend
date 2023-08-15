@@ -14,7 +14,7 @@ import lombok.*;
 public class User {
 
     @Id
-    private Long id;
+    private String id;
     private String accessToken;
     private String refreshToken;
 }

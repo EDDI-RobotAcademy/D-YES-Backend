@@ -20,8 +20,14 @@ public class UserController {
     final private UserService userService;
     @GetMapping("/oauth/google/login")
     public RedirectView googleUserLogin (@RequestParam(name = "code") String code) {
-        String googleUUIDUrl = userService.googleUserLogin(code);
-        RedirectView redirectView = new RedirectView(googleUUIDUrl);
+        String googleUserTokenWithUrl = userService.googleUserLogin(code);
+        RedirectView redirectView = new RedirectView(googleUserTokenWithUrl);
+        return redirectView;
+    }
+    @GetMapping("/oauth/naver/login")
+    public RedirectView naverUserLogin (@RequestParam(name = "code") String code) {
+        String naverUserTokenWithUrl = userService.naverUserLogin(code);
+        RedirectView redirectView = new RedirectView(naverUserTokenWithUrl);
         return redirectView;
     }
 }

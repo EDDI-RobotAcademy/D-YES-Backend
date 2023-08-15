@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class GoogleOauthUserInfoResponse {
     @JsonProperty("id")
-    private Long id;
+    private String id;
 
     @JsonProperty("email")
     private String email;

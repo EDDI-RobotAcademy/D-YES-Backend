@@ -5,8 +5,13 @@ import com.dyes.backend.domain.user.repository.UserRepository;
 import com.dyes.backend.domain.user.service.UserServiceImpl;
 import com.dyes.backend.domain.user.service.response.GoogleOauthAccessTokenResponse;
 import com.dyes.backend.domain.user.service.response.GoogleOauthUserInfoResponse;
+import com.dyes.backend.domain.user.service.response.NaverOauthAccessTokenResponse;
+import com.dyes.backend.domain.user.service.response.NaverOauthUserInfoResponse;
 import com.dyes.backend.utility.provider.GoogleOauthSecretsProvider;
+import com.dyes.backend.utility.provider.NaverOauthSecretsProvider;
 import com.dyes.backend.utility.redis.RedisService;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,9 +37,13 @@ public class UserMockingTest {
     @Mock
     private RedisService mockRedisService;
     @Mock
-    private GoogleOauthSecretsProvider mockGoogleOauthClientIdProvider;
+    private GoogleOauthSecretsProvider mockGoogleOauthSecretsProvider;
     @Mock
     private RestTemplate mockRestTemplate;
+    @Mock
+    private NaverOauthSecretsProvider mockNaverOauthSecretsProvider;
+    @Mock
+    private ObjectMapper mockObjectMapper;
     @InjectMocks
     private UserServiceImpl mockService;
 
@@ -43,33 +52,36 @@ public class UserMockingTest {
         MockitoAnnotations.initMocks(this);
 
         mockService = new UserServiceImpl(
-                mockGoogleOauthClientIdProvider,
+                mockGoogleOauthSecretsProvider,
+                mockNaverOauthSecretsProvider,
                 mockUserRepository,
                 mockRedisService,
-                mockRestTemplate
+                mockRestTemplate,
+                mockObjectMapper
         );
     }
+
     @Test
     @DisplayName("userMockingTest: (google)getAccessTokenWithAuthorizationCode")
     public void 구글_코드로_엑세스토큰을_요청합니다(){
 
         final String authorizationCode = "구글에서 받은 인가 코드";
-        when(mockGoogleOauthClientIdProvider.getGOOGLE_AUTH_CLIENT_ID()).thenReturn("clientId");
-        when(mockGoogleOauthClientIdProvider.getGOOGLE_AUTH_REDIRECT_URL()).thenReturn("redirectUrl");
-        when(mockGoogleOauthClientIdProvider.getGOOGLE_AUTH_SECRETS()).thenReturn("clientSecret");
-        when(mockGoogleOauthClientIdProvider.getGOOGLE_TOKEN_REQUEST_URL()).thenReturn("http://example.com/token_request");
+        when(mockGoogleOauthSecretsProvider.getGOOGLE_AUTH_CLIENT_ID()).thenReturn("clientId");
+        when(mockGoogleOauthSecretsProvider.getGOOGLE_AUTH_REDIRECT_URL()).thenReturn("redirectUrl");
+        when(mockGoogleOauthSecretsProvider.getGOOGLE_AUTH_SECRETS()).thenReturn("clientSecret");
+        when(mockGoogleOauthSecretsProvider.getGOOGLE_TOKEN_REQUEST_URL()).thenReturn("http://example.com/token_request");
 
         GoogleOauthAccessTokenResponse expectedResponse = new GoogleOauthAccessTokenResponse();
 
         ResponseEntity<GoogleOauthAccessTokenResponse> responseEntity = new ResponseEntity<>(expectedResponse, HttpStatus.OK);
 
         when(mockRestTemplate.postForEntity(
-                eq(mockGoogleOauthClientIdProvider.getGOOGLE_TOKEN_REQUEST_URL()),
+                eq(mockGoogleOauthSecretsProvider.getGOOGLE_TOKEN_REQUEST_URL()),
                 any(HttpEntity.class),
                 eq(GoogleOauthAccessTokenResponse.class)
         )).thenReturn(responseEntity);
 
-        GoogleOauthAccessTokenResponse result = mockService.requestAccessTokenWithAuthorizationCode(authorizationCode);
+        GoogleOauthAccessTokenResponse result = mockService.googleRequestAccessTokenWithAuthorizationCode(authorizationCode);
         assertEquals(expectedResponse, result);
     }
 
@@ -79,39 +91,22 @@ public class UserMockingTest {
 
         final String accessToken = "구글에서 받은 엑세스 토큰";
 
-        when(mockGoogleOauthClientIdProvider.getGOOGLE_USERINFO_REQUEST_URL()).thenReturn("userInfoRequestUrl");
+        when(mockGoogleOauthSecretsProvider.getGOOGLE_USERINFO_REQUEST_URL()).thenReturn("userInfoRequestUrl");
 
         GoogleOauthUserInfoResponse expectedResponse = new GoogleOauthUserInfoResponse();
 
         when(mockRestTemplate.exchange(
-                eq(mockGoogleOauthClientIdProvider.getGOOGLE_USERINFO_REQUEST_URL()),
+                eq(mockGoogleOauthSecretsProvider.getGOOGLE_USERINFO_REQUEST_URL()),
                 eq(HttpMethod.GET),
                 any(HttpEntity.class),
                 eq(GoogleOauthUserInfoResponse.class)
         )).thenReturn(new ResponseEntity<>(expectedResponse, HttpStatus.OK));
 
-        ResponseEntity<GoogleOauthUserInfoResponse> actualResponse = mockService.requestUserInfoWithAccessToken(accessToken);
+        ResponseEntity<GoogleOauthUserInfoResponse> actualResponse = mockService.googleRequestUserInfoWithAccessToken(accessToken);
 
         assertEquals(expectedResponse, actualResponse.getBody());
 
         verify(mockRestTemplate, times(1)).exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(GoogleOauthUserInfoResponse.class));
-
-    }
-
-    @Test
-    @DisplayName("userMockingTest: (google)userSave")
-    public void 구글_유저_아이디를_받으면_저장합니다 () {
-        final Long id = 1L;
-        final String accessToken = "엑세스토큰";
-        final String refreshToken = "리프레시토큰";
-        User user = new User(id,accessToken,refreshToken);
-        when(mockUserRepository.findById(id)).thenReturn(Optional.empty());
-
-        User savedUser = mockService.userSave(id, accessToken,refreshToken);
-
-        when(mockUserRepository.save(user)).thenReturn(user);
-
-        assertEquals(user, savedUser);
     }
 
     @Test
@@ -123,14 +118,14 @@ public class UserMockingTest {
         ResponseEntity<GoogleOauthAccessTokenResponse> responseEntity = new ResponseEntity<>(expectedResponse, HttpStatus.OK);
 
         when(mockRestTemplate.postForEntity(
-                eq(mockGoogleOauthClientIdProvider.getGOOGLE_TOKEN_REQUEST_URL()),
+                eq(mockGoogleOauthSecretsProvider.getGOOGLE_TOKEN_REQUEST_URL()),
                 any(HttpEntity.class),
                 eq(GoogleOauthAccessTokenResponse.class)
         )).thenReturn(responseEntity);
 
         GoogleOauthUserInfoResponse expectedInfoResponse = new GoogleOauthUserInfoResponse();
         when(mockRestTemplate.exchange(
-                eq(mockGoogleOauthClientIdProvider.getGOOGLE_USERINFO_REQUEST_URL()),
+                eq(mockGoogleOauthSecretsProvider.getGOOGLE_USERINFO_REQUEST_URL()),
                 eq(HttpMethod.GET),
                 any(HttpEntity.class),
                 eq(GoogleOauthUserInfoResponse.class)
@@ -141,5 +136,114 @@ public class UserMockingTest {
 
         String result = mockService.googleUserLogin(authorizationCode);
         assertNotNull(result);
+    }
+
+    /*
+    <------------------------------------------------------------------------------------------------------------------>
+     */
+
+    @Test
+    @DisplayName("userMockingTest: (naver)getAccessTokenWithAuthorizationCode")
+    public void 네이버_코드로_엑세스토큰을_요청합니다(){
+
+        final String authorizationCode = "네이버에서 받은 인가 코드";
+        when(mockNaverOauthSecretsProvider.getNAVER_AUTH_CLIENT_ID()).thenReturn("clientId");
+        when(mockNaverOauthSecretsProvider.getNAVER_AUTH_REDIRECT_URL()).thenReturn("redirectUrl");
+        when(mockNaverOauthSecretsProvider.getNAVER_AUTH_SECRETS()).thenReturn("clientSecret");
+        when(mockNaverOauthSecretsProvider.getNAVER_TOKEN_REQUEST_URL()).thenReturn("http://example.com/token_request");
+
+        NaverOauthAccessTokenResponse expectedResponse = new NaverOauthAccessTokenResponse();
+
+        ResponseEntity<NaverOauthAccessTokenResponse> responseEntity = new ResponseEntity<>(expectedResponse, HttpStatus.OK);
+
+        when(mockRestTemplate.postForEntity(
+                eq(mockNaverOauthSecretsProvider.getNAVER_TOKEN_REQUEST_URL()),
+                any(HttpEntity.class),
+                eq(NaverOauthAccessTokenResponse.class)
+        )).thenReturn(responseEntity);
+
+        NaverOauthAccessTokenResponse result = mockService.naverRequestAccessTokenWithAuthorizationCode(authorizationCode);
+        assertEquals(expectedResponse, result);
+    }
+    @Test
+    @DisplayName("userMockingTest: (naver)getUserInfoWithAccessToken")
+    public void 네이버_엑세스토큰으로_유저정보를_요청합니다() {
+
+        final String accessToken = "네이버에서 받은 엑세스 토큰";
+
+        when(mockNaverOauthSecretsProvider.getNAVER_USERINFO_REQUEST_URL()).thenReturn("userInfoRequestUrl");
+
+        NaverOauthUserInfoResponse expectedInfoResponse = new NaverOauthUserInfoResponse();
+
+        JsonNode mockResponseNode = mock(JsonNode.class);
+        JsonNode mockJsonNode = mock(JsonNode.class);
+        when(mockJsonNode.get("response")).thenReturn(mockResponseNode);
+        when(mockObjectMapper.convertValue(mockResponseNode, NaverOauthUserInfoResponse.class)).thenReturn(expectedInfoResponse);
+
+        ResponseEntity<JsonNode> mockResponseEntity = new ResponseEntity<>(mockJsonNode, HttpStatus.OK);
+        when(mockRestTemplate.exchange(
+                eq(mockNaverOauthSecretsProvider.getNAVER_USERINFO_REQUEST_URL()),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                eq(JsonNode.class)
+        )).thenReturn(mockResponseEntity);
+
+        NaverOauthUserInfoResponse actualResponse = mockService.naverRequestUserInfoWithAccessToken(accessToken);
+
+        assertEquals(expectedInfoResponse, actualResponse);
+
+        verify(mockRestTemplate, times(1)).exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(JsonNode.class));
+    }
+
+    @Test
+    @DisplayName("userMockingTest: (naver)googleUserLogin")
+    public void 네이버_유저가_로그인을_요청하면_네이버에서_코드를_받아_로그인을_하고_UUID를_반환해줍니다() {
+        final String authorizationCode = "구글에서 받은 인가 코드";
+
+        NaverOauthAccessTokenResponse expectedResponse = new NaverOauthAccessTokenResponse();
+        ResponseEntity<NaverOauthAccessTokenResponse> responseEntity = new ResponseEntity<>(expectedResponse, HttpStatus.OK);
+
+        when(mockRestTemplate.postForEntity(
+                eq(mockNaverOauthSecretsProvider.getNAVER_TOKEN_REQUEST_URL()),
+                any(HttpEntity.class),
+                eq(NaverOauthAccessTokenResponse.class)
+        )).thenReturn(responseEntity);
+
+        NaverOauthUserInfoResponse expectedInfoResponse = new NaverOauthUserInfoResponse();
+
+        JsonNode mockResponseNode = mock(JsonNode.class);
+        JsonNode mockJsonNode = mock(JsonNode.class);
+        when(mockJsonNode.get("response")).thenReturn(mockResponseNode);
+        when(mockObjectMapper.convertValue(mockResponseNode, NaverOauthUserInfoResponse.class)).thenReturn(expectedInfoResponse);
+
+        ResponseEntity<JsonNode> mockResponseEntity = new ResponseEntity<>(mockJsonNode, HttpStatus.OK);
+        when(mockRestTemplate.exchange(
+                eq(mockNaverOauthSecretsProvider.getNAVER_USERINFO_REQUEST_URL()),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                eq(JsonNode.class)
+        )).thenReturn(mockResponseEntity);
+
+        User user = new User(expectedInfoResponse.getId(), responseEntity.getBody().getAccessToken(), responseEntity.getBody().getRefreshToken());
+        when(mockService.userSave(expectedInfoResponse.getId(), responseEntity.getBody().getAccessToken(), responseEntity.getBody().getRefreshToken())).thenReturn(user);
+
+        String result = mockService.naverUserLogin(authorizationCode);
+        assertNotNull(result);
+    }
+
+    @Test
+    @DisplayName("userMockingTest: userSave")
+    public void 유저_아이디를_받으면_저장합니다 () {
+        final String id = "아이디";
+        final String accessToken = "엑세스토큰";
+        final String refreshToken = "리프레시토큰";
+        User user = new User(id,accessToken,refreshToken);
+        when(mockUserRepository.findByStringId(id)).thenReturn(Optional.empty());
+
+        User savedUser = mockService.userSave(id, accessToken,refreshToken);
+
+        when(mockUserRepository.save(user)).thenReturn(user);
+
+        assertEquals(user, savedUser);
     }
 }
