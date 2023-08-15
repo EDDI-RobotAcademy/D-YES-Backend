@@ -5,4 +5,5 @@ public interface UserService {
     String naverUserLogin(String code);
     String kakaoUserLogin(String code);
     Boolean checkNicknameDuplicate(String nickname);
+    Boolean checkEmailDuplicate(String email);
 }

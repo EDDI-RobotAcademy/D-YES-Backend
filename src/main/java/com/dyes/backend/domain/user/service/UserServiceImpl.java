@@ -384,4 +384,16 @@ public class UserServiceImpl implements UserService {
 
         return true;
     }
+
+    @Override
+    public Boolean checkEmailDuplicate(String email) {
+        Optional<UserProfile> maybeUserProfile = userProfileRepository.findByEmail(email);
+
+        if(maybeUserProfile.isPresent()) {
+            log.info("email already exists");
+            return false;
+        }
+
+        return true;
+    }
 }

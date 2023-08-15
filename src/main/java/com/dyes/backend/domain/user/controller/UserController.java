@@ -45,4 +45,11 @@ public class UserController {
 
         return userService.checkNicknameDuplicate(nickname);
     }
+
+    // 이메일 중복 확인
+    @GetMapping("/check-email")
+    public Boolean checkEmailDuplicate(@RequestParam("email") String email) {
+
+        return userService.checkEmailDuplicate(email);
+    }
 }
