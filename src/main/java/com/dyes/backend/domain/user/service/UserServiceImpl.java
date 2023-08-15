@@ -117,6 +117,32 @@ public class UserServiceImpl implements UserService {
         log.info("requestUserInfoWithAccessTokenForSignIn end");
         return response;
     }
+    public User googleUserSave (GoogleOauthAccessTokenResponse accessTokenResponse, GoogleOauthUserInfoResponse userInfoResponse) {
+        log.info("userCheckIsOurUser start");
+        Optional<User> maybeUser = userRepository.findByStringId(userInfoResponse.getId());
+        if (maybeUser.isPresent()) {
+            log.info("userCheckIsOurUser OurUser");
+            return maybeUser.get();
+        } else {
+            User user = User.builder()
+                    .id(userInfoResponse.getId())
+                    .accessToken(accessTokenResponse.getAccessToken())
+                    .refreshToken(accessTokenResponse.getRefreshToken())
+                    .build();
+            userRepository.save(user);
+
+            UserProfile userProfile = UserProfile.builder()
+                    .user(user)
+                    .id(userInfoResponse.getId())
+                    .email(userInfoResponse.getEmail())
+                    .profileImg(userInfoResponse.getPicture())
+                    .build();
+            userProfileRepository.save(userProfile);
+            log.info("userCheckIsOurUser NotOurUser");
+
+            return user;
+        }
+    }
 
     public User googleUserSave (GoogleOauthAccessTokenResponse accessTokenResponse, GoogleOauthUserInfoResponse userInfoResponse) {
         log.info("userCheckIsOurUser start");
