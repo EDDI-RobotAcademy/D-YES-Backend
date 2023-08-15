@@ -39,4 +39,17 @@ public class UserController {
         return redirectView;
     }
 
+    // 닉네임 중복 확인
+    @GetMapping("/check-nickname")
+    public Boolean checkNicknameDuplicate(@RequestParam("nickname") String nickname) {
+
+        return userService.checkNicknameDuplicate(nickname);
+    }
+
+    // 이메일 중복 확인
+    @GetMapping("/check-email")
+    public Boolean checkEmailDuplicate(@RequestParam("email") String email) {
+
+        return userService.checkEmailDuplicate(email);
+    }
 }

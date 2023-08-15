@@ -372,4 +372,28 @@ public class UserServiceImpl implements UserService {
 
         return httpHeaders;
     }
+
+    @Override
+    public Boolean checkNicknameDuplicate(String nickname) {
+        Optional<UserProfile> maybeUserProfile = userProfileRepository.findByNickName(nickname);
+
+        if(maybeUserProfile.isPresent()) {
+            log.info("nickname already exists");
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public Boolean checkEmailDuplicate(String email) {
+        Optional<UserProfile> maybeUserProfile = userProfileRepository.findByEmail(email);
+
+        if(maybeUserProfile.isPresent()) {
+            log.info("email already exists");
+            return false;
+        }
+
+        return true;
+    }
 }
