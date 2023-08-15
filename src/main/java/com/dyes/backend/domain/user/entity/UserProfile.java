@@ -3,8 +3,6 @@ package com.dyes.backend.domain.user.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.List;
-
 @Data
 @Entity
 @NoArgsConstructor
