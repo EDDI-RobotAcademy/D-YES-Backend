@@ -41,3 +41,4 @@ application.properties
 cors.properties
 mysql.properties
 redis.properties
+google_oauth.properties
