@@ -54,7 +54,7 @@ public class UserServiceImpl implements UserService {
         log.info("user" + user);
 
         final String userToken = "google" + UUID.randomUUID();
-        redisService.setUserTokenAndUser(userToken, user.getId());
+        redisService.setUserTokenAndUser(userToken, user.getAccessToken());
 
         final String redirectUrl = googleOauthSecretsProvider.getGOOGLE_REDIRECT_VIEW_URL();
         log.info("googleUserLogin end");
@@ -166,7 +166,7 @@ public class UserServiceImpl implements UserService {
         log.info("user" + user);
 
         final String userToken = "naver" + UUID.randomUUID();
-        redisService.setUserTokenAndUser(userToken, user.getId());
+        redisService.setUserTokenAndUser(userToken, user.getAccessToken());
 
         final String redirectUrl = naverOauthSecretsProvider.getNAVER_REDIRECT_VIEW_URL();
         log.info("naverUserLogin end");
