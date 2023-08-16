@@ -335,4 +335,21 @@ public class UserMockingTest {
 
         assertEquals(isDuplicated, false);
     }
+
+    @Test
+    @DisplayName("userMockingTest: checkEmailDuplicate")
+    public void 이메일_중복_확인을_합니다 () {
+        final String email = "team4dyes@gmail.com";
+        final UserProfile userProfile = UserProfile.builder()
+                .id(anyString())
+                .email(email)
+                .build();
+
+        when(mockUserProfileRepository.findByEmail(email))
+                .thenReturn(Optional.of(userProfile));
+
+        Boolean isDuplicated = mockService.checkEmailDuplicate(email);
+
+        assertEquals(isDuplicated, false);
+    }
 }
