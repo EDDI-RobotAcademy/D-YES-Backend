@@ -1,5 +1,6 @@
 package com.dyes.backend.userTest;
 
+import com.dyes.backend.domain.user.controller.form.UserProfileModifyRequestForm;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserProfile;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
@@ -68,6 +69,7 @@ public class UserMockingTest {
         );
     }
 
+    // Oauth 구글 로그인 테스트
     @Test
     @DisplayName("userMockingTest: (google)getAccessTokenWithAuthorizationCode")
     public void 구글_코드로_엑세스토큰을_요청합니다(){
@@ -183,6 +185,7 @@ public class UserMockingTest {
     <------------------------------------------------------------------------------------------------------------------>
      */
 
+    // Oauth 네이버 로그인 테스트
     @Test
     @DisplayName("userMockingTest: (naver)getAccessTokenWithAuthorizationCode")
     public void 네이버_코드로_엑세스토큰을_요청합니다(){
@@ -309,5 +312,27 @@ public class UserMockingTest {
         when(mockUserRepository.save(user)).thenReturn(user);
 
         assertEquals(user, savedUser);
+    }
+
+    /*
+    <------------------------------------------------------------------------------------------------------------------>
+     */
+
+    // UserService 테스트
+    @Test
+    @DisplayName("userMockingTest: checkNicknameDuplicate")
+    public void 닉네임_중복_확인을_합니다 () {
+        final String nickName = "ttMarket";
+        final UserProfile userProfile = UserProfile.builder()
+                .id(anyString())
+                .nickName(nickName)
+                .build();
+
+        when(mockUserProfileRepository.findByNickName(nickName))
+                .thenReturn(Optional.of(userProfile));
+
+        Boolean isDuplicated = mockService.checkNicknameDuplicate(nickName);
+
+        assertEquals(isDuplicated, false);
     }
 }
