@@ -1,6 +1,7 @@
 package com.dyes.backend.userTest;
 
 import com.dyes.backend.domain.user.controller.form.UserProfileModifyRequestForm;
+import com.dyes.backend.domain.user.entity.Address;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserProfile;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
@@ -352,7 +353,7 @@ public class UserMockingTest {
 
         assertEquals(isDuplicated, false);
     }
-    
+
     @Test
     @DisplayName("userMockingTest: getUserProfile")
     public void 사용자_프로필을_조회합니다 () {
@@ -392,5 +393,83 @@ public class UserMockingTest {
         assertEquals(userProfileResponseForm.getEmail(), email);
         verify(mockUserRepository, times(1)).findByStringId(userId);
         verify(mockUserProfileRepository, times(1)).findByUser(user);
+    }
+
+    @Test
+    @DisplayName("userMockingTest: modifyUserProfile")
+    public void 사용자_프로필을_수정합니다 () {
+        final String userId = "123456789test";
+        final String accessToken = "accessToken";
+        final String refreshToken = "refreshToken";
+
+        final String userToken = "test_abcabcabcabcabc";
+        final String email = "test@test.com";
+
+        final String modifiedNickName = "modifyNickName";
+        final String modifiedEmail = "modify@test.com";
+        final String modifiedProfileImg = "modifyImg";
+        final String modifiedContactNumber = "modifyContactNumber";
+        final String modifiedAddress = "modifyAddress";
+        final String modifiedZipCode = "modifyZipCode";
+        final String modifiedAddressDetail = "modifyAddressDetail";
+
+        UserProfileModifyRequestForm userProfileModifyRequestForm
+                = new UserProfileModifyRequestForm(
+                        userToken,
+                        modifiedNickName,
+                        modifiedEmail,
+                        modifiedProfileImg,
+                        modifiedContactNumber,
+                        modifiedAddress,
+                        modifiedZipCode,
+                        modifiedAddressDetail);
+
+        when(mockRedisService.getUserId(userToken)).thenReturn(userId);
+
+        final User user = User.builder()
+                .id(userId)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+        when(mockUserRepository.findByStringId(userId)).thenReturn(Optional.of(user));
+
+        UserProfile userProfile = UserProfile.builder()
+                .id(anyString())
+                .email(email)
+                .build();
+        when(mockUserProfileRepository.findByUser(user)).thenReturn(Optional.of(userProfile));
+
+        Address address = new Address(modifiedAddress, modifiedZipCode, modifiedAddressDetail);
+
+        userProfile.setNickName(modifiedNickName);
+        userProfile.setEmail(modifiedEmail);
+        userProfile.setProfileImg(modifiedProfileImg);
+        userProfile.setContactNumber(modifiedContactNumber);
+        userProfile.setAddress(address);
+
+        UserProfileResponseForm userProfileResponseForm
+                = new UserProfileResponseForm(
+                user.getId(),
+                userProfile.getNickName(),
+                userProfile.getEmail(),
+                userProfile.getProfileImg(),
+                userProfile.getContactNumber(),
+                userProfile.getAddress());
+
+        mockUserProfileRepository.save(userProfile);
+
+        mockService.modifyUserProfile(userProfileModifyRequestForm);
+
+        assertEquals(userProfileResponseForm.getNickName(), modifiedNickName);
+        assertEquals(userProfileResponseForm.getEmail(), modifiedEmail);
+        assertEquals(userProfileResponseForm.getProfileImg(), modifiedProfileImg);
+        assertEquals(userProfileResponseForm.getContactNumber(), modifiedContactNumber);
+        assertEquals(userProfileResponseForm.getAddress().getAddress(), modifiedAddress);
+        assertEquals(userProfileResponseForm.getAddress().getZipCode(), modifiedZipCode);
+        assertEquals(userProfileResponseForm.getAddress().getAddressDetail(), modifiedAddressDetail);
+
+        verify(mockUserRepository, times(1)).findByStringId(userId);
+        verify(mockUserProfileRepository, times(1)).findByUser(user);
+        verify(mockUserProfileRepository, times(1)).save(userProfile);
     }
 }
