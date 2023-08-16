@@ -42,10 +42,10 @@ public class UserController {
     }
 
     // 닉네임 중복 확인
-    @GetMapping("/check-nickname")
-    public Boolean checkNicknameDuplicate(@RequestParam("nickname") String nickname) {
+    @GetMapping("/check-nickName")
+    public Boolean checkNickNameDuplicate(@RequestParam("nickName") String nickName) {
 
-        return userService.checkNicknameDuplicate(nickname);
+        return userService.checkNickNameDuplicate(nickName);
     }
 
     // 이메일 중복 확인

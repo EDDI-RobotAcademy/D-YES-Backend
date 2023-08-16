@@ -7,7 +7,7 @@ public interface UserService {
     String googleUserLogin(String code);
     String naverUserLogin(String code);
     String kakaoUserLogin(String code);
-    Boolean checkNicknameDuplicate(String nickname);
+    Boolean checkNickNameDuplicate(String nickName);
     Boolean checkEmailDuplicate(String email);
     UserProfileResponseForm getUserProfile(String userToken);
     UserProfileResponseForm modifyUserProfile(UserProfileModifyRequestForm requestForm);

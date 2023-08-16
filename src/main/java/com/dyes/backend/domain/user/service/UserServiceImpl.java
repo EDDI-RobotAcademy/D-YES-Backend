@@ -381,8 +381,8 @@ public class UserServiceImpl implements UserService {
 
     // 닉네임 중복 확인
     @Override
-    public Boolean checkNicknameDuplicate(String nickname) {
-        Optional<UserProfile> maybeUserProfile = userProfileRepository.findByNickName(nickname);
+    public Boolean checkNickNameDuplicate(String nickName) {
+        Optional<UserProfile> maybeUserProfile = userProfileRepository.findByNickName(nickName);
 
         if(maybeUserProfile.isPresent()) {
             log.info("nickname already exists");

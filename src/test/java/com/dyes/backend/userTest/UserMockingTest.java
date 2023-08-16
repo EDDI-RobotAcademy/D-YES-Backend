@@ -331,7 +331,7 @@ public class UserMockingTest {
         when(mockUserProfileRepository.findByNickName(nickName))
                 .thenReturn(Optional.of(userProfile));
 
-        Boolean isDuplicated = mockService.checkNicknameDuplicate(nickName);
+        Boolean isDuplicated = mockService.checkNickNameDuplicate(nickName);
 
         assertEquals(isDuplicated, false);
     }
