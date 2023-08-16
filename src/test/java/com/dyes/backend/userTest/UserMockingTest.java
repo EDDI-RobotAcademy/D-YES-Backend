@@ -352,4 +352,45 @@ public class UserMockingTest {
 
         assertEquals(isDuplicated, false);
     }
+    
+    @Test
+    @DisplayName("userMockingTest: getUserProfile")
+    public void 사용자_프로필을_조회합니다 () {
+        final String userId = "123456789test";
+        final String accessToken = "accessToken";
+        final String refreshToken = "refreshToken";
+
+        final String userToken = "test_abcabcabcabcabc";
+        final String email = "test@test.com";
+
+        when(mockRedisService.getUserId(userToken)).thenReturn(userId);
+
+        User user = User.builder()
+                .id(userId)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+        when(mockUserRepository.findByStringId(userId)).thenReturn(Optional.of(user));
+
+        UserProfile userProfile = UserProfile.builder()
+                .id(anyString())
+                .email(email)
+                .build();
+        when(mockUserProfileRepository.findByUser(user)).thenReturn(Optional.of(userProfile));
+
+        UserProfileResponseForm userProfileResponseForm
+                = new UserProfileResponseForm(
+                    user.getId(),
+                    userProfile.getNickName(),
+                    userProfile.getEmail(),
+                    userProfile.getProfileImg(),
+                    userProfile.getContactNumber(),
+                    userProfile.getAddress());
+
+        mockService.getUserProfile(userToken);
+
+        assertEquals(userProfileResponseForm.getEmail(), email);
+        verify(mockUserRepository, times(1)).findByStringId(userId);
+        verify(mockUserProfileRepository, times(1)).findByUser(user);
+    }
 }
