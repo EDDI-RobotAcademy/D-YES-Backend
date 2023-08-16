@@ -20,6 +20,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Optional;
@@ -113,11 +114,17 @@ public class UserServiceImpl implements UserService {
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity(headers);
         log.info("request: " + request);
-        ResponseEntity<GoogleOauthUserInfoResponse> response = restTemplate.exchange(
-                googleOauthSecretsProvider.getGOOGLE_USERINFO_REQUEST_URL(), HttpMethod.GET, request, GoogleOauthUserInfoResponse.class);
-        log.info("response: " + response);
-        log.info("requestUserInfoWithAccessTokenForSignIn end");
-        return response;
+        try {
+            ResponseEntity<GoogleOauthUserInfoResponse> response = restTemplate.exchange(
+                    googleOauthSecretsProvider.getGOOGLE_USERINFO_REQUEST_URL(), HttpMethod.GET, request, GoogleOauthUserInfoResponse.class);
+            log.info("response: " + response);
+            log.info("requestUserInfoWithAccessTokenForSignIn end");
+            return response;
+        } catch (RestClientException e) {
+            log.error("Error during requestUserInfoWithAccessTokenForSignIn: " + e.getMessage());
+            ResponseEntity<GoogleOauthUserInfoResponse> response = expiredGoogleAccessTokenRequester(AccessToken);
+            return response;
+        }
     }
     
     public User googleUserSave (GoogleOauthAccessTokenResponse accessTokenResponse, GoogleOauthUserInfoResponse userInfoResponse) {
@@ -225,18 +232,25 @@ public class UserServiceImpl implements UserService {
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity(headers);
         log.info("request: " + request);
-        ResponseEntity<JsonNode> response = restTemplate.exchange(
-        naverOauthSecretsProvider.getNAVER_USERINFO_REQUEST_URL(), HttpMethod.GET, request, JsonNode.class);
-        log.info("response: " + response);
+        try {
+            ResponseEntity<JsonNode> response = restTemplate.exchange(
+                    naverOauthSecretsProvider.getNAVER_USERINFO_REQUEST_URL(), HttpMethod.GET, request, JsonNode.class);
+            log.info("response: " + response);
 
-        JsonNode responseNode = response.getBody().get("response");
-        log.info("Raw JSON response: " + responseNode);
+            JsonNode responseNode = response.getBody().get("response");
+            log.info("Raw JSON response: " + responseNode);
 
-        NaverOauthUserInfoResponse userInfoResponse =
-                objectMapper.convertValue(responseNode, NaverOauthUserInfoResponse.class);
-        log.info("Parsed response: " + userInfoResponse);
+            NaverOauthUserInfoResponse userInfoResponse =
+                    objectMapper.convertValue(responseNode, NaverOauthUserInfoResponse.class);
+            log.info("Parsed response: " + userInfoResponse);
 
-        return userInfoResponse;
+            return userInfoResponse;
+        } catch (RestClientException e) {
+            log.error("Error during requestUserInfoWithAccessTokenForSignIn: " + e.getMessage());
+            NaverOauthUserInfoResponse response = expiredNaverAccessTokenRequester(AccessToken);
+            return response;
+        }
+
     }
 
     public User naverUserSave (NaverOauthAccessTokenResponse accessTokenResponse, NaverOauthUserInfoResponse userInfoResponse) {
@@ -512,6 +526,91 @@ public class UserServiceImpl implements UserService {
                     userProfile.getAddress());
 
         return userProfileResponseForm;
+    }
+    public ResponseEntity<GoogleOauthUserInfoResponse> expiredGoogleAccessTokenRequester (String accessToken) {
+
+        User user = findUserByAccessTokenInDatabase(accessToken);
+
+        String refreshToken = user.getRefreshToken();
+
+        final String googleClientId = googleOauthSecretsProvider.getGOOGLE_AUTH_CLIENT_ID();
+        final String googleClientSecret = googleOauthSecretsProvider.getGOOGLE_AUTH_SECRETS();
+        final String googleRefreshTokenRequestUrl = googleOauthSecretsProvider.getGOOGLE_REFRESH_TOKEN_REQUEST_URL();
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+
+        body.add("refresh_token", refreshToken);
+        body.add("client_id", googleClientId);
+        body.add("client_secret", googleClientSecret);
+        body.add("grant_type", "refresh_token");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(body, headers);
+
+        ResponseEntity<GoogleOauthAccessTokenResponse> accessTokenResponse = restTemplate.postForEntity(googleRefreshTokenRequestUrl, requestEntity, GoogleOauthAccessTokenResponse.class);
+        if(accessTokenResponse.getStatusCode() == HttpStatus.OK){
+            user.setAccessToken(accessTokenResponse.getBody().getAccessToken());
+            userRepository.save(user);
+            return googleRequestUserInfoWithAccessToken(user.getAccessToken());
+        }
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
+    public NaverOauthUserInfoResponse expiredNaverAccessTokenRequester (String accessToken) {
+
+        User user = findUserByAccessTokenInDatabase(accessToken);
+
+        String refreshToken = user.getRefreshToken();
+
+    final String naverClientId = naverOauthSecretsProvider.getNAVER_AUTH_CLIENT_ID();
+        final String naverClientSecret = naverOauthSecretsProvider.getNAVER_AUTH_SECRETS();
+        final String naverRefreshTokenRequestUrl = naverOauthSecretsProvider.getNAVER_REFRESH_TOKEN_REQUEST_URL();
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+
+        body.add("refresh_token", refreshToken);
+        body.add("client_id", naverClientId);
+        body.add("client_secret", naverClientSecret);
+        body.add("grant_type", "refresh_token");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(body, headers);
+
+        ResponseEntity<NaverOauthAccessTokenResponse> accessTokenResponse = restTemplate.postForEntity(naverRefreshTokenRequestUrl, requestEntity, NaverOauthAccessTokenResponse.class);
+        if(accessTokenResponse.getStatusCode() == HttpStatus.OK){
+            user.setAccessToken(accessTokenResponse.getBody().getAccessToken());
+            userRepository.save(user);
+            return naverRequestUserInfoWithAccessToken(user.getAccessToken());
+        }
+        return null;
+    }
+
+    public User findUserByUserTokenInRedis (String userToken) {
+        String accountId = redisService.getUserId(userToken);
+        if(accountId == null){
+            log.info("accountId is empty");
+            return null;
+        }
+
+        Optional<User> maybeUser = userRepository.findByStringId(accountId);
+
+        if(maybeUser.isEmpty()) {
+            log.info("user is empty");
+            return null;
+        }
+
+        User user = maybeUser.get();
+        return user;
+    }
+    public User findUserByAccessTokenInDatabase (String accessToken) {
+        Optional<User> maybeUser = userRepository.findByAccessToken(accessToken);
+        if (maybeUser.isEmpty()) {
+            log.info("user is empty");
+            return null;
+        }
+        User user = maybeUser.get();
+        return user;
     }
 
 }
