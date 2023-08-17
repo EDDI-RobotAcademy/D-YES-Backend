@@ -399,7 +399,7 @@ public class UserServiceImpl implements UserService {
         return redirectUrl + userToken;
     }
 
-    // 카카오에서 인가 코드를 받으면 엑세스 코드 요청
+    // 카카오에서 인가 코드를 받으면 엑세스 토큰 요청
     public KakaoAccessTokenResponseForm getAccessTokenFromKakao(String code) {
         // 헤더 설정
         HttpHeaders httpHeaders = setHeaders();
@@ -423,17 +423,14 @@ public class UserServiceImpl implements UserService {
 
     // 카카오 엑세스 토큰으로 유저 정보 요청
     public KakaoUserInfoResponseForm getUserInfoFromKakao(String accessToken) {
-        // 헤더 설정
-        HttpHeaders httpHeaders = setHeaders();
-        httpHeaders.add("Authorization", "Bearer " + accessToken);
-
-        // 바디 설정
-        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("ACCESS_TOKEN", accessToken);
-
-        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(parameters, httpHeaders);
 
         try {
+            // 헤더 설정
+            HttpHeaders httpHeaders = setHeaders();
+            httpHeaders.add("Authorization", "Bearer " + accessToken);
+
+            HttpEntity<String> requestEntity = new HttpEntity<>(httpHeaders);
+
             ResponseEntity<KakaoUserInfoResponseForm> kakaoUserInfoResponseForm = restTemplate.postForEntity(
                     kakaoOauthSecretsProvider.getKAKAO_USERINFO_REQUEST_URL(),
                     requestEntity,
@@ -447,14 +444,29 @@ public class UserServiceImpl implements UserService {
 
         } catch (RestClientException e) {
             log.error("Error during requestUserInfoWithAccessTokenForSignIn: " + e.getMessage());
-            KakaoUserInfoResponseForm kakaoUserInfoResponseForm = expiredKakaoAccessTokenRequester(accessToken);
+            KakaoAccessTokenResponseForm kakaoAccessTokenResponseForm = expiredKakaoAccessTokenRequester(accessToken);
 
-            return kakaoUserInfoResponseForm;
+            // 헤더 설정
+            HttpHeaders httpHeaders = setHeaders();
+            httpHeaders.add("Authorization", "Bearer " + accessToken);
+
+            HttpEntity<String> requestEntity = new HttpEntity<>(httpHeaders);
+
+            ResponseEntity<KakaoUserInfoResponseForm> kakaoUserInfoResponseForm = restTemplate.postForEntity(
+                    kakaoOauthSecretsProvider.getKAKAO_USERINFO_REQUEST_URL(),
+                    requestEntity,
+                    KakaoUserInfoResponseForm.class);
+
+            log.info("userInfo Id: " + kakaoUserInfoResponseForm.getBody().getId());
+            log.info("userInfo Nickname: " + kakaoUserInfoResponseForm.getBody().getProperties().getNickname());
+            log.info("userInfo Profile_image: " + kakaoUserInfoResponseForm.getBody().getProperties().getProfile_image());
+
+            return kakaoUserInfoResponseForm.getBody();
         }
     }
 
-    // 카카오 리프래쉬 토큰으로 엑세스 토큰 재발급 받은 후 유저 정보 요청
-    public KakaoUserInfoResponseForm expiredKakaoAccessTokenRequester (String accessToken) {
+    // 카카오 리프래쉬 토큰으로 엑세스 토큰 재발급
+    public KakaoAccessTokenResponseForm expiredKakaoAccessTokenRequester (String accessToken) {
 
         final User user = findUserByAccessTokenInDatabase(accessToken);
         final String refreshToken = user.getRefreshToken();
@@ -486,10 +498,7 @@ public class UserServiceImpl implements UserService {
         }
         userRepository.save(user);
 
-        // 카카오 엑세스 토큰으로 유저 정보 요청
-        final KakaoUserInfoResponseForm kakaoUserInfoResponseForm = getUserInfoFromKakao(renewAccessToken);
-
-        return kakaoUserInfoResponseForm;
+        return kakaoAccessTokenResponseForm.getBody();
     }
 
     /*
