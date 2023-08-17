@@ -151,7 +151,7 @@ public class UserMockingTest {
         when(mockUserProfileRepository.save(any(UserProfile.class))).thenReturn(userProfile);
         String result = mockService.googleUserLogin(authorizationCode);
 
-//        verify(mockRedisService, times(1)).setUserTokenAndUser(anyString(), eq(user.getAccessToken()));
+        verify(mockRedisService, times(1)).setUserTokenAndUser(anyString(), eq(user.getAccessToken()));
         assertNotNull(result);
     }
     @Test
@@ -280,7 +280,7 @@ public class UserMockingTest {
 
         String result = mockService.naverUserLogin(authorizationCode);
 
-//        verify(mockRedisService, times(1)).setUserTokenAndUser(anyString(), eq(user.getAccessToken()));
+        verify(mockRedisService, times(1)).setUserTokenAndUser(anyString(), eq(user.getAccessToken()));
         assertNotNull(result);
     }
 
@@ -370,14 +370,11 @@ public class UserMockingTest {
         final String userToken = "test_abcabcabcabcabc";
         final String email = "test@test.com";
 
-        when(mockRedisService.getUserId(userToken)).thenReturn(userId);
-
         User user = User.builder()
                 .id(userId)
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .build();
-        when(mockUserRepository.findByStringId(userId)).thenReturn(Optional.of(user));
 
         UserProfile userProfile = UserProfile.builder()
                 .id(anyString())
@@ -397,8 +394,7 @@ public class UserMockingTest {
         mockService.getUserProfile(userToken);
 
         assertEquals(userProfileResponseForm.getEmail(), email);
-        verify(mockUserRepository, times(1)).findByStringId(userId);
-        verify(mockUserProfileRepository, times(1)).findByUser(user);
+        verify(mockRedisService, times(1)).getAccessToken(userToken);
     }
 
     @Test
@@ -430,14 +426,11 @@ public class UserMockingTest {
                         modifiedZipCode,
                         modifiedAddressDetail);
 
-        when(mockRedisService.getUserId(userToken)).thenReturn(userId);
-
-        final User user = User.builder()
+        User user = User.builder()
                 .id(userId)
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .build();
-        when(mockUserRepository.findByStringId(userId)).thenReturn(Optional.of(user));
 
         UserProfile userProfile = UserProfile.builder()
                 .id(anyString())
@@ -474,8 +467,6 @@ public class UserMockingTest {
         assertEquals(userProfileResponseForm.getAddress().getZipCode(), modifiedZipCode);
         assertEquals(userProfileResponseForm.getAddress().getAddressDetail(), modifiedAddressDetail);
 
-        verify(mockUserRepository, times(1)).findByStringId(userId);
-        verify(mockUserProfileRepository, times(1)).findByUser(user);
         verify(mockUserProfileRepository, times(1)).save(userProfile);
     }
 }

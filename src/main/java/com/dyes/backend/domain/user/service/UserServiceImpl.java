@@ -126,6 +126,37 @@ public class UserServiceImpl implements UserService {
             return response;
         }
     }
+
+    // 구글 리프래쉬 토큰으로 엑세스 토큰 재발급 받은 후 유저 정보 요청
+    public ResponseEntity<GoogleOauthUserInfoResponse> expiredGoogleAccessTokenRequester (String accessToken) {
+
+        User user = findUserByAccessTokenInDatabase(accessToken);
+
+        String refreshToken = user.getRefreshToken();
+
+        final String googleClientId = googleOauthSecretsProvider.getGOOGLE_AUTH_CLIENT_ID();
+        final String googleClientSecret = googleOauthSecretsProvider.getGOOGLE_AUTH_SECRETS();
+        final String googleRefreshTokenRequestUrl = googleOauthSecretsProvider.getGOOGLE_REFRESH_TOKEN_REQUEST_URL();
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+
+        body.add("refresh_token", refreshToken);
+        body.add("client_id", googleClientId);
+        body.add("client_secret", googleClientSecret);
+        body.add("grant_type", "refresh_token");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(body, headers);
+
+        ResponseEntity<GoogleOauthAccessTokenResponse> accessTokenResponse = restTemplate.postForEntity(googleRefreshTokenRequestUrl, requestEntity, GoogleOauthAccessTokenResponse.class);
+        if(accessTokenResponse.getStatusCode() == HttpStatus.OK){
+            user.setAccessToken(accessTokenResponse.getBody().getAccessToken());
+            userRepository.save(user);
+            return googleRequestUserInfoWithAccessToken(user.getAccessToken());
+        }
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
     
     public User googleUserSave (GoogleOauthAccessTokenResponse accessTokenResponse, GoogleOauthUserInfoResponse userInfoResponse) {
         log.info("userCheckIsOurUser start");
@@ -251,6 +282,37 @@ public class UserServiceImpl implements UserService {
             return response;
         }
 
+    }
+
+    // 네이버 리프래쉬 토큰으로 엑세스 토큰 재발급 받은 후 유저 정보 요청
+    public NaverOauthUserInfoResponse expiredNaverAccessTokenRequester (String accessToken) {
+
+        User user = findUserByAccessTokenInDatabase(accessToken);
+
+        String refreshToken = user.getRefreshToken();
+
+        final String naverClientId = naverOauthSecretsProvider.getNAVER_AUTH_CLIENT_ID();
+        final String naverClientSecret = naverOauthSecretsProvider.getNAVER_AUTH_SECRETS();
+        final String naverRefreshTokenRequestUrl = naverOauthSecretsProvider.getNAVER_REFRESH_TOKEN_REQUEST_URL();
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+
+        body.add("refresh_token", refreshToken);
+        body.add("client_id", naverClientId);
+        body.add("client_secret", naverClientSecret);
+        body.add("grant_type", "refresh_token");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(body, headers);
+
+        ResponseEntity<NaverOauthAccessTokenResponse> accessTokenResponse = restTemplate.postForEntity(naverRefreshTokenRequestUrl, requestEntity, NaverOauthAccessTokenResponse.class);
+        if(accessTokenResponse.getStatusCode() == HttpStatus.OK){
+            user.setAccessToken(accessTokenResponse.getBody().getAccessToken());
+            userRepository.save(user);
+            return naverRequestUserInfoWithAccessToken(user.getAccessToken());
+        }
+        return null;
     }
 
     public User naverUserSave (NaverOauthAccessTokenResponse accessTokenResponse, NaverOauthUserInfoResponse userInfoResponse) {
@@ -417,35 +479,25 @@ public class UserServiceImpl implements UserService {
         return true;
     }
 
-    // 사용자 프로필 가져오기
+    // 유저 프로필 가져오기
     @Override
     public UserProfileResponseForm getUserProfile(String userToken) {
-        String accountId = redisService.getUserId(userToken);
-        if(accountId == null){
-            log.info("accountId is empty");
+        final User user = findUserByUserToken(userToken);
+        if(user == null) {
             return null;
         }
-
-        Optional<User> maybeUser = userRepository.findByStringId(accountId);
-
-        if(maybeUser.isEmpty()) {
-            log.info("user is empty");
-            return null;
-        }
-
-        User user = maybeUser.get();
 
         Optional<UserProfile> maybeUserProfile = userProfileRepository.findByUser(user);
 
         if(maybeUserProfile.isEmpty()) {
-            UserProfileResponseForm userProfileResponseForm = new UserProfileResponseForm(accountId);
+            UserProfileResponseForm userProfileResponseForm = new UserProfileResponseForm(user.getId());
             return userProfileResponseForm;
         }
 
         UserProfile userProfile = maybeUserProfile.get();
         UserProfileResponseForm userProfileResponseForm
                 = new UserProfileResponseForm(
-                    accountId,
+                    user.getId(),
                     userProfile.getNickName(),
                     userProfile.getEmail(),
                     userProfile.getProfileImg(),
@@ -455,24 +507,13 @@ public class UserServiceImpl implements UserService {
         return userProfileResponseForm;
     }
 
-    // 사용자 프로필 수정하기
+    // 유저 프로필 수정하기
     @Override
     public UserProfileResponseForm modifyUserProfile(UserProfileModifyRequestForm requestForm) {
-        String userToken = requestForm.getUserToken();
-        String accountId = redisService.getUserId(userToken);
-        if(accountId == null){
-            log.info("accountId is empty");
+        final User user = findUserByUserToken(requestForm.getUserToken());
+        if(user == null) {
             return null;
         }
-
-        Optional<User> maybeUser = userRepository.findByStringId(accountId);
-
-        if(maybeUser.isEmpty()) {
-            log.info("user is empty");
-            return null;
-        }
-
-        User user = maybeUser.get();
 
         Optional<UserProfile> maybeUserProfile = userProfileRepository.findByUser(user);
         if(maybeUserProfile.isEmpty()) {
@@ -493,12 +534,12 @@ public class UserServiceImpl implements UserService {
 
             UserProfileResponseForm userProfileResponseForm
                     = new UserProfileResponseForm(
-                    user.getId(),
-                    userProfile.getNickName(),
-                    userProfile.getEmail(),
-                    userProfile.getProfileImg(),
-                    userProfile.getContactNumber(),
-                    userProfile.getAddress());
+                        user.getId(),
+                        userProfile.getNickName(),
+                        userProfile.getEmail(),
+                        userProfile.getProfileImg(),
+                        userProfile.getContactNumber(),
+                        userProfile.getAddress());
 
             return userProfileResponseForm;
         }
@@ -525,73 +566,35 @@ public class UserServiceImpl implements UserService {
 
         return userProfileResponseForm;
     }
-    public ResponseEntity<GoogleOauthUserInfoResponse> expiredGoogleAccessTokenRequester (String accessToken) {
 
-        User user = findUserByAccessTokenInDatabase(accessToken);
-
-        String refreshToken = user.getRefreshToken();
-
-        final String googleClientId = googleOauthSecretsProvider.getGOOGLE_AUTH_CLIENT_ID();
-        final String googleClientSecret = googleOauthSecretsProvider.getGOOGLE_AUTH_SECRETS();
-        final String googleRefreshTokenRequestUrl = googleOauthSecretsProvider.getGOOGLE_REFRESH_TOKEN_REQUEST_URL();
-        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-
-        body.add("refresh_token", refreshToken);
-        body.add("client_id", googleClientId);
-        body.add("client_secret", googleClientSecret);
-        body.add("grant_type", "refresh_token");
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
-        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(body, headers);
-
-        ResponseEntity<GoogleOauthAccessTokenResponse> accessTokenResponse = restTemplate.postForEntity(googleRefreshTokenRequestUrl, requestEntity, GoogleOauthAccessTokenResponse.class);
-        if(accessTokenResponse.getStatusCode() == HttpStatus.OK){
-            user.setAccessToken(accessTokenResponse.getBody().getAccessToken());
-            userRepository.save(user);
-            return googleRequestUserInfoWithAccessToken(user.getAccessToken());
-        }
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-    }
-    public NaverOauthUserInfoResponse expiredNaverAccessTokenRequester (String accessToken) {
-
-        User user = findUserByAccessTokenInDatabase(accessToken);
-
-        String refreshToken = user.getRefreshToken();
-
-    final String naverClientId = naverOauthSecretsProvider.getNAVER_AUTH_CLIENT_ID();
-        final String naverClientSecret = naverOauthSecretsProvider.getNAVER_AUTH_SECRETS();
-        final String naverRefreshTokenRequestUrl = naverOauthSecretsProvider.getNAVER_REFRESH_TOKEN_REQUEST_URL();
-        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-
-        body.add("refresh_token", refreshToken);
-        body.add("client_id", naverClientId);
-        body.add("client_secret", naverClientSecret);
-        body.add("grant_type", "refresh_token");
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
-        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(body, headers);
-
-        ResponseEntity<NaverOauthAccessTokenResponse> accessTokenResponse = restTemplate.postForEntity(naverRefreshTokenRequestUrl, requestEntity, NaverOauthAccessTokenResponse.class);
-        if(accessTokenResponse.getStatusCode() == HttpStatus.OK){
-            user.setAccessToken(accessTokenResponse.getBody().getAccessToken());
-            userRepository.save(user);
-            return naverRequestUserInfoWithAccessToken(user.getAccessToken());
-        }
-        return null;
-    }
-
-    public User findUserByUserTokenInRedis (String userToken) {
-        String accountId = redisService.getUserId(userToken);
-        if(accountId == null){
-            log.info("accountId is empty");
+    // userToken으로 Redis에서 accessToken 조회 후 Oauth 서버로 사용자 정보 요청
+    public User findUserByUserToken (String userToken) {
+        final String accessToken = redisService.getAccessToken(userToken);
+        if(accessToken == null){
+            log.info("accessToken is empty");
             return null;
         }
 
-        Optional<User> maybeUser = userRepository.findByStringId(accountId);
+        String userId = "";
+        if(userToken.contains("google")) {
+            ResponseEntity<GoogleOauthUserInfoResponse> googleOauthUserInfoResponse
+                    = googleRequestUserInfoWithAccessToken(accessToken);
+            userId = googleOauthUserInfoResponse.getBody().getId();
+        }
+
+        if(userToken.contains("naver")) {
+            NaverOauthUserInfoResponse naverOauthUserInfoResponse
+                    = naverRequestUserInfoWithAccessToken(accessToken);
+            userId = naverOauthUserInfoResponse.getId();
+        }
+
+        if(userToken.contains("kakao")) {
+            KakaoUserInfoResponseForm kakaoUserInfoResponseForm
+                    = getUserInfoFromKakao(accessToken);
+            userId = kakaoUserInfoResponseForm.getId();
+        }
+
+        Optional<User> maybeUser = userRepository.findByStringId(userId);
 
         if(maybeUser.isEmpty()) {
             log.info("user is empty");
@@ -601,6 +604,8 @@ public class UserServiceImpl implements UserService {
         User user = maybeUser.get();
         return user;
     }
+
+    // accessToken으로 DB에서 사용자 조회
     public User findUserByAccessTokenInDatabase (String accessToken) {
         Optional<User> maybeUser = userRepository.findByAccessToken(accessToken);
         if (maybeUser.isEmpty()) {
