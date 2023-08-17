@@ -15,9 +15,9 @@ public class RedisServiceImpl implements RedisService{
     final private RedisTemplate<String, String> redisTemplateObject;
 
     @Override
-    public void setUserTokenAndUser (String UUID, String userId) {
+    public void setUserTokenAndUser (String userToken, String accessToken) {
         ValueOperations<String, String> value = redisTemplateObject.opsForValue();
-        value.set(UUID, userId, Duration.ofHours(1));
+        value.set(userToken, accessToken, Duration.ofHours(1));
     }
 
     @Override
