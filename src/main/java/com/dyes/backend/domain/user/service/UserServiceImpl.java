@@ -289,7 +289,7 @@ public class UserServiceImpl implements UserService {
     public String kakaoUserLogin(String code) {
         // 카카오 서버에서 accessToken 받아오기
         KakaoAccessTokenResponseForm kakaoAccessTokenResponseForm = getAccessTokenFromKakao(code);
-        String accessToken = kakaoAccessTokenResponseForm.getAccess_token();
+        final String accessToken = kakaoAccessTokenResponseForm.getAccess_token();
 
         // 카카오 서버에서 받아온 accessToken으로 사용자 정보 받아오기
         KakaoUserInfoResponseForm kakaoUserInfoResponseForm = getUserInfoFromKakao(accessToken);
@@ -316,18 +316,16 @@ public class UserServiceImpl implements UserService {
             userProfileRepository.save(userProfile);
 
             final String userToken = "kakao" + UUID.randomUUID();
-            redisService.setUserTokenAndUser(userToken, user.getId());
+            redisService.setUserTokenAndUser(userToken, accessToken);
 
             final String redirectUrl = kakaoOauthSecretsProvider.getKAKAO_REDIRECT_VIEW_URL();
 
             return redirectUrl + userToken;
         }
 
-        // 있다면 로그인 해당 사용자 가져오기
-        User user = maybeUser.get();
-
+        // 있다면 로그인
         final String userToken = "kakao" + UUID.randomUUID();
-        redisService.setUserTokenAndUser(userToken, user.getId());
+        redisService.setUserTokenAndUser(userToken, accessToken);
 
         final String redirectUrl = kakaoOauthSecretsProvider.getKAKAO_REDIRECT_VIEW_URL();
 
