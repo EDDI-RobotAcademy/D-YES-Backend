@@ -35,40 +35,14 @@ jobs:
           run: |
             mkdir -p src/main/resources
             cd src/main/resources
-            echo "${{ secrets.DEPLOY_APPLICATION_PROPERTIES_ALL }}" > application.properties
+            echo "${{ secrets.DEPLOY_APPLICATION_PROPERTIES }}" > application.properties
+            echo "${{ secrets.DEPLOY_MYSQL_PROPERTIES }}" >> application.properties
+            echo "${{ secrets.DEPLOY_REDIS_PROPERTIES }}" >> application.properties
+            echo "${{ secrets.DEPLOY_CORS_PROPERTIES }}" >> application.properties
+            echo "${{ secrets.DEPLOY_GOOGLE_CONFIG }}" >> application.properties
+            echo "${{ secrets.DEPLOY_KAKAO_CONFIG }}" >> application.properties
+            echo "${{ secrets.DEPLOY_NAVER_CONFIG }}" >> application.properties
             ls
-
-#         - name: create application.properties for CD
-#           run: |
-#             mkdir -p src/main/resources
-#             pwd
-#             cd src/main/resources
-#             echo "${{ secrets.DEPLOY_APPLICATION_PROPERTIES }}" > src/main/resources/application.properties
-#             cat src/main/resources/application.properties 
-
-#         - name: create cors.properties for CD
-#           run: |
-#             mkdir -p src/main/resources
-#             pwd
-#             cd src/main/resources
-#             echo "${{ secrets.DEPLOY_CORS_PROPERTIES }}" > src/main/resources/cors.properties
-#             cat src/main/resources/cors.properties 
-
-#         - name: create redis.properties for CD
-#           run: |
-#             mkdir -p src/main/resources
-#             pwd
-#             cd src/main/resources
-#             echo "${{ secrets.DEPLOY_REDIS_PROPERTIES }}" > src/main/resources/redis.properties
-#             cat src/main/resources/redis.properties 
-
-#         - name: create mysql.properties for CD
-#           run: |
-#             mkdir -p src/main/resources
-#             pwd
-#             cd src/main/resources
-#             echo "${{ secrets.DEPLOY_MYSQL_PROPERTIES }}" > src/main/resources/mysql.properties
-#             cat src/main/resources/mysql.properties 
 
         - name: Grant Permission to gradlew
           run: chmod +x gradlew
