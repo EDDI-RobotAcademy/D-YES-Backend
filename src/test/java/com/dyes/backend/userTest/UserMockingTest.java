@@ -7,7 +7,10 @@ import com.dyes.backend.domain.user.entity.UserProfile;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import com.dyes.backend.domain.user.repository.UserRepository;
 import com.dyes.backend.domain.user.service.UserServiceImpl;
-import com.dyes.backend.domain.user.service.response.*;
+import com.dyes.backend.domain.user.service.response.GoogleOauthAccessTokenResponse;
+import com.dyes.backend.domain.user.service.response.GoogleOauthUserInfoResponse;
+import com.dyes.backend.domain.user.service.response.NaverOauthAccessTokenResponse;
+import com.dyes.backend.domain.user.service.response.NaverOauthUserInfoResponse;
 import com.dyes.backend.utility.provider.GoogleOauthSecretsProvider;
 import com.dyes.backend.utility.provider.KakaoOauthSecretsProvider;
 import com.dyes.backend.utility.provider.NaverOauthSecretsProvider;
@@ -21,7 +24,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Optional;
@@ -146,8 +152,9 @@ public class UserMockingTest {
 
         when(mockService.googleUserSave(responseEntity.getBody(), expectedInfoResponse)).thenReturn(user);
         when(mockUserProfileRepository.save(any(UserProfile.class))).thenReturn(userProfile);
-
         String result = mockService.googleUserLogin(authorizationCode);
+
+//        verify(mockRedisService, times(1)).setUserTokenAndUser(anyString(), eq(user.getAccessToken()));
         assertNotNull(result);
     }
     @Test
@@ -275,6 +282,8 @@ public class UserMockingTest {
         when(mockUserProfileRepository.save(any(UserProfile.class))).thenReturn(userProfile);
 
         String result = mockService.naverUserLogin(authorizationCode);
+
+//        verify(mockRedisService, times(1)).setUserTokenAndUser(anyString(), eq(user.getAccessToken()));
         assertNotNull(result);
     }
 

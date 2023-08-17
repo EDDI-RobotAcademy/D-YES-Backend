@@ -25,4 +25,7 @@ public class GoogleOauthSecretsProvider {
     private String GOOGLE_USERINFO_REQUEST_URL;
     @Value("${google.login.redirect.view}")
     private String GOOGLE_REDIRECT_VIEW_URL;
+    @Value("${google.oauth.refresh.token.request}")
+    private String GOOGLE_REFRESH_TOKEN_REQUEST_URL;
+
 }
