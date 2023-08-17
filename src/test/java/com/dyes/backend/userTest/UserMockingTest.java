@@ -316,4 +316,13 @@ public class UserMockingTest {
 
         assertEquals(user, savedUser);
     }
+    @Test
+    @DisplayName("userMockingTest: userLogOut")
+    public void 유저가_로그아웃을_요청하면_유저토큰으로_레디스에서_정해준_값을_삭제합니다() {
+        final String userToken = "프론트에서 받은 유저 토큰";
+
+        mockService.logOutWithDeleteKeyAndValueInRedis(userToken);
+        verify(mockRedisService, times(1)).deleteKeyAndValueWithUserToken(eq(userToken));
+    }
+
 }

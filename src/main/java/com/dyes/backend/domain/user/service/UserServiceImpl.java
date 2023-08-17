@@ -14,6 +14,7 @@ import com.dyes.backend.utility.provider.NaverOauthSecretsProvider;
 import com.dyes.backend.utility.redis.RedisService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.lettuce.core.RedisException;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -614,6 +615,15 @@ public class UserServiceImpl implements UserService {
         }
         User user = maybeUser.get();
         return user;
+    }
+    public boolean logOutWithDeleteKeyAndValueInRedis (String userToken) {
+        try {
+            redisService.deleteKeyAndValueWithUserToken(userToken);
+            return true;
+        } catch (RedisException e) {
+            log.error("Can't not logout with this userToken: {}", userToken, e);
+            return false;
+        }
     }
 
 }
