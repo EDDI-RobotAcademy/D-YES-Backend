@@ -11,5 +11,5 @@ public interface UserService {
     Boolean checkEmailDuplicate(String email);
     UserProfileResponseForm getUserProfile(String userToken);
     UserProfileResponseForm modifyUserProfile(UserProfileModifyRequestForm requestForm);
-    boolean logOutWithDeleteKeyAndValueInRedis (String userToken);
+    boolean UserLogOut (String userToken);
 }

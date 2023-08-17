@@ -619,7 +619,35 @@ public class UserServiceImpl implements UserService {
         User user = maybeUser.get();
         return user;
     }
-    public boolean logOutWithDeleteKeyAndValueInRedis (String userToken) {
+    public boolean UserLogOut (String userToken) {
+        Boolean isLoggedOut;
+        String platform = divideUserByPlatform(userToken);
+        if (platform.equals("google")) {
+            isLoggedOut = logOutWithDeleteKeyAndValueInRedis(userToken);
+            return isLoggedOut;
+        } else if (platform.equals("naver")) {
+            isLoggedOut = logOutWithDeleteKeyAndValueInRedis(userToken);
+            return isLoggedOut;
+        } else {
+            isLoggedOut = logOutWithDeleteKeyAndValueInRedis(userToken);
+            // 카카오 로그아웃 추가 작업하시면 됩니다
+            return isLoggedOut;
+        }
+    }
+    public String divideUserByPlatform(String userToken) {
+            String platform;
+        if (userToken.contains("google")){
+            platform = "google";
+            return platform;
+        } else if (userToken.contains("naver")) {
+            platform = "naver";
+            return platform;
+        } else {
+            platform = "kakao";
+            return platform;
+        }
+    }
+    public Boolean logOutWithDeleteKeyAndValueInRedis (String userToken) {
         try {
             redisService.deleteKeyAndValueWithUserToken(userToken);
             return true;
