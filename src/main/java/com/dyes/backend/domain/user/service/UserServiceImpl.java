@@ -1,6 +1,7 @@
 package com.dyes.backend.domain.user.service;
 
 import com.dyes.backend.domain.user.controller.form.UserProfileModifyRequestForm;
+import com.dyes.backend.domain.user.entity.Active;
 import com.dyes.backend.domain.user.entity.Address;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserProfile;
@@ -13,6 +14,7 @@ import com.dyes.backend.utility.provider.NaverOauthSecretsProvider;
 import com.dyes.backend.utility.redis.RedisService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.lettuce.core.RedisException;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -167,6 +169,7 @@ public class UserServiceImpl implements UserService {
         } else {
             User user = User.builder()
                     .id(userInfoResponse.getId())
+                    .active(Active.YES)
                     .accessToken(accessTokenResponse.getAccessToken())
                     .refreshToken(accessTokenResponse.getRefreshToken())
                     .build();
@@ -324,6 +327,7 @@ public class UserServiceImpl implements UserService {
         } else {
             User user = User.builder()
                     .id(userInfoResponse.getId())
+                    .active(Active.YES)
                     .accessToken(accessTokenResponse.getAccessToken())
                     .refreshToken(accessTokenResponse.getRefreshToken())
                     .build();
@@ -614,6 +618,43 @@ public class UserServiceImpl implements UserService {
         }
         User user = maybeUser.get();
         return user;
+    }
+    public boolean UserLogOut (String userToken) {
+        Boolean isLoggedOut;
+        String platform = divideUserByPlatform(userToken);
+        if (platform.equals("google")) {
+            isLoggedOut = logOutWithDeleteKeyAndValueInRedis(userToken);
+            return isLoggedOut;
+        } else if (platform.equals("naver")) {
+            isLoggedOut = logOutWithDeleteKeyAndValueInRedis(userToken);
+            return isLoggedOut;
+        } else {
+            isLoggedOut = logOutWithDeleteKeyAndValueInRedis(userToken);
+            // 카카오 로그아웃 추가 작업하시면 됩니다
+            return isLoggedOut;
+        }
+    }
+    public String divideUserByPlatform(String userToken) {
+            String platform;
+        if (userToken.contains("google")){
+            platform = "google";
+            return platform;
+        } else if (userToken.contains("naver")) {
+            platform = "naver";
+            return platform;
+        } else {
+            platform = "kakao";
+            return platform;
+        }
+    }
+    public Boolean logOutWithDeleteKeyAndValueInRedis (String userToken) {
+        try {
+            redisService.deleteKeyAndValueWithUserToken(userToken);
+            return true;
+        } catch (RedisException e) {
+            log.error("Can't not logout with this userToken: {}", userToken, e);
+            return false;
+        }
     }
 
 }

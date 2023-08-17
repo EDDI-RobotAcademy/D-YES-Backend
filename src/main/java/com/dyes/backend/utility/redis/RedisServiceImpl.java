@@ -1,5 +1,6 @@
 package com.dyes.backend.utility.redis;
 
+import io.lettuce.core.RedisException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -30,6 +31,15 @@ public class RedisServiceImpl implements RedisService{
         }
 
         return accessToken;
+    }
+
+    @Override
+    public void deleteKeyAndValueWithUserToken(String userToken){
+        try {
+            redisTemplateObject.delete(userToken);
+        } catch (RedisException e) {
+            log.error("Error while deleting key and value for userToken: {}", userToken, e);
+        }
     }
 
 }

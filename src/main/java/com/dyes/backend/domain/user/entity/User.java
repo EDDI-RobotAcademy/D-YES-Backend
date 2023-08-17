@@ -1,8 +1,13 @@
 package com.dyes.backend.domain.user.entity;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
@@ -15,4 +20,6 @@ public class User {
     private String id;
     private String accessToken;
     private String refreshToken;
+    @Enumerated(EnumType.STRING)
+    private Active active;
 }
