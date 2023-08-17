@@ -1,15 +1,13 @@
 package com.dyes.backend.userTest;
 
 import com.dyes.backend.domain.user.controller.form.UserProfileModifyRequestForm;
+import com.dyes.backend.domain.user.entity.Address;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserProfile;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import com.dyes.backend.domain.user.repository.UserRepository;
 import com.dyes.backend.domain.user.service.UserServiceImpl;
-import com.dyes.backend.domain.user.service.response.GoogleOauthAccessTokenResponse;
-import com.dyes.backend.domain.user.service.response.GoogleOauthUserInfoResponse;
-import com.dyes.backend.domain.user.service.response.NaverOauthAccessTokenResponse;
-import com.dyes.backend.domain.user.service.response.NaverOauthUserInfoResponse;
+import com.dyes.backend.domain.user.service.response.*;
 import com.dyes.backend.utility.provider.GoogleOauthSecretsProvider;
 import com.dyes.backend.utility.provider.KakaoOauthSecretsProvider;
 import com.dyes.backend.utility.provider.NaverOauthSecretsProvider;
@@ -153,7 +151,7 @@ public class UserMockingTest {
         when(mockUserProfileRepository.save(any(UserProfile.class))).thenReturn(userProfile);
         String result = mockService.googleUserLogin(authorizationCode);
 
-//        verify(mockRedisService, times(1)).setUserTokenAndUser(anyString(), eq(user.getAccessToken()));
+        verify(mockRedisService, times(1)).setUserTokenAndUser(anyString(), eq(user.getAccessToken()));
         assertNotNull(result);
     }
     @Test
@@ -282,7 +280,7 @@ public class UserMockingTest {
 
         String result = mockService.naverUserLogin(authorizationCode);
 
-//        verify(mockRedisService, times(1)).setUserTokenAndUser(anyString(), eq(user.getAccessToken()));
+        verify(mockRedisService, times(1)).setUserTokenAndUser(anyString(), eq(user.getAccessToken()));
         assertNotNull(result);
     }
 
@@ -360,5 +358,115 @@ public class UserMockingTest {
         Boolean isDuplicated = mockService.checkEmailDuplicate(email);
 
         assertEquals(isDuplicated, false);
+    }
+
+    @Test
+    @DisplayName("userMockingTest: getUserProfile")
+    public void 사용자_프로필을_조회합니다 () {
+        final String userId = "123456789test";
+        final String accessToken = "accessToken";
+        final String refreshToken = "refreshToken";
+
+        final String userToken = "test_abcabcabcabcabc";
+        final String email = "test@test.com";
+
+        User user = User.builder()
+                .id(userId)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+
+        UserProfile userProfile = UserProfile.builder()
+                .id(anyString())
+                .email(email)
+                .build();
+        when(mockUserProfileRepository.findByUser(user)).thenReturn(Optional.of(userProfile));
+
+        UserProfileResponseForm userProfileResponseForm
+                = new UserProfileResponseForm(
+                    user.getId(),
+                    userProfile.getNickName(),
+                    userProfile.getEmail(),
+                    userProfile.getProfileImg(),
+                    userProfile.getContactNumber(),
+                    userProfile.getAddress());
+
+        mockService.getUserProfile(userToken);
+
+        assertEquals(userProfileResponseForm.getEmail(), email);
+        verify(mockRedisService, times(1)).getAccessToken(userToken);
+    }
+
+    @Test
+    @DisplayName("userMockingTest: modifyUserProfile")
+    public void 사용자_프로필을_수정합니다 () {
+        final String userId = "123456789test";
+        final String accessToken = "accessToken";
+        final String refreshToken = "refreshToken";
+
+        final String userToken = "test_abcabcabcabcabc";
+        final String email = "test@test.com";
+
+        final String modifiedNickName = "modifyNickName";
+        final String modifiedEmail = "modify@test.com";
+        final String modifiedProfileImg = "modifyImg";
+        final String modifiedContactNumber = "modifyContactNumber";
+        final String modifiedAddress = "modifyAddress";
+        final String modifiedZipCode = "modifyZipCode";
+        final String modifiedAddressDetail = "modifyAddressDetail";
+
+        UserProfileModifyRequestForm userProfileModifyRequestForm
+                = new UserProfileModifyRequestForm(
+                        userToken,
+                        modifiedNickName,
+                        modifiedEmail,
+                        modifiedProfileImg,
+                        modifiedContactNumber,
+                        modifiedAddress,
+                        modifiedZipCode,
+                        modifiedAddressDetail);
+
+        User user = User.builder()
+                .id(userId)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+
+        UserProfile userProfile = UserProfile.builder()
+                .id(anyString())
+                .email(email)
+                .build();
+        when(mockUserProfileRepository.findByUser(user)).thenReturn(Optional.of(userProfile));
+
+        Address address = new Address(modifiedAddress, modifiedZipCode, modifiedAddressDetail);
+
+        userProfile.setNickName(modifiedNickName);
+        userProfile.setEmail(modifiedEmail);
+        userProfile.setProfileImg(modifiedProfileImg);
+        userProfile.setContactNumber(modifiedContactNumber);
+        userProfile.setAddress(address);
+
+        UserProfileResponseForm userProfileResponseForm
+                = new UserProfileResponseForm(
+                user.getId(),
+                userProfile.getNickName(),
+                userProfile.getEmail(),
+                userProfile.getProfileImg(),
+                userProfile.getContactNumber(),
+                userProfile.getAddress());
+
+        mockUserProfileRepository.save(userProfile);
+
+        mockService.modifyUserProfile(userProfileModifyRequestForm);
+
+        assertEquals(userProfileResponseForm.getNickName(), modifiedNickName);
+        assertEquals(userProfileResponseForm.getEmail(), modifiedEmail);
+        assertEquals(userProfileResponseForm.getProfileImg(), modifiedProfileImg);
+        assertEquals(userProfileResponseForm.getContactNumber(), modifiedContactNumber);
+        assertEquals(userProfileResponseForm.getAddress().getAddress(), modifiedAddress);
+        assertEquals(userProfileResponseForm.getAddress().getZipCode(), modifiedZipCode);
+        assertEquals(userProfileResponseForm.getAddress().getAddressDetail(), modifiedAddressDetail);
+
+        verify(mockUserProfileRepository, times(1)).save(userProfile);
     }
 }

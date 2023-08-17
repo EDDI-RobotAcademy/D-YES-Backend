@@ -21,15 +21,15 @@ public class RedisServiceImpl implements RedisService{
     }
 
     @Override
-    public String getUserId(String userToken) {
+    public String getAccessToken(String userToken) {
         ValueOperations<String, String> value = redisTemplateObject.opsForValue();
-        String accountId = value.get(userToken);
+        String accessToken = value.get(userToken);
 
-        if(accountId == null) {
+        if(accessToken == null) {
             return null;
         }
 
-        return accountId;
+        return accessToken;
     }
 
 }
