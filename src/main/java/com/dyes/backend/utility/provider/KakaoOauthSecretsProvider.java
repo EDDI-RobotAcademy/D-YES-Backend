@@ -23,4 +23,6 @@ public class KakaoOauthSecretsProvider {
     private String KAKAO_TOKEN_REQUEST_URL;
     @Value("${kakao.oauth.user.info.request.url}")
     private String KAKAO_USERINFO_REQUEST_URL;
+    @Value("${kakao.oauth.refresh.token.request}")
+    private String KAKAO_REFRESH_TOKEN_REQUEST_URL;
 }

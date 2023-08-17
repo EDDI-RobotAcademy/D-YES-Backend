@@ -368,7 +368,8 @@ public class UserServiceImpl implements UserService {
             User user = new User(
                     kakaoUserInfoResponseForm.getId(),
                     kakaoAccessTokenResponseForm.getAccess_token(),
-                    kakaoAccessTokenResponseForm.getRefresh_token());
+                    kakaoAccessTokenResponseForm.getRefresh_token(),
+                    Active.YES);
 
             userRepository.save(user);
 
@@ -432,17 +433,63 @@ public class UserServiceImpl implements UserService {
 
         HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(parameters, httpHeaders);
 
-        // 카카오 서버에서 받아온 userInfo
-        ResponseEntity<KakaoUserInfoResponseForm> kakaoUserInfoResponseForm = restTemplate.postForEntity(
-                kakaoOauthSecretsProvider.getKAKAO_USERINFO_REQUEST_URL(),
+        try {
+            ResponseEntity<KakaoUserInfoResponseForm> kakaoUserInfoResponseForm = restTemplate.postForEntity(
+                    kakaoOauthSecretsProvider.getKAKAO_USERINFO_REQUEST_URL(),
+                    requestEntity,
+                    KakaoUserInfoResponseForm.class);
+
+            log.info("userInfo Id: " + kakaoUserInfoResponseForm.getBody().getId());
+            log.info("userInfo Nickname: " + kakaoUserInfoResponseForm.getBody().getProperties().getNickname());
+            log.info("userInfo Profile_image: " + kakaoUserInfoResponseForm.getBody().getProperties().getProfile_image());
+
+            return kakaoUserInfoResponseForm.getBody();
+
+        } catch (RestClientException e) {
+            log.error("Error during requestUserInfoWithAccessTokenForSignIn: " + e.getMessage());
+            KakaoUserInfoResponseForm kakaoUserInfoResponseForm = expiredKakaoAccessTokenRequester(accessToken);
+
+            return kakaoUserInfoResponseForm;
+        }
+    }
+
+    // 카카오 리프래쉬 토큰으로 엑세스 토큰 재발급 받은 후 유저 정보 요청
+    public KakaoUserInfoResponseForm expiredKakaoAccessTokenRequester (String accessToken) {
+
+        final User user = findUserByAccessTokenInDatabase(accessToken);
+        final String refreshToken = user.getRefreshToken();
+
+        // 헤더 설정
+        HttpHeaders httpHeaders = setHeaders();
+
+        // 바디 설정
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("grant_type", "refresh_token");
+        parameters.add("client_id", kakaoOauthSecretsProvider.getKAKAO_AUTH_RESTAPI_KEY());
+        parameters.add("refresh_token", refreshToken);
+
+        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(parameters, httpHeaders);
+
+        ResponseEntity<KakaoAccessTokenResponseForm> kakaoAccessTokenResponseForm = restTemplate.postForEntity(
+                kakaoOauthSecretsProvider.getKAKAO_REFRESH_TOKEN_REQUEST_URL(),
                 requestEntity,
-                KakaoUserInfoResponseForm.class);
+                KakaoAccessTokenResponseForm.class);
 
-        log.info("userInfo Id: " + kakaoUserInfoResponseForm.getBody().getId());
-        log.info("userInfo Nickname: " + kakaoUserInfoResponseForm.getBody().getProperties().getNickname());
-        log.info("userInfo Profile_image: " + kakaoUserInfoResponseForm.getBody().getProperties().getProfile_image());
+        final String renewAccessToken = kakaoAccessTokenResponseForm.getBody().getAccess_token();
+        final String renewRefreshToken = kakaoAccessTokenResponseForm.getBody().getRefresh_token();
 
-        return kakaoUserInfoResponseForm.getBody();
+        user.setAccessToken(renewAccessToken);
+
+        // refreshToken의 유효 기간이 1개월 미만인 경우 새로운 refreshToken을 받아오므로 새롭게 저장
+        if(!renewAccessToken.equals(user.getRefreshToken())) {
+            user.setRefreshToken(renewRefreshToken);
+        }
+        userRepository.save(user);
+
+        // 카카오 엑세스 토큰으로 유저 정보 요청
+        final KakaoUserInfoResponseForm kakaoUserInfoResponseForm = getUserInfoFromKakao(renewAccessToken);
+
+        return kakaoUserInfoResponseForm;
     }
 
     /*
