@@ -17,49 +17,20 @@ jobs:
           java-version: '17'
           distribution: 'zulu'
 
-      # CI Test를 위한 application.properties 생성(임시 방편)
+      # CI Test를 위한 application.properties 생성
       - name: create application.properties for CI Test
         run: |
           pwd
           mkdir -p src/main/resources
           cd src/main/resources
-          echo "${{ secrets.DEVELOPMENT_APPLICATION_PROPERTIES_ALL }}" > application.properties
+          echo "${{ secrets.DEVELOPMENT_APPLICATION_PROPERTIES }}" > application.properties
+          echo "${{ secrets.DEVELOPMENT_MYSQL_PROPERTIES }}" >> application.properties
+          echo "${{ secrets.DEVELOPMENT_REDIS_PROPERTIES }}" >> application.properties
+          echo "${{ secrets.DEVELOPMENT_CORS_PROPERTIES }}" >> application.properties
+          echo "${{ secrets.DEVELOPMENT_GOOGLE_CONFIG }}" >> application.properties
+          echo "${{ secrets.DEVELOPMENT_KAKAO_CONFIG }}" >> application.properties
+          echo "${{ secrets.DEVELOPMENT_NAVER_CONFIG }}" >> application.properties
           ls
-          
-#       - name: create application.properties for CI Test
-#         run: |
-#           ls
-#           pwd
-#           mkdir -p src/main/resources
-#           cd src/main/resources
-#           pwd
-#           echo "${{ secrets.DEVELOPMENT_APPLICATION_PROPERTIES }}" > application.properties
-#           ls
-
-#       - name: create cors.properties for CI Test
-#         run: |
-#           pwd
-#           mkdir -p src/main/resources
-#           cd src/main/resources
-#           pwd
-#           echo "${{ secrets.DEVELOPMENT_CORS_PROPERTIES }}" > cors.properties
-#           ls
-
-#       - name: create redis.properties for CI Test
-#         run: |
-#           mkdir -p src/main/resources
-#           cd src/main/resources
-#           pwd
-#           echo "${{ secrets.DEVELOPMENT_REDIS_PROPERTIES }}" > redis.properties
-#           ls
-
-#       - name: create mysql.properties for CI Test
-#         run: |
-#           mkdir -p src/main/resources
-#           cd src/main/resources
-#           pwd
-#           echo "${{ secrets.DEVELOPMENT_MYSQL_PROPERTIES }}" > mysql.properties
-#           ls
 
       # CI Test에서 사용할 MySQL 설정
       - name: Setup MySQL
