@@ -356,6 +356,10 @@ public class UserServiceImpl implements UserService {
         // 카카오 서버에서 accessToken 받아오기
         KakaoAccessTokenResponseForm kakaoAccessTokenResponseForm = getAccessTokenFromKakao(code);
         final String accessToken = kakaoAccessTokenResponseForm.getAccess_token();
+        final String refreshToken = kakaoAccessTokenResponseForm.getRefresh_token();
+
+        log.info("kakao accessToken: " + accessToken);
+        log.info("kakao refreshToken: " + refreshToken);
 
         // 카카오 서버에서 받아온 accessToken으로 사용자 정보 받아오기
         KakaoUserInfoResponseForm kakaoUserInfoResponseForm = getUserInfoFromKakao(accessToken);
@@ -390,7 +394,12 @@ public class UserServiceImpl implements UserService {
             return redirectUrl + userToken;
         }
 
-        // 있다면 로그인
+        // 있다면 accessToken, refreshToken 갱신 후 로그인
+        final User user = maybeUser.get();
+        user.setAccessToken(accessToken);
+        user.setRefreshToken(refreshToken);
+        userRepository.save(user);
+
         final String userToken = "kakao" + UUID.randomUUID();
         redisService.setUserTokenAndUser(userToken, accessToken);
 
