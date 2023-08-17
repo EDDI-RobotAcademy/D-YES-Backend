@@ -48,7 +48,6 @@ public class UserServiceImpl implements UserService {
         log.info("googleUserLogin start");
 
         final GoogleOauthAccessTokenResponse accessTokenResponse = googleRequestAccessTokenWithAuthorizationCode(code);
-
         ResponseEntity<GoogleOauthUserInfoResponse> userInfoResponse =
                 googleRequestUserInfoWithAccessToken(accessTokenResponse.getAccessToken());
 
@@ -176,9 +175,11 @@ public class UserServiceImpl implements UserService {
         Optional<User> maybeUser = userRepository.findByStringId(userInfoResponse.getId());
         if (maybeUser.isPresent()) {
             log.info("userCheckIsOurUser OurUser");
+            User user = maybeUser.get();
+            user.setAccessToken(accessTokenResponse.getAccessToken());
+            userRepository.save(user);
             log.info("userCheckIsOurUser end");
-
-            return maybeUser.get();
+            return user;
         } else {
             User user = User.builder()
                     .id(userInfoResponse.getId())
@@ -351,8 +352,11 @@ public class UserServiceImpl implements UserService {
         Optional<User> maybeUser = userRepository.findByStringId(userInfoResponse.getId());
         if (maybeUser.isPresent()) {
             log.info("userCheckIsOurUser OurUser");
+            User user = maybeUser.get();
+            user.setAccessToken(accessTokenResponse.getAccessToken());
+            userRepository.save(user);
             log.info("userCheckIsOurUser end");
-            return maybeUser.get();
+            return user;
         } else {
             User user = User.builder()
                     .id(userInfoResponse.getId())
