@@ -1,6 +1,7 @@
 package com.dyes.backend.domain.user.service;
 
 import com.dyes.backend.domain.user.controller.form.UserProfileModifyRequestForm;
+import com.dyes.backend.domain.user.entity.Active;
 import com.dyes.backend.domain.user.entity.Address;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserProfile;
@@ -136,6 +137,7 @@ public class UserServiceImpl implements UserService {
         } else {
             User user = User.builder()
                     .id(userInfoResponse.getId())
+                    .active(Active.YES)
                     .accessToken(accessTokenResponse.getAccessToken())
                     .refreshToken(accessTokenResponse.getRefreshToken())
                     .build();
@@ -262,6 +264,7 @@ public class UserServiceImpl implements UserService {
         } else {
             User user = User.builder()
                     .id(userInfoResponse.getId())
+                    .active(Active.YES)
                     .accessToken(accessTokenResponse.getAccessToken())
                     .refreshToken(accessTokenResponse.getRefreshToken())
                     .build();

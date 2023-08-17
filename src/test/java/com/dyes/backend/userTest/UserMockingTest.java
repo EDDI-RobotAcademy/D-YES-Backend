@@ -1,5 +1,6 @@
 package com.dyes.backend.userTest;
 
+import com.dyes.backend.domain.user.entity.Active;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserProfile;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
@@ -143,15 +144,14 @@ public class UserMockingTest {
                 any(HttpEntity.class),
                 eq(GoogleOauthUserInfoResponse.class)
         )).thenReturn(new ResponseEntity<>(expectedInfoResponse, HttpStatus.OK));
-
-        User user = new User(expectedInfoResponse.getId(), responseEntity.getBody().getAccessToken(), responseEntity.getBody().getRefreshToken());
+        User user = new User(expectedInfoResponse.getId(), responseEntity.getBody().getAccessToken(), responseEntity.getBody().getRefreshToken(), Active.YES);
         UserProfile userProfile = new UserProfile();
 
         when(mockService.googleUserSave(responseEntity.getBody(), expectedInfoResponse)).thenReturn(user);
         when(mockUserProfileRepository.save(any(UserProfile.class))).thenReturn(userProfile);
         String result = mockService.googleUserLogin(authorizationCode);
 
-//        verify(mockRedisService, times(1)).setUserTokenAndUser(anyString(), eq(user.getAccessToken()));
+        verify(mockRedisService, times(1)).setUserTokenAndUser(anyString(), eq(user.getAccessToken()));
         assertNotNull(result);
     }
     @Test
@@ -175,8 +175,7 @@ public class UserMockingTest {
                 eq(GoogleOauthUserInfoResponse.class)
         )).thenReturn(new ResponseEntity<>(expectedInfoResponse, HttpStatus.OK));
 
-
-        User user = new User(expectedInfoResponse.getId(), expectedResponse.getAccessToken(), expectedResponse.getRefreshToken());
+        User user = new User(expectedInfoResponse.getId(), expectedResponse.getAccessToken(), expectedResponse.getRefreshToken(), Active.YES);
         when(mockUserRepository.findByStringId(expectedInfoResponse.getId())).thenReturn(Optional.empty());
 
         User savedUser = mockService.googleUserSave(expectedResponse, expectedInfoResponse);
@@ -271,15 +270,14 @@ public class UserMockingTest {
                 any(HttpEntity.class),
                 eq(JsonNode.class)
         )).thenReturn(mockResponseEntity);
-
-        User user = new User(expectedInfoResponse.getId(), responseEntity.getBody().getAccessToken(), responseEntity.getBody().getRefreshToken());
+        User user = new User(expectedInfoResponse.getId(), responseEntity.getBody().getAccessToken(), responseEntity.getBody().getRefreshToken(), Active.YES);
         UserProfile userProfile = new UserProfile();
         when(mockService.naverUserSave(responseEntity.getBody(), expectedInfoResponse)).thenReturn(user);
         when(mockUserProfileRepository.save(any(UserProfile.class))).thenReturn(userProfile);
 
         String result = mockService.naverUserLogin(authorizationCode);
 
-//        verify(mockRedisService, times(1)).setUserTokenAndUser(anyString(), eq(user.getAccessToken()));
+        verify(mockRedisService, times(1)).setUserTokenAndUser(anyString(), eq(user.getAccessToken()));
         assertNotNull(result);
     }
 
@@ -309,8 +307,7 @@ public class UserMockingTest {
                 any(HttpEntity.class),
                 eq(JsonNode.class)
         )).thenReturn(mockResponseEntity);
-
-        User user = new User(expectedInfoResponse.getId(), expectedResponse.getAccessToken(), expectedResponse.getRefreshToken());
+        User user = new User(expectedInfoResponse.getId(), expectedResponse.getAccessToken(), expectedResponse.getRefreshToken(), Active.YES);
         when(mockUserRepository.findByStringId(expectedInfoResponse.getId())).thenReturn(Optional.empty());
 
         User savedUser = mockService.naverUserSave(expectedResponse, expectedInfoResponse);
