@@ -396,6 +396,10 @@ public class UserServiceImpl implements UserService {
         // 카카오 서버에서 accessToken 받아오기
         KakaoAccessTokenResponseForm kakaoAccessTokenResponseForm = getAccessTokenFromKakao(code);
         final String accessToken = kakaoAccessTokenResponseForm.getAccess_token();
+        final String refreshToken = kakaoAccessTokenResponseForm.getRefresh_token();
+
+        log.info("kakao accessToken: " + accessToken);
+        log.info("kakao refreshToken: " + refreshToken);
 
         // 카카오 서버에서 받아온 accessToken으로 사용자 정보 받아오기
         KakaoUserInfoResponseForm kakaoUserInfoResponseForm = getUserInfoFromKakao(accessToken);
@@ -430,7 +434,12 @@ public class UserServiceImpl implements UserService {
             return redirectUrl + userToken;
         }
 
-        // 있다면 로그인
+        // 있다면 accessToken, refreshToken 갱신 후 로그인
+        final User user = maybeUser.get();
+        user.setAccessToken(accessToken);
+        user.setRefreshToken(refreshToken);
+        userRepository.save(user);
+
         final String userToken = "kakao" + UUID.randomUUID();
         redisService.setUserTokenAndUser(userToken, accessToken);
 
@@ -439,7 +448,7 @@ public class UserServiceImpl implements UserService {
         return redirectUrl + userToken;
     }
 
-    // 카카오에서 인가 코드를 받으면 엑세스 코드 요청
+    // 카카오에서 인가 코드를 받으면 엑세스 토큰 요청
     public KakaoAccessTokenResponseForm getAccessTokenFromKakao(String code) {
         // 헤더 설정
         HttpHeaders httpHeaders = setHeaders();
@@ -463,27 +472,82 @@ public class UserServiceImpl implements UserService {
 
     // 카카오 엑세스 토큰으로 유저 정보 요청
     public KakaoUserInfoResponseForm getUserInfoFromKakao(String accessToken) {
+
+        try {
+            // 헤더 설정
+            HttpHeaders httpHeaders = setHeaders();
+            httpHeaders.add("Authorization", "Bearer " + accessToken);
+
+            HttpEntity<String> requestEntity = new HttpEntity<>(httpHeaders);
+
+            ResponseEntity<KakaoUserInfoResponseForm> kakaoUserInfoResponseForm = restTemplate.postForEntity(
+                    kakaoOauthSecretsProvider.getKAKAO_USERINFO_REQUEST_URL(),
+                    requestEntity,
+                    KakaoUserInfoResponseForm.class);
+
+            log.info("userInfo Id: " + kakaoUserInfoResponseForm.getBody().getId());
+            log.info("userInfo Nickname: " + kakaoUserInfoResponseForm.getBody().getProperties().getNickname());
+            log.info("userInfo Profile_image: " + kakaoUserInfoResponseForm.getBody().getProperties().getProfile_image());
+
+            return kakaoUserInfoResponseForm.getBody();
+
+        } catch (RestClientException e) {
+            log.error("Error during requestUserInfoWithAccessTokenForSignIn: " + e.getMessage());
+            KakaoAccessTokenResponseForm kakaoAccessTokenResponseForm = expiredKakaoAccessTokenRequester(accessToken);
+
+            // 헤더 설정
+            HttpHeaders httpHeaders = setHeaders();
+            httpHeaders.add("Authorization", "Bearer " + accessToken);
+
+            HttpEntity<String> requestEntity = new HttpEntity<>(httpHeaders);
+
+            ResponseEntity<KakaoUserInfoResponseForm> kakaoUserInfoResponseForm = restTemplate.postForEntity(
+                    kakaoOauthSecretsProvider.getKAKAO_USERINFO_REQUEST_URL(),
+                    requestEntity,
+                    KakaoUserInfoResponseForm.class);
+
+            log.info("userInfo Id: " + kakaoUserInfoResponseForm.getBody().getId());
+            log.info("userInfo Nickname: " + kakaoUserInfoResponseForm.getBody().getProperties().getNickname());
+            log.info("userInfo Profile_image: " + kakaoUserInfoResponseForm.getBody().getProperties().getProfile_image());
+
+            return kakaoUserInfoResponseForm.getBody();
+        }
+    }
+
+    // 카카오 리프래쉬 토큰으로 엑세스 토큰 재발급
+    public KakaoAccessTokenResponseForm expiredKakaoAccessTokenRequester (String accessToken) {
+
+        final User user = findUserByAccessTokenInDatabase(accessToken);
+        final String refreshToken = user.getRefreshToken();
+
         // 헤더 설정
         HttpHeaders httpHeaders = setHeaders();
-        httpHeaders.add("Authorization", "Bearer " + accessToken);
 
         // 바디 설정
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("ACCESS_TOKEN", accessToken);
+        parameters.add("grant_type", "refresh_token");
+        parameters.add("client_id", kakaoOauthSecretsProvider.getKAKAO_AUTH_RESTAPI_KEY());
+        parameters.add("refresh_token", refreshToken);
 
         HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(parameters, httpHeaders);
 
-        // 카카오 서버에서 받아온 userInfo
-        ResponseEntity<KakaoUserInfoResponseForm> kakaoUserInfoResponseForm = restTemplate.postForEntity(
-                kakaoOauthSecretsProvider.getKAKAO_USERINFO_REQUEST_URL(),
+        ResponseEntity<KakaoAccessTokenResponseForm> kakaoAccessTokenResponseForm = restTemplate.postForEntity(
+                kakaoOauthSecretsProvider.getKAKAO_REFRESH_TOKEN_REQUEST_URL(),
                 requestEntity,
-                KakaoUserInfoResponseForm.class);
+                KakaoAccessTokenResponseForm.class);
 
-        log.info("userInfo Id: " + kakaoUserInfoResponseForm.getBody().getId());
-        log.info("userInfo Nickname: " + kakaoUserInfoResponseForm.getBody().getProperties().getNickname());
-        log.info("userInfo Profile_image: " + kakaoUserInfoResponseForm.getBody().getProperties().getProfile_image());
+        final String renewAccessToken = kakaoAccessTokenResponseForm.getBody().getAccess_token();
+        final String renewRefreshToken = kakaoAccessTokenResponseForm.getBody().getRefresh_token();
 
-        return kakaoUserInfoResponseForm.getBody();
+        user.setAccessToken(renewAccessToken);
+
+        // refreshToken의 유효 기간이 1개월 미만인 경우 새로운 refreshToken을 받아오므로 새롭게 저장
+        if(!renewAccessToken.equals(user.getRefreshToken())) {
+            user.setRefreshToken(renewRefreshToken);
+        }
+        userRepository.save(user);
+
+        return kakaoAccessTokenResponseForm.getBody();
     }
 
     /*
