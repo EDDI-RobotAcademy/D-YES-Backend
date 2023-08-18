@@ -21,10 +21,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Optional;
@@ -323,6 +320,61 @@ public class UserMockingTest {
 
         mockService.logOutWithDeleteKeyAndValueInRedis(userToken);
         verify(mockRedisService, times(1)).deleteKeyAndValueWithUserToken(eq(userToken));
+    }
+
+    /*
+    <------------------------------------------------------------------------------------------------------------------>
+     */
+
+    // Oauth 카카오 로그인 테스트
+    @Test
+    @DisplayName("userMockingTest: (kakao)kakaoRequestAccessTokenWithAuthorizationCode")
+    public void 카카오_인가코드로_엑세스토큰을_요청합니다() {
+
+        final String authorizationCode = "카카오에서 받은 인가 코드";
+        when(mockKakaoOauthSecretsProvider.getKAKAO_AUTH_RESTAPI_KEY()).thenReturn("clientId");
+        when(mockKakaoOauthSecretsProvider.getKAKAO_AUTH_REDIRECT_URL()).thenReturn("redirectUrl");
+        when(mockKakaoOauthSecretsProvider.getKAKAO_TOKEN_REQUEST_URL()).thenReturn("http://example.com/token_request");
+
+        KakaoAccessTokenResponseForm expectedResponse = new KakaoAccessTokenResponseForm();
+
+        ResponseEntity<KakaoAccessTokenResponseForm> responseEntity = new ResponseEntity<>(expectedResponse, HttpStatus.OK);
+
+        when(mockRestTemplate.postForEntity(
+                eq(mockKakaoOauthSecretsProvider.getKAKAO_TOKEN_REQUEST_URL()),
+                any(HttpEntity.class),
+                eq(KakaoAccessTokenResponseForm.class)
+        )).thenReturn(responseEntity);
+
+        KakaoAccessTokenResponseForm result = mockService.getAccessTokenFromKakao(authorizationCode);
+        assertEquals(expectedResponse, result);
+    }
+
+    @Test
+    @DisplayName("userMockingTest: (kakao)kakaoRequestUserInfoWithAccessToken")
+    public void 카카오_엑세스토큰으로_유저정보를_요청합니다() {
+
+        final String accessToken = "카카오에서 받은 엑세스 토큰";
+        HttpHeaders httpHeaders = mockService.setHeaders();
+        httpHeaders.add("Authorization", "Bearer " + accessToken);
+        HttpEntity<String> requestEntity = new HttpEntity<>(httpHeaders);
+
+        KakaoUserInfoResponseForm expectedInfoResponse = new KakaoUserInfoResponseForm();
+
+        when(mockRestTemplate.postForEntity(
+                mockKakaoOauthSecretsProvider.getKAKAO_USERINFO_REQUEST_URL(),
+                requestEntity,
+                KakaoUserInfoResponseForm.class))
+                .thenReturn(ResponseEntity.ok(expectedInfoResponse));
+
+        KakaoUserInfoResponseForm result = mockService.getUserInfoFromKakao(accessToken);
+
+        assertEquals(expectedInfoResponse, result);
+        verify(mockKakaoOauthSecretsProvider, times(2)).getKAKAO_USERINFO_REQUEST_URL();
+        verify(mockRestTemplate, times(1)).postForEntity(
+                mockKakaoOauthSecretsProvider.getKAKAO_USERINFO_REQUEST_URL(),
+                requestEntity,
+                KakaoUserInfoResponseForm.class);
     }
 
     /*

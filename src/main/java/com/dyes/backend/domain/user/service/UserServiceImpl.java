@@ -481,10 +481,6 @@ public class UserServiceImpl implements UserService {
                     requestEntity,
                     KakaoUserInfoResponseForm.class);
 
-            log.info("userInfo Id: " + kakaoUserInfoResponseForm.getBody().getId());
-            log.info("userInfo Nickname: " + kakaoUserInfoResponseForm.getBody().getProperties().getNickname());
-            log.info("userInfo Profile_image: " + kakaoUserInfoResponseForm.getBody().getProperties().getProfile_image());
-
             return kakaoUserInfoResponseForm.getBody();
 
         } catch (RestClientException e) {
@@ -501,10 +497,6 @@ public class UserServiceImpl implements UserService {
                     kakaoOauthSecretsProvider.getKAKAO_USERINFO_REQUEST_URL(),
                     requestEntity,
                     KakaoUserInfoResponseForm.class);
-
-            log.info("userInfo Id: " + kakaoUserInfoResponseForm.getBody().getId());
-            log.info("userInfo Nickname: " + kakaoUserInfoResponseForm.getBody().getProperties().getNickname());
-            log.info("userInfo Profile_image: " + kakaoUserInfoResponseForm.getBody().getProperties().getProfile_image());
 
             return kakaoUserInfoResponseForm.getBody();
         }
