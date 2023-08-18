@@ -5,6 +5,8 @@ import com.dyes.backend.domain.user.entity.Active;
 import com.dyes.backend.domain.user.entity.Address;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserProfile;
+import com.dyes.backend.domain.user.repository.ResignedUserProfileRepository;
+import com.dyes.backend.domain.user.repository.ResignedUserRepository;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import com.dyes.backend.domain.user.repository.UserRepository;
 import com.dyes.backend.domain.user.service.response.*;
@@ -38,6 +40,8 @@ public class UserServiceImpl implements UserService {
     final private KakaoOauthSecretsProvider kakaoOauthSecretsProvider;
     final private UserRepository userRepository;
     final private UserProfileRepository userProfileRepository;
+    final private ResignedUserRepository resignedUserRepository;
+    final private ResignedUserProfileRepository resignedUserProfileRepository;
     final private RedisService redisService;
     final private RestTemplate restTemplate;
     final private ObjectMapper objectMapper;
@@ -48,7 +52,6 @@ public class UserServiceImpl implements UserService {
         log.info("googleUserLogin start");
 
         final GoogleOauthAccessTokenResponse accessTokenResponse = googleRequestAccessTokenWithAuthorizationCode(code);
-
         ResponseEntity<GoogleOauthUserInfoResponse> userInfoResponse =
                 googleRequestUserInfoWithAccessToken(accessTokenResponse.getAccessToken());
 
@@ -170,7 +173,8 @@ public class UserServiceImpl implements UserService {
         log.info("expiredGoogleAccessTokenRequester end");
         return null;
     }
-    
+    // 구글 유저 찾기 후 없으면 저장
+
     public User googleUserSave (GoogleOauthAccessTokenResponse accessTokenResponse, GoogleOauthUserInfoResponse userInfoResponse) {
         log.info("userCheckIsOurUser start");
         Optional<User> maybeUser = userRepository.findByStringId(userInfoResponse.getId());
@@ -200,6 +204,7 @@ public class UserServiceImpl implements UserService {
             return user;
         }
     }
+
 
     /*
     <------------------------------------------------------------------------------------------------------------------>
@@ -345,7 +350,7 @@ public class UserServiceImpl implements UserService {
         log.info("expiredNaverAccessTokenRequester end");
         return null;
     }
-
+    // 네이버 유저 찾기 후 없으면 저장
     public User naverUserSave (NaverOauthAccessTokenResponse accessTokenResponse, NaverOauthUserInfoResponse userInfoResponse) {
         log.info("userCheckIsOurUser start");
         Optional<User> maybeUser = userRepository.findByStringId(userInfoResponse.getId());
@@ -658,22 +663,14 @@ public class UserServiceImpl implements UserService {
     // userToken으로 사용자 로그아웃
     public boolean UserLogOut (String userToken) {
         log.info("UserLogOut start");
-        Boolean isLoggedOut;
-        String platform = divideUserByPlatform(userToken);
-        if (platform.equals("google")) {
-            isLoggedOut = logOutWithDeleteKeyAndValueInRedis(userToken);
             log.info("UserLogOut end");
-            return isLoggedOut;
-        } else if (platform.equals("naver")) {
-            isLoggedOut = logOutWithDeleteKeyAndValueInRedis(userToken);
-            log.info("UserLogOut end");
-            return isLoggedOut;
-        } else {
-            isLoggedOut = logOutWithDeleteKeyAndValueInRedis(userToken);
-            // 카카오 로그아웃 추가 작업하시면 됩니다
-            log.info("UserLogOut end");
-            return isLoggedOut;
-        }
+            try {
+                logOutWithDeleteKeyAndValueInRedis(userToken);
+                return true;
+            } catch (Exception e) {
+                log.error("Can't logOut {}", e.getMessage(), e);
+                return false;
+            }
     }
 
     // 로그아웃 요청한 사용자의 플랫폼 판별
