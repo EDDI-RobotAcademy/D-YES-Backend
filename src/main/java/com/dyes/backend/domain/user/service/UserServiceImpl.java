@@ -5,6 +5,8 @@ import com.dyes.backend.domain.user.entity.Active;
 import com.dyes.backend.domain.user.entity.Address;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserProfile;
+import com.dyes.backend.domain.user.repository.ResignedUserProfileRepository;
+import com.dyes.backend.domain.user.repository.ResignedUserRepository;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import com.dyes.backend.domain.user.repository.UserRepository;
 import com.dyes.backend.domain.user.service.response.*;
@@ -38,6 +40,8 @@ public class UserServiceImpl implements UserService {
     final private KakaoOauthSecretsProvider kakaoOauthSecretsProvider;
     final private UserRepository userRepository;
     final private UserProfileRepository userProfileRepository;
+    final private ResignedUserRepository resignedUserRepository;
+    final private ResignedUserProfileRepository resignedUserProfileRepository;
     final private RedisService redisService;
     final private RestTemplate restTemplate;
     final private ObjectMapper objectMapper;
@@ -48,7 +52,6 @@ public class UserServiceImpl implements UserService {
         log.info("googleUserLogin start");
 
         final GoogleOauthAccessTokenResponse accessTokenResponse = googleRequestAccessTokenWithAuthorizationCode(code);
-
         ResponseEntity<GoogleOauthUserInfoResponse> userInfoResponse =
                 googleRequestUserInfoWithAccessToken(accessTokenResponse.getAccessToken());
 
@@ -71,16 +74,9 @@ public class UserServiceImpl implements UserService {
         log.info("requestAccessToken start");
 
         final String googleClientId = googleOauthSecretsProvider.getGOOGLE_AUTH_CLIENT_ID();
-        log.info("googleClientId: " + googleClientId);
-
         final String googleRedirectUrl = googleOauthSecretsProvider.getGOOGLE_AUTH_REDIRECT_URL();
-        log.info("googleRedirectUrl: " + googleRedirectUrl);
-
         final String googleClientSecret = googleOauthSecretsProvider.getGOOGLE_AUTH_SECRETS();
-        log.info("googleClientSecret: " + googleClientSecret);
-
         final String googleTokenRequestUrl = googleOauthSecretsProvider.getGOOGLE_TOKEN_REQUEST_URL();
-        log.info("googleTokenRequestUrl: " + googleTokenRequestUrl);
 
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
 
@@ -99,10 +95,10 @@ public class UserServiceImpl implements UserService {
         log.info("accessTokenRequest: " + accessTokenResponse);
 
         if(accessTokenResponse.getStatusCode() == HttpStatus.OK){
+            log.info("requestAccessToken end");
             return accessTokenResponse.getBody();
         }
         log.info("requestAccessToken end");
-
         return null;
     }
 
@@ -112,25 +108,41 @@ public class UserServiceImpl implements UserService {
 
         HttpHeaders headers = new HttpHeaders();
 
-        headers.add("Authorization","Bearer "+ AccessToken);
 
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity(headers);
-        log.info("request: " + request);
         try {
+            headers.add("Authorization","Bearer "+ AccessToken);
+            HttpEntity<MultiValueMap<String, String>> request = new HttpEntity(headers);
+            log.info("request: " + request);
+
             ResponseEntity<GoogleOauthUserInfoResponse> response = restTemplate.exchange(
                     googleOauthSecretsProvider.getGOOGLE_USERINFO_REQUEST_URL(), HttpMethod.GET, request, GoogleOauthUserInfoResponse.class);
             log.info("response: " + response);
+
             log.info("requestUserInfoWithAccessTokenForSignIn end");
+
             return response;
         } catch (RestClientException e) {
             log.error("Error during requestUserInfoWithAccessTokenForSignIn: " + e.getMessage());
-            ResponseEntity<GoogleOauthUserInfoResponse> response = expiredGoogleAccessTokenRequester(AccessToken);
+
+            String responseAccessToken = expiredGoogleAccessTokenRequester(AccessToken);
+
+            headers.add("Authorization","Bearer "+ responseAccessToken);
+            HttpEntity<MultiValueMap<String, String>> request = new HttpEntity(headers);
+            log.info("request: " + request);
+
+            ResponseEntity<GoogleOauthUserInfoResponse> response = restTemplate.exchange(
+                    googleOauthSecretsProvider.getGOOGLE_USERINFO_REQUEST_URL(), HttpMethod.GET, request, GoogleOauthUserInfoResponse.class);
+            log.info("response: " + response);
+
+            log.info("requestUserInfoWithAccessTokenForSignIn end");
+
             return response;
         }
     }
 
     // 구글 리프래쉬 토큰으로 엑세스 토큰 재발급 받은 후 유저 정보 요청
-    public ResponseEntity<GoogleOauthUserInfoResponse> expiredGoogleAccessTokenRequester (String accessToken) {
+    public String expiredGoogleAccessTokenRequester (String accessToken) {
+        log.info("expiredGoogleAccessTokenRequester start");
 
         User user = findUserByAccessTokenInDatabase(accessToken);
 
@@ -155,17 +167,24 @@ public class UserServiceImpl implements UserService {
         if(accessTokenResponse.getStatusCode() == HttpStatus.OK){
             user.setAccessToken(accessTokenResponse.getBody().getAccessToken());
             userRepository.save(user);
-            return googleRequestUserInfoWithAccessToken(user.getAccessToken());
+            log.info("expiredGoogleAccessTokenRequester end");
+            return user.getAccessToken();
         }
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        log.info("expiredGoogleAccessTokenRequester end");
+        return null;
     }
-    
+    // 구글 유저 찾기 후 없으면 저장
+
     public User googleUserSave (GoogleOauthAccessTokenResponse accessTokenResponse, GoogleOauthUserInfoResponse userInfoResponse) {
         log.info("userCheckIsOurUser start");
         Optional<User> maybeUser = userRepository.findByStringId(userInfoResponse.getId());
         if (maybeUser.isPresent()) {
             log.info("userCheckIsOurUser OurUser");
-            return maybeUser.get();
+            User user = maybeUser.get();
+            user.setAccessToken(accessTokenResponse.getAccessToken());
+            userRepository.save(user);
+            log.info("userCheckIsOurUser end");
+            return user;
         } else {
             User user = User.builder()
                     .id(userInfoResponse.getId())
@@ -183,10 +202,11 @@ public class UserServiceImpl implements UserService {
                     .build();
             userProfileRepository.save(userProfile);
             log.info("userCheckIsOurUser NotOurUser");
-
+            log.info("userCheckIsOurUser end");
             return user;
         }
     }
+
 
     /*
     <------------------------------------------------------------------------------------------------------------------>
@@ -204,7 +224,7 @@ public class UserServiceImpl implements UserService {
 
         log.info("userInfoResponse: " + userInfoResponse);
         User user = naverUserSave(accessTokenResponse, userInfoResponse);
-        log.info("user" + user);
+        log.info("user: " + user);
 
         final String userToken = "naver" + UUID.randomUUID();
         redisService.setUserTokenAndUser(userToken, user.getAccessToken());
@@ -217,20 +237,12 @@ public class UserServiceImpl implements UserService {
 
     // 네이버에서 인가 코드를 받으면 엑세스 코드 요청
     public NaverOauthAccessTokenResponse naverRequestAccessTokenWithAuthorizationCode(String code) {
-
         log.info("requestAccessToken start");
 
         final String naverClientId = naverOauthSecretsProvider.getNAVER_AUTH_CLIENT_ID();
-        log.info("naverClientId: " + naverClientId);
-
         final String naverRedirectUrl = naverOauthSecretsProvider.getNAVER_AUTH_REDIRECT_URL();
-        log.info("naverRedirectUrl: " + naverRedirectUrl);
-
         final String naverClientSecret = naverOauthSecretsProvider.getNAVER_AUTH_SECRETS();
-        log.info("naverClientSecret: " + naverClientSecret);
-
         final String naverTokenRequestUrl = naverOauthSecretsProvider.getNAVER_TOKEN_REQUEST_URL();
-        log.info("naverTokenRequestUrl: " + naverTokenRequestUrl);
 
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
 
@@ -249,10 +261,10 @@ public class UserServiceImpl implements UserService {
         log.info("accessTokenRequest: " + accessTokenResponse);
 
         if(accessTokenResponse.getStatusCode() == HttpStatus.OK){
+            log.info("requestAccessToken end");
             return accessTokenResponse.getBody();
         }
         log.info("requestAccessToken end");
-
         return null;
     }
 
@@ -262,33 +274,53 @@ public class UserServiceImpl implements UserService {
 
         HttpHeaders headers = new HttpHeaders();
 
-        headers.add("Authorization","Bearer "+ AccessToken);
 
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity(headers);
-        log.info("request: " + request);
         try {
+            headers.add("Authorization","Bearer "+ AccessToken);
+
+            HttpEntity<MultiValueMap<String, String>> request = new HttpEntity(headers);
+            log.info("request: " + request);
+
             ResponseEntity<JsonNode> response = restTemplate.exchange(
                     naverOauthSecretsProvider.getNAVER_USERINFO_REQUEST_URL(), HttpMethod.GET, request, JsonNode.class);
             log.info("response: " + response);
 
             JsonNode responseNode = response.getBody().get("response");
-            log.info("Raw JSON response: " + responseNode);
 
             NaverOauthUserInfoResponse userInfoResponse =
                     objectMapper.convertValue(responseNode, NaverOauthUserInfoResponse.class);
-            log.info("Parsed response: " + userInfoResponse);
+
+            log.info("requestUserInfoWithAccessTokenForSignIn end");
 
             return userInfoResponse;
         } catch (RestClientException e) {
             log.error("Error during requestUserInfoWithAccessTokenForSignIn: " + e.getMessage());
-            NaverOauthUserInfoResponse response = expiredNaverAccessTokenRequester(AccessToken);
-            return response;
+
+            String responseAccessToken = expiredNaverAccessTokenRequester(AccessToken);
+            headers.add("Authorization","Bearer "+ responseAccessToken);
+
+            HttpEntity<MultiValueMap<String, String>> request = new HttpEntity(headers);
+            log.info("request: " + request);
+
+            ResponseEntity<JsonNode> response = restTemplate.exchange(
+                    naverOauthSecretsProvider.getNAVER_USERINFO_REQUEST_URL(), HttpMethod.GET, request, JsonNode.class);
+            log.info("response: " + response);
+
+            JsonNode responseNode = response.getBody().get("response");
+
+            NaverOauthUserInfoResponse userInfoResponse =
+                    objectMapper.convertValue(responseNode, NaverOauthUserInfoResponse.class);
+
+            log.info("requestUserInfoWithAccessTokenForSignIn end");
+
+            return userInfoResponse;
         }
 
     }
 
     // 네이버 리프래쉬 토큰으로 엑세스 토큰 재발급 받은 후 유저 정보 요청
-    public NaverOauthUserInfoResponse expiredNaverAccessTokenRequester (String accessToken) {
+    public String expiredNaverAccessTokenRequester (String accessToken) {
+        log.info("expiredNaverAccessTokenRequester start");
 
         User user = findUserByAccessTokenInDatabase(accessToken);
 
@@ -313,17 +345,24 @@ public class UserServiceImpl implements UserService {
         if(accessTokenResponse.getStatusCode() == HttpStatus.OK){
             user.setAccessToken(accessTokenResponse.getBody().getAccessToken());
             userRepository.save(user);
-            return naverRequestUserInfoWithAccessToken(user.getAccessToken());
+            log.info("expiredNaverAccessTokenRequester end");
+
+            return user.getAccessToken();
         }
+        log.info("expiredNaverAccessTokenRequester end");
         return null;
     }
-
+    // 네이버 유저 찾기 후 없으면 저장
     public User naverUserSave (NaverOauthAccessTokenResponse accessTokenResponse, NaverOauthUserInfoResponse userInfoResponse) {
         log.info("userCheckIsOurUser start");
         Optional<User> maybeUser = userRepository.findByStringId(userInfoResponse.getId());
         if (maybeUser.isPresent()) {
             log.info("userCheckIsOurUser OurUser");
-            return maybeUser.get();
+            User user = maybeUser.get();
+            user.setAccessToken(accessTokenResponse.getAccessToken());
+            userRepository.save(user);
+            log.info("userCheckIsOurUser end");
+            return user;
         } else {
             User user = User.builder()
                     .id(userInfoResponse.getId())
@@ -342,6 +381,7 @@ public class UserServiceImpl implements UserService {
                     .build();
             userProfileRepository.save(userProfile);
             log.info("userCheckIsOurUser NotOurUser");
+            log.info("userCheckIsOurUser end");
             return user;
         }
     }
@@ -368,7 +408,8 @@ public class UserServiceImpl implements UserService {
             User user = new User(
                     kakaoUserInfoResponseForm.getId(),
                     kakaoAccessTokenResponseForm.getAccess_token(),
-                    kakaoAccessTokenResponseForm.getRefresh_token());
+                    kakaoAccessTokenResponseForm.getRefresh_token(),
+                    Active.YES);
 
             userRepository.save(user);
 
@@ -611,48 +652,61 @@ public class UserServiceImpl implements UserService {
 
     // accessToken으로 DB에서 사용자 조회
     public User findUserByAccessTokenInDatabase (String accessToken) {
+        log.info("findUserByAccessTokenInDatabase Start");
+
         Optional<User> maybeUser = userRepository.findByAccessToken(accessToken);
         if (maybeUser.isEmpty()) {
             log.info("user is empty");
+            log.info("findUserByAccessTokenInDatabase end");
             return null;
         }
         User user = maybeUser.get();
+        log.info("findUserByAccessTokenInDatabase end");
         return user;
     }
+
+    // userToken으로 사용자 로그아웃
     public boolean UserLogOut (String userToken) {
-        Boolean isLoggedOut;
-        String platform = divideUserByPlatform(userToken);
-        if (platform.equals("google")) {
-            isLoggedOut = logOutWithDeleteKeyAndValueInRedis(userToken);
-            return isLoggedOut;
-        } else if (platform.equals("naver")) {
-            isLoggedOut = logOutWithDeleteKeyAndValueInRedis(userToken);
-            return isLoggedOut;
-        } else {
-            isLoggedOut = logOutWithDeleteKeyAndValueInRedis(userToken);
-            // 카카오 로그아웃 추가 작업하시면 됩니다
-            return isLoggedOut;
-        }
+        log.info("UserLogOut start");
+            log.info("UserLogOut end");
+            try {
+                logOutWithDeleteKeyAndValueInRedis(userToken);
+                return true;
+            } catch (Exception e) {
+                log.error("Can't logOut {}", e.getMessage(), e);
+                return false;
+            }
     }
+
+    // 로그아웃 요청한 사용자의 플랫폼 판별
     public String divideUserByPlatform(String userToken) {
-            String platform;
+        log.info("divideUserByPlatform start");
+        String platform;
         if (userToken.contains("google")){
             platform = "google";
+            log.info("divideUserByPlatform end");
             return platform;
         } else if (userToken.contains("naver")) {
             platform = "naver";
+            log.info("divideUserByPlatform end");
             return platform;
         } else {
             platform = "kakao";
+            log.info("divideUserByPlatform end");
             return platform;
         }
     }
+
+    // 로그아웃 요청한 사용자의 userToken
     public Boolean logOutWithDeleteKeyAndValueInRedis (String userToken) {
+        log.info("logOutWithDeleteKeyAndValueInRedis start");
         try {
             redisService.deleteKeyAndValueWithUserToken(userToken);
+            log.info("logOutWithDeleteKeyAndValueInRedis end");
             return true;
         } catch (RedisException e) {
             log.error("Can't not logout with this userToken: {}", userToken, e);
+            log.info("logOutWithDeleteKeyAndValueInRedis end");
             return false;
         }
     }
