@@ -12,4 +12,6 @@ public interface UserService {
     UserProfileResponseForm getUserProfile(String userToken);
     UserProfileResponseForm modifyUserProfile(UserProfileModifyRequestForm requestForm);
     boolean UserLogOut (String userToken);
+    boolean userWithdraw(String userToken);
+
 }

@@ -7,6 +7,8 @@ import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserProfile;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import com.dyes.backend.domain.user.repository.UserRepository;
+import com.dyes.backend.domain.user.repository.WithdrawalUserProfileRepository;
+import com.dyes.backend.domain.user.repository.WithdrawalUserRepository;
 import com.dyes.backend.domain.user.service.response.*;
 import com.dyes.backend.utility.provider.GoogleOauthSecretsProvider;
 import com.dyes.backend.utility.provider.KakaoOauthSecretsProvider;
@@ -38,6 +40,8 @@ public class UserServiceImpl implements UserService {
     final private KakaoOauthSecretsProvider kakaoOauthSecretsProvider;
     final private UserRepository userRepository;
     final private UserProfileRepository userProfileRepository;
+    final private WithdrawalUserRepository withdrawalUserRepository;
+    final private WithdrawalUserProfileRepository withdrawalUserProfileRepository;
     final private RedisService redisService;
     final private RestTemplate restTemplate;
     final private ObjectMapper objectMapper;
@@ -63,7 +67,7 @@ public class UserServiceImpl implements UserService {
 
         return redirectUrl + userToken;
     }
-
+    
     // 구글에서 인가 코드를 받으면 엑세스 코드 요청
     public GoogleOauthAccessTokenResponse googleRequestAccessTokenWithAuthorizationCode(String code) {
 
@@ -169,8 +173,8 @@ public class UserServiceImpl implements UserService {
         log.info("expiredGoogleAccessTokenRequester end");
         return null;
     }
-    // 구글 유저 찾기 후 없으면 저장
 
+    // 구글 유저 찾기 후 없으면 저장
     public User googleUserSave (GoogleOauthAccessTokenResponse accessTokenResponse, GoogleOauthUserInfoResponse userInfoResponse) {
         log.info("userCheckIsOurUser start");
         Optional<User> maybeUser = userRepository.findByStringId(userInfoResponse.getId());
@@ -203,6 +207,44 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    // 구글 회원 탈퇴
+    public Boolean googleUserDelete (String userToken) throws NullPointerException{
+        User user = findUserByAccessTokenInDatabase(redisService.getAccessToken(userToken));
+        String responseAccessToken = expiredGoogleAccessTokenRequester(user.getAccessToken());
+
+        final String googleRevokeUrl = googleOauthSecretsProvider.getGOOGLE_REVOKE_URL();
+
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("token", responseAccessToken);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(body, headers);
+        try {
+            ResponseEntity<JsonNode> jsonNodeResponseEntity = restTemplate.postForEntity(googleRevokeUrl, requestEntity, JsonNode.class);
+            JsonNode responseBody = jsonNodeResponseEntity.getBody();
+            log.info("jsonNodeResponseEntity: " + responseBody);
+            if (responseBody.has("error")) {
+                String error = responseBody.get("error").asText();
+                String errorDescription = responseBody.get("error_description").asText();
+
+                log.error("Error: " + error + ", Error Description: " + errorDescription);
+                return false;
+            } else {
+                UserProfile userProfile = userProfileRepository.findByUser(user).get();
+                user.setActive(Active.NO);
+                withdrawalUserRepository.save(user);
+                withdrawalUserProfileRepository.save(userProfile);
+
+                userProfileRepository.delete(userProfile);
+                userRepository.delete(user);
+                redisService.deleteKeyAndValueWithUserToken(userToken);
+                return true;
+            }
+        }catch (Exception e){
+            log.error("Can't Delete User", e);
+            return false;
+        }
+    }
 
     /*
     <------------------------------------------------------------------------------------------------------------------>
@@ -348,6 +390,7 @@ public class UserServiceImpl implements UserService {
         log.info("expiredNaverAccessTokenRequester end");
         return null;
     }
+
     // 네이버 유저 찾기 후 없으면 저장
     public User naverUserSave (NaverOauthAccessTokenResponse accessTokenResponse, NaverOauthUserInfoResponse userInfoResponse) {
         log.info("userCheckIsOurUser start");
@@ -382,6 +425,52 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    // 네이버 유저 탈퇴
+    public Boolean naverUserDelete (String userToken) throws NullPointerException{
+        User user = findUserByAccessTokenInDatabase(redisService.getAccessToken(userToken));
+        log.info("user.getAccessToken(): " + user.getAccessToken());
+        String responseAccessToken = expiredNaverAccessTokenRequester(user.getAccessToken());
+        log.info("responseAccessToken: " + responseAccessToken);
+
+        final String naverRevokeUrl = naverOauthSecretsProvider.getNAVER_REVOKE_URL();
+        final String naverClientId = naverOauthSecretsProvider.getNAVER_AUTH_CLIENT_ID();
+        final String naverSecrets = naverOauthSecretsProvider.getNAVER_AUTH_SECRETS();
+
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("access_token", responseAccessToken);
+        body.add("client_id", naverClientId);
+        body.add("client_secret", naverSecrets);
+        body.add("grant_type", "delete");
+        body.add("service_provider", "NAVER");
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(body, headers);
+        try {
+            ResponseEntity<JsonNode> jsonNodeResponseEntity = restTemplate.postForEntity(naverRevokeUrl, requestEntity, JsonNode.class);
+            JsonNode responseBody = jsonNodeResponseEntity.getBody();
+            log.info("jsonNodeResponseEntity: " + responseBody);
+            if (responseBody.has("error")) {
+                String error = responseBody.get("error").asText();
+                String errorDescription = responseBody.get("error_description").asText();
+
+                log.error("Error: " + error + ", Error Description: " + errorDescription);
+                return false;
+            } else {
+                UserProfile userProfile = userProfileRepository.findByUser(user).get();
+                user.setActive(Active.NO);
+                withdrawalUserRepository.save(user);
+                withdrawalUserProfileRepository.save(userProfile);
+
+                userProfileRepository.delete(userProfile);
+                userRepository.delete(user);
+                redisService.deleteKeyAndValueWithUserToken(userToken);
+                return true;
+            }
+        }catch (Exception e){
+            log.error("Can't Delete User", e);
+            return false;
+        }
+    }
     /*
     <------------------------------------------------------------------------------------------------------------------>
      */
@@ -671,6 +760,29 @@ public class UserServiceImpl implements UserService {
 
         return userProfileResponseForm;
     }
+
+    // 유저 탈퇴하기
+    @Override
+    public boolean userWithdraw(String userToken) {
+        String platform = divideUserByPlatform(userToken);
+        if (platform.contains("google")){
+
+            log.info("divideUserByPlatform end");
+            return googleUserDelete(userToken);
+        } else if (platform.contains("naver")) {
+
+            log.info("divideUserByPlatform end");
+            return naverUserDelete(userToken);
+        } else {
+            // 카카오 탈퇴 함수
+            log.info("divideUserByPlatform end");
+            return false;
+        }
+    }
+
+    /*
+    <------------------------------------------------------------------------------------------------------------------>
+     */
 
     // userToken으로 Redis에서 accessToken 조회 후 Oauth 서버로 사용자 정보 요청
     public User findUserByUserToken (String userToken) {
