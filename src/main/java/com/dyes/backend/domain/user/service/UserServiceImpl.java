@@ -5,8 +5,6 @@ import com.dyes.backend.domain.user.entity.Active;
 import com.dyes.backend.domain.user.entity.Address;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserProfile;
-import com.dyes.backend.domain.user.repository.ResignedUserProfileRepository;
-import com.dyes.backend.domain.user.repository.ResignedUserRepository;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import com.dyes.backend.domain.user.repository.UserRepository;
 import com.dyes.backend.domain.user.service.response.*;
@@ -40,8 +38,6 @@ public class UserServiceImpl implements UserService {
     final private KakaoOauthSecretsProvider kakaoOauthSecretsProvider;
     final private UserRepository userRepository;
     final private UserProfileRepository userProfileRepository;
-    final private ResignedUserRepository resignedUserRepository;
-    final private ResignedUserProfileRepository resignedUserProfileRepository;
     final private RedisService redisService;
     final private RestTemplate restTemplate;
     final private ObjectMapper objectMapper;
