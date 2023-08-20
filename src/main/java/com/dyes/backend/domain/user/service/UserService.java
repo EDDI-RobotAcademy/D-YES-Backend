@@ -11,5 +11,6 @@ public interface UserService {
     Boolean checkEmailDuplicate(String email);
     UserProfileResponseForm getUserProfile(String userToken);
     UserProfileResponseForm modifyUserProfile(UserProfileModifyRequestForm requestForm);
+    boolean userWithdraw(String userToken);
     boolean UserLogOut (String userToken);
 }

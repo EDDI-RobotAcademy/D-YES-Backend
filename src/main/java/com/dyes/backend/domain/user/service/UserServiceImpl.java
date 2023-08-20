@@ -538,6 +538,61 @@ public class UserServiceImpl implements UserService {
         return kakaoAccessTokenResponseForm.getBody();
     }
 
+    // 카카오 유저 탈퇴
+    public Boolean kakaoUserDelete (String userToken) throws NullPointerException{
+
+        final String accessToken = redisService.getAccessToken(userToken);
+        if(accessToken == null) {
+            return false;
+        }
+
+        final User user = findUserByAccessTokenInDatabase(accessToken);
+        if(user == null) {
+            return false;
+        }
+
+        // 헤더 설정
+        HttpHeaders httpHeaders = setHeaders();
+        httpHeaders.add("Authorization", "Bearer " + accessToken);
+
+        // 바디 설정
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("target_id_type", "user_id");
+        parameters.add("target_id", user.getId());
+
+        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(parameters, httpHeaders);
+
+        ResponseEntity<KakaoDisconnectUserIdResponseForm> kakaoDisconnectUserResponse = restTemplate.postForEntity(
+                kakaoOauthSecretsProvider.getKAKAO_DISCONNECT_REQUEST_URL(),
+                requestEntity,
+                KakaoDisconnectUserIdResponseForm.class);
+
+        try {
+            String receivedUserId = kakaoDisconnectUserResponse.getBody().getId().toString();
+            Optional<User> foundUser = userRepository.findByStringId(receivedUserId);
+            Optional<UserProfile> foundUserProfile = userProfileRepository.findByUser(foundUser.get());
+            if(foundUser.isEmpty() || foundUserProfile.isEmpty()) {
+                log.info("Cannot find User");
+                return false;
+            }
+
+            UserProfile withdrawalUserProfile = foundUserProfile.get();
+            userProfileRepository.delete(withdrawalUserProfile);
+
+            User withdrawalUser = foundUser.get();
+            withdrawalUser.setActive(Active.NO);
+            userRepository.save(withdrawalUser);
+
+            UserLogOut(userToken);
+
+            return true;
+        } catch (RestClientException e) {
+            log.error("Error during kakaoUserWithdrawal: " + e.getMessage());
+
+            return false;
+        }
+    }
+    
     /*
     <------------------------------------------------------------------------------------------------------------------>
      */
@@ -662,6 +717,26 @@ public class UserServiceImpl implements UserService {
                     userProfile.getAddress());
 
         return userProfileResponseForm;
+    }
+
+    // 유저 탈퇴하기
+    @Override
+    public boolean userWithdraw(String userToken) {
+        String platform = divideUserByPlatform(userToken);
+        if (platform.contains("google")){
+
+            log.info("divideUserByPlatform end");
+            return false;
+//            return googleUserDelete(userToken);
+        } else if (platform.contains("naver")) {
+
+            log.info("divideUserByPlatform end");
+            return false;
+//            return naverUserDelete(userToken);
+        } else {
+            log.info("divideUserByPlatform end");
+            return kakaoUserDelete(userToken);
+        }
     }
 
     // userToken으로 Redis에서 accessToken 조회 후 Oauth 서버로 사용자 정보 요청
