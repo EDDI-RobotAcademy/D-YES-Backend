@@ -7,8 +7,6 @@ import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserProfile;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import com.dyes.backend.domain.user.repository.UserRepository;
-import com.dyes.backend.domain.user.repository.WithdrawalUserProfileRepository;
-import com.dyes.backend.domain.user.repository.WithdrawalUserRepository;
 import com.dyes.backend.domain.user.service.response.*;
 import com.dyes.backend.utility.provider.GoogleOauthSecretsProvider;
 import com.dyes.backend.utility.provider.KakaoOauthSecretsProvider;
@@ -40,8 +38,6 @@ public class UserServiceImpl implements UserService {
     final private KakaoOauthSecretsProvider kakaoOauthSecretsProvider;
     final private UserRepository userRepository;
     final private UserProfileRepository userProfileRepository;
-    final private WithdrawalUserRepository withdrawalUserRepository;
-    final private WithdrawalUserProfileRepository withdrawalUserProfileRepository;
     final private RedisService redisService;
     final private RestTemplate restTemplate;
     final private ObjectMapper objectMapper;
@@ -178,14 +174,7 @@ public class UserServiceImpl implements UserService {
     public User googleUserSave (GoogleOauthAccessTokenResponse accessTokenResponse, GoogleOauthUserInfoResponse userInfoResponse) {
         log.info("userCheckIsOurUser start");
         Optional<User> maybeUser = userRepository.findByStringId(userInfoResponse.getId());
-        if (maybeUser.isPresent()) {
-            log.info("userCheckIsOurUser OurUser");
-            User user = maybeUser.get();
-            user.setAccessToken(accessTokenResponse.getAccessToken());
-            userRepository.save(user);
-            log.info("userCheckIsOurUser end");
-            return user;
-        } else {
+        if (maybeUser.isEmpty()) {
             User user = User.builder()
                     .id(userInfoResponse.getId())
                     .active(Active.YES)
@@ -201,7 +190,31 @@ public class UserServiceImpl implements UserService {
                     .profileImg(userInfoResponse.getPicture())
                     .build();
             userProfileRepository.save(userProfile);
-            log.info("userCheckIsOurUser NotOurUser");
+            log.info("userCheckIsOurUser Not Our User");
+            log.info("userCheckIsOurUser end");
+            return user;
+        } else if (maybeUser.get().getActive() == Active.NO) {
+            User user = maybeUser.get();
+            user.setActive(Active.YES);
+            user.setAccessToken(accessTokenResponse.getAccessToken());
+            user.setRefreshToken(accessTokenResponse.getRefreshToken());
+            userRepository.save(user);
+
+            UserProfile userProfile = UserProfile.builder()
+                    .user(user)
+                    .id(userInfoResponse.getId())
+                    .email(userInfoResponse.getEmail())
+                    .profileImg(userInfoResponse.getPicture())
+                    .build();
+            userProfileRepository.save(userProfile);
+            log.info("userCheckIsOurUser rejoin user");
+            log.info("userCheckIsOurUser end");
+            return user;
+        } else {
+            log.info("userCheckIsOurUser OurUser");
+            User user = maybeUser.get();
+            user.setAccessToken(accessTokenResponse.getAccessToken());
+            userRepository.save(user);
             log.info("userCheckIsOurUser end");
             return user;
         }
@@ -210,7 +223,10 @@ public class UserServiceImpl implements UserService {
     // 구글 회원 탈퇴
     public Boolean googleUserDelete (String userToken) throws NullPointerException{
         User user = findUserByAccessTokenInDatabase(redisService.getAccessToken(userToken));
+        log.info("user.getAccessToken(): " + user.getAccessToken());
         String responseAccessToken = expiredGoogleAccessTokenRequester(user.getAccessToken());
+        log.info("responseAccessToken: " + responseAccessToken);
+
 
         final String googleRevokeUrl = googleOauthSecretsProvider.getGOOGLE_REVOKE_URL();
 
@@ -230,13 +246,12 @@ public class UserServiceImpl implements UserService {
                 log.error("Error: " + error + ", Error Description: " + errorDescription);
                 return false;
             } else {
-                UserProfile userProfile = userProfileRepository.findByUser(user).get();
                 user.setActive(Active.NO);
-                withdrawalUserRepository.save(user);
-                withdrawalUserProfileRepository.save(userProfile);
+                userRepository.save(user);
 
+                UserProfile userProfile = userProfileRepository.findByUser(user).get();
                 userProfileRepository.delete(userProfile);
-                userRepository.delete(user);
+
                 redisService.deleteKeyAndValueWithUserToken(userToken);
                 return true;
             }
@@ -395,14 +410,7 @@ public class UserServiceImpl implements UserService {
     public User naverUserSave (NaverOauthAccessTokenResponse accessTokenResponse, NaverOauthUserInfoResponse userInfoResponse) {
         log.info("userCheckIsOurUser start");
         Optional<User> maybeUser = userRepository.findByStringId(userInfoResponse.getId());
-        if (maybeUser.isPresent()) {
-            log.info("userCheckIsOurUser OurUser");
-            User user = maybeUser.get();
-            user.setAccessToken(accessTokenResponse.getAccessToken());
-            userRepository.save(user);
-            log.info("userCheckIsOurUser end");
-            return user;
-        } else {
+        if (maybeUser.isEmpty()) {
             User user = User.builder()
                     .id(userInfoResponse.getId())
                     .active(Active.YES)
@@ -420,6 +428,31 @@ public class UserServiceImpl implements UserService {
                     .build();
             userProfileRepository.save(userProfile);
             log.info("userCheckIsOurUser NotOurUser");
+            log.info("userCheckIsOurUser end");
+            return user;
+        } else if (maybeUser.get().getActive() == Active.NO) {
+            User user = maybeUser.get();
+            user.setActive(Active.YES);
+            user.setAccessToken(accessTokenResponse.getAccessToken());
+            user.setRefreshToken(accessTokenResponse.getRefreshToken());
+            userRepository.save(user);
+
+            UserProfile userProfile = UserProfile.builder()
+                    .user(user)
+                    .id(userInfoResponse.getId())
+                    .contactNumber(userInfoResponse.getMobile_e164())
+                    .email(userInfoResponse.getEmail())
+                    .profileImg(userInfoResponse.getProfile_image())
+                    .build();
+            userProfileRepository.save(userProfile);
+            log.info("userCheckIsOurUser rejoin user");
+            log.info("userCheckIsOurUser end");
+            return user;
+        } else {
+            log.info("userCheckIsOurUser OurUser");
+            User user = maybeUser.get();
+            user.setAccessToken(accessTokenResponse.getAccessToken());
+            userRepository.save(user);
             log.info("userCheckIsOurUser end");
             return user;
         }
@@ -456,13 +489,12 @@ public class UserServiceImpl implements UserService {
                 log.error("Error: " + error + ", Error Description: " + errorDescription);
                 return false;
             } else {
-                UserProfile userProfile = userProfileRepository.findByUser(user).get();
                 user.setActive(Active.NO);
-                withdrawalUserRepository.save(user);
-                withdrawalUserProfileRepository.save(userProfile);
+                userRepository.save(user);
 
+                UserProfile userProfile = userProfileRepository.findByUser(user).get();
                 userProfileRepository.delete(userProfile);
-                userRepository.delete(user);
+
                 redisService.deleteKeyAndValueWithUserToken(userToken);
                 return true;
             }
@@ -828,7 +860,7 @@ public class UserServiceImpl implements UserService {
 
         Optional<User> maybeUser = userRepository.findByAccessToken(accessToken);
         if (maybeUser.isEmpty()) {
-            log.info("user is empty");
+            log.warn("사용자를 찾지 못함: access token - {}", accessToken);
             log.info("findUserByAccessTokenInDatabase end");
             return null;
         }
