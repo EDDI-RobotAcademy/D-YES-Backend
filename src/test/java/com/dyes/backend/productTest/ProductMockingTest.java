@@ -1,18 +1,17 @@
 package com.dyes.backend.productTest;
 
 import com.dyes.backend.domain.product.controller.form.ProductRegisterForm;
-import com.dyes.backend.domain.product.service.Response.ProductResponseForm;
+import com.dyes.backend.domain.product.service.request.ProductDetailImagesRegisterRequest;
+import com.dyes.backend.domain.product.service.request.ProductMainImageRegisterRequest;
+import com.dyes.backend.domain.product.service.request.ProductRegisterRequest;
 import com.dyes.backend.domain.product.entity.*;
 import com.dyes.backend.domain.product.repository.ProductDetailImagesRepository;
 import com.dyes.backend.domain.product.repository.ProductMainImageRepository;
 import com.dyes.backend.domain.product.repository.ProductOptionRepository;
 import com.dyes.backend.domain.product.repository.ProductRepository;
 import com.dyes.backend.domain.product.service.ProductServiceImpl;
-import com.dyes.backend.domain.product.service.Response.ProductDetailImagesResponse;
-import com.dyes.backend.domain.product.service.Response.ProductMainImageResponse;
-import com.dyes.backend.domain.product.service.Response.ProductOptionResponse;
-import com.dyes.backend.domain.product.service.Response.ProductResponse;
 import com.dyes.backend.domain.product.service.request.ProductOptionRegisterRequest;
+import com.dyes.backend.domain.product.service.Response.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -66,15 +65,18 @@ public class ProductMockingTest {
         final String unit = "KG";
         final String cultivationMethod = "organic";
         final String mainImage = "메인 이미지";
-        final List<String> detailImages = Arrays.asList("디테일 이미지1", "디테일 이미지2");
+        final String detailImages = "디테일 이미지1";
+
+        ProductRegisterRequest productRegisterRequest = new ProductRegisterRequest(productName, productDescription, cultivationMethod);
+        ProductOptionRegisterRequest productOptionRegisterRequest = new ProductOptionRegisterRequest(optionName, optionPrice, stock, value, unit);
+        ProductMainImageRegisterRequest productMainImageRegisterRequest = new ProductMainImageRegisterRequest(mainImage);
+        ProductDetailImagesRegisterRequest productDetailImagesRegisterRequest = new ProductDetailImagesRegisterRequest(detailImages);
 
         ProductRegisterForm registerForm = new ProductRegisterForm(
-                productName,
-                productDescription,
-                cultivationMethod,
-                Arrays.asList(new ProductOptionRegisterRequest(optionName, optionPrice, stock, value, unit)),
-                mainImage,
-                detailImages
+                productRegisterRequest,
+                Arrays.asList(productOptionRegisterRequest),
+                productMainImageRegisterRequest,
+                Arrays.asList(productDetailImagesRegisterRequest)
                 );
 
         boolean result = mockService.productRegistration(registerForm);
@@ -83,7 +85,7 @@ public class ProductMockingTest {
         verify(mockProductRepository, times(1)).save(any());
         verify(mockProductOptionRepository, times(1)).save(any());
         verify(mockProductMainImageRepository, times(1)).save(any());
-        verify(mockProductDetailImagesRepository, times(2)).save(any());
+        verify(mockProductDetailImagesRepository, times(1)).save(any());
     }
     @Test
     @DisplayName("product mocking test: view product")

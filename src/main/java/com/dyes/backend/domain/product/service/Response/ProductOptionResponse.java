@@ -2,8 +2,6 @@ package com.dyes.backend.domain.product.service.Response;
 
 import com.dyes.backend.domain.product.entity.ProductOption;
 import com.dyes.backend.domain.product.entity.Unit;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

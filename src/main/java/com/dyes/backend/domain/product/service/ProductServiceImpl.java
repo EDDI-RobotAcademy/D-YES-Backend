@@ -1,6 +1,9 @@
 package com.dyes.backend.domain.product.service;
 
 import com.dyes.backend.domain.product.controller.form.ProductRegisterForm;
+import com.dyes.backend.domain.product.service.request.ProductDetailImagesRegisterRequest;
+import com.dyes.backend.domain.product.service.request.ProductMainImageRegisterRequest;
+import com.dyes.backend.domain.product.service.request.ProductOptionRegisterRequest;
 import com.dyes.backend.domain.product.service.Response.ProductResponseForm;
 import com.dyes.backend.domain.product.entity.*;
 import com.dyes.backend.domain.product.repository.ProductDetailImagesRepository;
@@ -31,24 +34,29 @@ public class ProductServiceImpl implements ProductService{
     @Override
     public boolean productRegistration(ProductRegisterForm registerForm) {
         log.info("productRegistration start");
-        ProductRegisterRequest request = registerForm.toProductRegister();
+
+        ProductRegisterRequest productRequest = registerForm.getProductRegisterRequest();
+        List<ProductOptionRegisterRequest> productOptionRegisterRequests = registerForm.getProductOptionRegisterRequest();
+        ProductMainImageRegisterRequest productMainImageRegisterRequest = registerForm.getProductMainImageRegisterRequest();
+        List<ProductDetailImagesRegisterRequest> productDetailImagesRegisterRequests = registerForm.getProductDetailImagesRegisterRequests();
+
         try {
             Product product = Product.builder()
-                    .productName(request.getProductName())
-                    .productDescription(request.getProductDescription())
-                    .cultivationMethod(cultivationMethodDecision(request.getCultivationMethod()))
+                    .productName(productRequest.getProductName())
+                    .productDescription(productRequest.getProductDescription())
+                    .cultivationMethod(cultivationMethodDecision(productRequest.getCultivationMethod()))
                     .build();
             log.info("product: " + product);
             productRepository.save(product);
 
-            for (int i = 0; i < request.getProductOptionRegisterRequest().size(); i++) {
+            for (int i = 0; i < productOptionRegisterRequests.size(); i++) {
                 ProductOption productOption = ProductOption.builder()
-                        .optionPrice(request.getProductOptionRegisterRequest().get(i).getOptionPrice())
-                        .stock(request.getProductOptionRegisterRequest().get(i).getStock())
-                        .optionName(request.getProductOptionRegisterRequest().get(i).getOptionName())
+                        .optionPrice(productOptionRegisterRequests.get(i).getOptionPrice())
+                        .stock(productOptionRegisterRequests.get(i).getStock())
+                        .optionName(productOptionRegisterRequests.get(i).getOptionName())
                         .amount(Amount.builder()
-                                .value(request.getProductOptionRegisterRequest().get(i).getValue())
-                                .unit(unitDecision(request.getProductOptionRegisterRequest().get(i).getUnit()))
+                                .value(productOptionRegisterRequests.get(i).getValue())
+                                .unit(unitDecision(productOptionRegisterRequests.get(i).getUnit()))
                                 .build())
                         .product(product)
                         .build();
@@ -58,15 +66,15 @@ public class ProductServiceImpl implements ProductService{
 
             ProductMainImage mainImage = ProductMainImage.builder()
                     .id(product.getId())
-                    .mainImg(request.getMainImg())
+                    .mainImg(productMainImageRegisterRequest.getMainImg())
                     .product(product)
                     .build();
             log.info("mainImage: " + mainImage);
             productMainImageRepository.save(mainImage);
 
-            for (String detailImagesInRegisterForm : request.getDetailImgs()) {
+            for (ProductDetailImagesRegisterRequest detailImagesInRegisterForm : productDetailImagesRegisterRequests) {
                 ProductDetailImages detailImages = ProductDetailImages.builder()
-                        .detailImgs(detailImagesInRegisterForm)
+                        .detailImgs(detailImagesInRegisterForm.getDetailImgs())
                         .product(product)
                         .build();
                 log.info("detailImages: " + detailImages);

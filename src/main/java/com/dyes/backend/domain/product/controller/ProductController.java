@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/product")
 public class ProductController {
     final private ProductService productService;
-    @GetMapping("/register")
+    @PostMapping("/register")
     public boolean productRegister(@RequestBody ProductRegisterForm registerForm) {
         return productService.productRegistration(registerForm);
     }
