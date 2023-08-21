@@ -503,6 +503,7 @@ public class UserServiceImpl implements UserService {
             return false;
         }
     }
+  
     /*
     <------------------------------------------------------------------------------------------------------------------>
      */
@@ -602,10 +603,6 @@ public class UserServiceImpl implements UserService {
                     requestEntity,
                     KakaoUserInfoResponseForm.class);
 
-            log.info("userInfo Id: " + kakaoUserInfoResponseForm.getBody().getId());
-            log.info("userInfo Nickname: " + kakaoUserInfoResponseForm.getBody().getProperties().getNickname());
-            log.info("userInfo Profile_image: " + kakaoUserInfoResponseForm.getBody().getProperties().getProfile_image());
-
             return kakaoUserInfoResponseForm.getBody();
 
         } catch (RestClientException e) {
@@ -622,10 +619,6 @@ public class UserServiceImpl implements UserService {
                     kakaoOauthSecretsProvider.getKAKAO_USERINFO_REQUEST_URL(),
                     requestEntity,
                     KakaoUserInfoResponseForm.class);
-
-            log.info("userInfo Id: " + kakaoUserInfoResponseForm.getBody().getId());
-            log.info("userInfo Nickname: " + kakaoUserInfoResponseForm.getBody().getProperties().getNickname());
-            log.info("userInfo Profile_image: " + kakaoUserInfoResponseForm.getBody().getProperties().getProfile_image());
 
             return kakaoUserInfoResponseForm.getBody();
         }
@@ -667,6 +660,61 @@ public class UserServiceImpl implements UserService {
         return kakaoAccessTokenResponseForm.getBody();
     }
 
+    // 카카오 유저 탈퇴
+    public Boolean kakaoUserDelete (String userToken) throws NullPointerException{
+
+        final String accessToken = redisService.getAccessToken(userToken);
+        if(accessToken == null) {
+            return false;
+        }
+
+        final User user = findUserByAccessTokenInDatabase(accessToken);
+        if(user == null) {
+            return false;
+        }
+
+        // 헤더 설정
+        HttpHeaders httpHeaders = setHeaders();
+        httpHeaders.add("Authorization", "Bearer " + accessToken);
+
+        // 바디 설정
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("target_id_type", "user_id");
+        parameters.add("target_id", user.getId());
+
+        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(parameters, httpHeaders);
+
+        ResponseEntity<KakaoDisconnectUserIdResponseForm> kakaoDisconnectUserResponse = restTemplate.postForEntity(
+                kakaoOauthSecretsProvider.getKAKAO_DISCONNECT_REQUEST_URL(),
+                requestEntity,
+                KakaoDisconnectUserIdResponseForm.class);
+
+        try {
+            String receivedUserId = kakaoDisconnectUserResponse.getBody().getId().toString();
+            Optional<User> foundUser = userRepository.findByStringId(receivedUserId);
+            Optional<UserProfile> foundUserProfile = userProfileRepository.findByUser(foundUser.get());
+            if(foundUser.isEmpty() || foundUserProfile.isEmpty()) {
+                log.info("Cannot find User");
+                return false;
+            }
+
+            UserProfile withdrawalUserProfile = foundUserProfile.get();
+            userProfileRepository.delete(withdrawalUserProfile);
+
+            User withdrawalUser = foundUser.get();
+            withdrawalUser.setActive(Active.NO);
+            userRepository.save(withdrawalUser);
+
+            UserLogOut(userToken);
+
+            return true;
+        } catch (RestClientException e) {
+            log.error("Error during kakaoUserWithdrawal: " + e.getMessage());
+
+            return false;
+        }
+    }
+    
     /*
     <------------------------------------------------------------------------------------------------------------------>
      */
@@ -797,18 +845,17 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean userWithdraw(String userToken) {
         String platform = divideUserByPlatform(userToken);
-        if (platform.contains("google")){
-
+        if (platform.contains("google")) {
             log.info("divideUserByPlatform end");
             return googleUserDelete(userToken);
+          
         } else if (platform.contains("naver")) {
-
             log.info("divideUserByPlatform end");
             return naverUserDelete(userToken);
+          
         } else {
-            // 카카오 탈퇴 함수
             log.info("divideUserByPlatform end");
-            return false;
+            return kakaoUserDelete(userToken);
         }
     }
 

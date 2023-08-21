@@ -68,11 +68,15 @@ public class UserController {
 
         return userService.modifyUserProfile(requestForm);
     }
-    // 사용자 로그 아웃
+
+    // 사용자 로그아웃
     @GetMapping("/logOut")
     public Boolean userLogOut(@RequestParam("userToken") String userToken) {
+
         return userService.UserLogOut(userToken);
     }
+
+    // 사용자 탈퇴
     @DeleteMapping("/withdrawal")
     public Boolean userWithdraw (@RequestParam("userToken") String userToken) {
 
