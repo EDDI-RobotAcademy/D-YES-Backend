@@ -32,4 +32,10 @@ public class ProductController {
     public boolean productModify(@RequestBody ProductModifyForm modifyForm) {
         return productService.productModify(modifyForm);
     }
+
+    // 상품 삭제
+    @DeleteMapping("/delete")
+    public boolean productDelete(@RequestParam(name = "productId") Long productId) {
+        return productService.productDelete(productId);
+    }
 }

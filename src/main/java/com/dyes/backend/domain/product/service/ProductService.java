@@ -8,4 +8,5 @@ public interface ProductService {
     boolean productRegistration(ProductRegisterForm registerForm);
     ProductResponseForm readProduct(Long productId);
     boolean productModify(ProductModifyForm modifyForm);
+    boolean productDelete(Long productId);
 }

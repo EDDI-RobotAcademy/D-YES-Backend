@@ -186,6 +186,38 @@ public class ProductServiceImpl implements ProductService{
         return true;
     }
 
+    // 상품 삭제
+    @Override
+    public boolean productDelete(Long productId) {
+        Optional<Product> maybeProduct = productRepository.findById(productId);
+        if(maybeProduct.isEmpty()) {
+            log.info("Product is empty");
+            return false;
+        }
+        Product deleteProduct = maybeProduct.get();
+
+        Optional<ProductMainImage> maybeProductMainImage = productMainImageRepository.findByProduct(deleteProduct);
+        if(maybeProductMainImage.isEmpty()) {
+            log.info("ProductMainImage is empty");
+            return false;
+        }
+        ProductMainImage deleteProductMainImage = maybeProductMainImage.get();
+        productMainImageRepository.delete(deleteProductMainImage);
+
+        List<ProductDetailImages> deleteProductDetailImagesList = productDetailImagesRepository.findByProduct(deleteProduct);
+        for(ProductDetailImages productDetailImages: deleteProductDetailImagesList) {
+            productDetailImagesRepository.delete(productDetailImages);
+        }
+
+        List<ProductOption> deleteProductOptionList = productOptionRepository.findByProduct(deleteProduct);
+        for(ProductOption productOption: deleteProductOptionList) {
+            productOptionRepository.delete(productOption);
+        }
+
+        productRepository.delete(deleteProduct);
+        return true;
+    }
+
     // unit 구별 util
     public Unit unitDecision (String unit) {
         if (unit.equals("KG")) {
