@@ -7,6 +7,7 @@ import com.dyes.backend.domain.product.repository.ProductMainImageRepository;
 import com.dyes.backend.domain.product.repository.ProductOptionRepository;
 import com.dyes.backend.domain.product.repository.ProductRepository;
 import com.dyes.backend.domain.product.service.ProductServiceImpl;
+import com.dyes.backend.domain.product.service.request.ProductOptionRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,11 +19,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 public class ProductMockingTest {
@@ -50,7 +51,7 @@ public class ProductMockingTest {
     @Test
     @DisplayName("product mocking test: product registration")
     public void 관리자가_상품_등록을_합니다 () {
-
+        final String productName = "상품이름";
         final String productDescription = "상세설명";
         final String optionName = "옵션 이름";
         final Long optionPrice = 1L;
@@ -62,13 +63,10 @@ public class ProductMockingTest {
         final List<String> detailImages = Arrays.asList("디테일 이미지1", "디테일 이미지2");
 
         ProductRegisterForm registerForm = new ProductRegisterForm(
+                productName,
                 productDescription,
-                optionName,
-                optionPrice,
-                stock,
-                value,
-                unit,
                 cultivationMethod,
+                Arrays.asList(new ProductOptionRequest(optionName, optionPrice, stock, value, unit)),
                 mainImage,
                 detailImages
                 );
@@ -81,5 +79,4 @@ public class ProductMockingTest {
         verify(mockProductMainImageRepository, times(1)).save(any());
         verify(mockProductDetailImagesRepository, times(2)).save(any());
     }
-
 }
