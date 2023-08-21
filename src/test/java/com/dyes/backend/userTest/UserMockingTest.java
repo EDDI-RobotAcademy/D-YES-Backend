@@ -420,6 +420,52 @@ public class UserMockingTest {
         assertEquals(expectedResponse.getRefresh_token(), result.getRefresh_token());
     }
 
+    @Test
+    @DisplayName("userMockingTest: (kakao)kakaoUserDelete")
+    public void 카카오_사용자가_회원탈퇴를_합니다() {
+
+        final String userToken = "카카오 사용자의 유저토큰";
+        final String userId = "12345";
+        final String accessToken = "카카오에서 받은 엑세스 토큰";
+        final String refreshToken = "카카오에서 받은 리프래쉬 토큰";
+
+        User user = User.builder()
+                .id(userId)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+        when(mockRedisService.getAccessToken(userToken)).thenReturn(accessToken);
+        when(mockUserRepository.findByAccessToken(accessToken)).thenReturn(Optional.of(user));
+        mockService.findUserByAccessTokenInDatabase(accessToken);
+
+        HttpHeaders httpHeaders = mockService.setHeaders();
+        httpHeaders.add("Authorization", "Bearer " + accessToken);
+
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("target_id_type", "user_id");
+        parameters.add("target_id", user.getId());
+        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(parameters, httpHeaders);
+
+        KakaoDisconnectUserIdResponseForm expectedResponse = new KakaoDisconnectUserIdResponseForm();
+        expectedResponse.setId(Long.parseLong(user.getId()));
+
+        when(mockRestTemplate.postForEntity(
+                mockKakaoOauthSecretsProvider.getKAKAO_DISCONNECT_REQUEST_URL(),
+                requestEntity,
+                KakaoDisconnectUserIdResponseForm.class))
+                .thenReturn(ResponseEntity.ok(expectedResponse));
+
+        when(mockUserRepository.findByStringId(expectedResponse.getId().toString())).thenReturn(Optional.of(user));
+        when(mockUserProfileRepository.findByUser(user)).thenReturn(Optional.of(new UserProfile()));
+
+        Boolean isCompletedWithdrawal = mockService.kakaoUserDelete(userToken);
+
+        assertEquals(isCompletedWithdrawal, true);
+        assertEquals(expectedResponse.getId().toString(),userId);
+        verify(mockUserRepository, times(1)).findByStringId(expectedResponse.getId().toString());
+        verify(mockUserProfileRepository, times(1)).findByUser(user);
+    }
+
     /*
     <------------------------------------------------------------------------------------------------------------------>
      */
