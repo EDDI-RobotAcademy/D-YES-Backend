@@ -548,22 +548,48 @@ public class UserServiceImpl implements UserService {
             redisService.setUserTokenAndUser(userToken, accessToken);
 
             final String redirectUrl = kakaoOauthSecretsProvider.getKAKAO_REDIRECT_VIEW_URL();
+            return redirectUrl + userToken;
 
+        } else if(maybeUser.isPresent() && maybeUser.get().getActive().equals(Active.YES)) {
+
+            // 활동하고 있는 회원이면 accessToken, refreshToken 갱신 후 로그인
+            final User user = maybeUser.get();
+            user.setAccessToken(accessToken);
+            user.setRefreshToken(refreshToken);
+            userRepository.save(user);
+
+            final String userToken = "kakao" + UUID.randomUUID();
+            redisService.setUserTokenAndUser(userToken, accessToken);
+
+            final String redirectUrl = kakaoOauthSecretsProvider.getKAKAO_REDIRECT_VIEW_URL();
+            return redirectUrl + userToken;
+
+        } else if(maybeUser.isPresent() && maybeUser.get().getActive().equals(Active.NO)) {
+
+            // 탈퇴한 회원이면 Active YES로 변경 후 프로필 재생성
+            final User user = maybeUser.get();
+            user.setActive(Active.YES);
+            user.setAccessToken(accessToken);
+            user.setRefreshToken(refreshToken);
+            userRepository.save(user);
+
+            UserProfile userProfile = UserProfile.builder()
+                    .user(user)
+                    .id(kakaoUserInfoResponseForm.getId())
+                    .nickName(kakaoUserInfoResponseForm.getProperties().getNickname())
+                    .profileImg(kakaoUserInfoResponseForm.getProperties().getProfile_image())
+                    .build();
+
+            userProfileRepository.save(userProfile);
+
+            final String userToken = "kakao" + UUID.randomUUID();
+            redisService.setUserTokenAndUser(userToken, accessToken);
+
+            final String redirectUrl = kakaoOauthSecretsProvider.getKAKAO_REDIRECT_VIEW_URL();
             return redirectUrl + userToken;
         }
 
-        // 있다면 accessToken, refreshToken 갱신 후 로그인
-        final User user = maybeUser.get();
-        user.setAccessToken(accessToken);
-        user.setRefreshToken(refreshToken);
-        userRepository.save(user);
-
-        final String userToken = "kakao" + UUID.randomUUID();
-        redisService.setUserTokenAndUser(userToken, accessToken);
-
-        final String redirectUrl = kakaoOauthSecretsProvider.getKAKAO_REDIRECT_VIEW_URL();
-
-        return redirectUrl + userToken;
+        return null;
     }
 
     // 카카오에서 인가 코드를 받으면 엑세스 토큰 요청
