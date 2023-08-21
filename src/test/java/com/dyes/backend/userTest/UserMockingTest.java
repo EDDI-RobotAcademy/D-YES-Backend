@@ -22,6 +22,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.*;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Optional;
@@ -375,6 +377,47 @@ public class UserMockingTest {
                 mockKakaoOauthSecretsProvider.getKAKAO_USERINFO_REQUEST_URL(),
                 requestEntity,
                 KakaoUserInfoResponseForm.class);
+    }
+
+    @Test
+    @DisplayName("userMockingTest: (kakao)expiredKakaoAccessTokenRequester")
+    public void 카카오_리프래쉬토큰으로_액세스토큰을_요청합니다() {
+
+        final String accessToken = "카카오에서 받은 엑세스 토큰";
+        final String refreshToken = "카카오에서 받은 리프래쉬 토큰";
+        final String renewAccessToken = "카카오에서 받은 새로운 엑세스 토큰";
+
+        User user = User.builder()
+                    .id(anyString())
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .build();
+        when(mockUserRepository.findByAccessToken(accessToken)).thenReturn(Optional.of(user));
+
+        mockService.findUserByAccessTokenInDatabase(accessToken);
+
+        HttpHeaders httpHeaders = mockService.setHeaders();
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("grant_type", "refresh_token");
+        parameters.add("client_id", mockKakaoOauthSecretsProvider.getKAKAO_AUTH_RESTAPI_KEY());
+        parameters.add("refresh_token", refreshToken);
+        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(parameters, httpHeaders);
+
+        KakaoAccessTokenResponseForm expectedResponse = new KakaoAccessTokenResponseForm();
+        expectedResponse.setAccess_token(renewAccessToken);
+        expectedResponse.setRefresh_token(refreshToken);
+
+        when(mockRestTemplate.postForEntity(
+                mockKakaoOauthSecretsProvider.getKAKAO_REFRESH_TOKEN_REQUEST_URL(),
+                requestEntity,
+                KakaoAccessTokenResponseForm.class))
+                .thenReturn(ResponseEntity.ok(expectedResponse));
+
+        KakaoAccessTokenResponseForm result = mockService.expiredKakaoAccessTokenRequester(accessToken);
+
+        assertEquals(expectedResponse, result);
+        assertEquals(expectedResponse.getAccess_token(), result.getAccess_token());
+        assertEquals(expectedResponse.getRefresh_token(), result.getRefresh_token());
     }
 
     /*
