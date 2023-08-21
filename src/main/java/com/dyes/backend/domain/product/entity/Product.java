@@ -16,4 +16,6 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String productDescription;
+    @Enumerated(EnumType.STRING)
+    private CultivationMethod cultivationMethod;
 }

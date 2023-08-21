@@ -20,8 +20,6 @@ public class ProductOption {
     private int stock;
     @Embedded
     private Amount amount;
-    @Enumerated(EnumType.STRING)
-    private CultivationMethod CultivationMethod;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_id")
     private Product product;

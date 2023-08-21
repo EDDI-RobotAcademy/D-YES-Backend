@@ -1,5 +1,7 @@
 package com.dyes.backend.domain.product.controller.form;
 
+import com.dyes.backend.domain.product.service.request.ProductOptionRequest;
+import com.dyes.backend.domain.product.service.request.ProductRegisterRequest;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,13 +13,11 @@ import java.util.List;
 @AllArgsConstructor
 public class ProductRegisterForm {
     private String productDescription;
-    private String optionName;
-    private Long optionPrice;
-    private int stock;
-    private Long value;
-    private String unit;
     private String cultivationMethod;
+    private List<ProductOptionRequest> productOptionRequest;
     private String mainImg;
     private List<String> detailImgs;
-
+    public ProductRegisterRequest toProductRegister () {
+        return new ProductRegisterRequest(productDescription, cultivationMethod, productOptionRequest, mainImg, detailImgs);
+    }
 }
