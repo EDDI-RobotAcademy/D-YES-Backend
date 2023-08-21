@@ -1,8 +1,12 @@
 package com.dyes.backend.domain.user.service.response;
 
-import lombok.Getter;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class KakaoAccessTokenResponseForm {
     private String token_type;
     private String access_token;
