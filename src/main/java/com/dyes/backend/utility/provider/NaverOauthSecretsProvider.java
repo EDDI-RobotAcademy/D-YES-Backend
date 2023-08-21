@@ -26,4 +26,6 @@ public class NaverOauthSecretsProvider {
         private String NAVER_REDIRECT_VIEW_URL;
         @Value("${naver.oauth.refresh.token.request}")
         private String NAVER_REFRESH_TOKEN_REQUEST_URL;
+        @Value("${naver.oauth.revoke.url}")
+        private String NAVER_REVOKE_URL;
 }

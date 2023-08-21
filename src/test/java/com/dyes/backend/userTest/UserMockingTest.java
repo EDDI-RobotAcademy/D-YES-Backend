@@ -28,8 +28,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -68,7 +67,6 @@ public class UserMockingTest {
                 mockRedisService,
                 mockRestTemplate,
                 mockObjectMapper
-
         );
     }
 
@@ -181,6 +179,42 @@ public class UserMockingTest {
         when(mockUserRepository.save(user)).thenReturn(user);
 
         assertEquals(user, savedUser);
+    }
+    @Test
+    @DisplayName("userMockingTest: (google)user withdraw")
+    public void 구글_유저가_회원탈퇴를_하면_계정을_비활성화_시킵니다 () {
+        final String userToken = "유저 토큰";
+        final String accessToken = "엑세스 토큰";
+        User user = new User("아이디", accessToken, "리프래시토큰", Active.YES);
+
+        when(mockRedisService.getAccessToken(userToken)).thenReturn(accessToken);
+
+        when(mockUserRepository.findByAccessToken(accessToken)).thenReturn(Optional.of(user));
+
+        GoogleOauthAccessTokenResponse expectedResponse = new GoogleOauthAccessTokenResponse();
+        expectedResponse.setAccessToken(accessToken);
+        ResponseEntity<GoogleOauthAccessTokenResponse> responseAccessEntity = new ResponseEntity<>(expectedResponse, HttpStatus.OK);
+
+        when(mockRestTemplate.postForEntity(
+                eq(mockGoogleOauthSecretsProvider.getGOOGLE_TOKEN_REQUEST_URL()),
+                any(HttpEntity.class),
+                eq(GoogleOauthAccessTokenResponse.class)
+        )).thenReturn(responseAccessEntity);
+
+        when(mockGoogleOauthSecretsProvider.getGOOGLE_REVOKE_URL()).thenReturn("https://testurl.com/revoke");
+
+        JsonNode jsonNode = mock(JsonNode.class);
+        ResponseEntity<JsonNode> responseEntity = new ResponseEntity<>(jsonNode, HttpStatus.OK);
+        when(mockRestTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(JsonNode.class))).thenReturn(responseEntity);
+
+        when(mockUserProfileRepository.findByUser(user)).thenReturn(Optional.of(new UserProfile()));
+
+        boolean result = mockService.googleUserDelete(userToken);
+
+        assertTrue(result);
+        assertEquals(user.getActive(), Active.NO);
+        verify(mockUserRepository, times(2)).save(user);
+        verify(mockRedisService, times(1)).deleteKeyAndValueWithUserToken(userToken);
     }
 
     /*
@@ -315,13 +349,45 @@ public class UserMockingTest {
 
         assertEquals(user, savedUser);
     }
-    @Test
-    @DisplayName("userMockingTest: userLogOut")
-    public void 유저가_로그아웃을_요청하면_유저토큰으로_레디스에서_정해준_값을_삭제합니다() {
-        final String userToken = "프론트에서 받은 유저 토큰";
 
-        mockService.logOutWithDeleteKeyAndValueInRedis(userToken);
-        verify(mockRedisService, times(1)).deleteKeyAndValueWithUserToken(eq(userToken));
+
+    @Test
+    @DisplayName("userMockingTest: (naver)user withdraw")
+    public void 네이버_유저가_회원탈퇴를_하면_계정을_비활성화_시킵니다 () {
+        final String userToken = "유저 토큰";
+        final String accessToken = "엑세스 토큰";
+        User user = new User("아이디", accessToken, "리프래시토큰", Active.YES);
+
+        when(mockRedisService.getAccessToken(userToken)).thenReturn(accessToken);
+
+        when(mockUserRepository.findByAccessToken(accessToken)).thenReturn(Optional.of(user));
+
+        NaverOauthAccessTokenResponse expectedResponse = new NaverOauthAccessTokenResponse();
+        expectedResponse.setAccessToken(accessToken);
+        ResponseEntity<NaverOauthAccessTokenResponse> responseAccessEntity = new ResponseEntity<>(expectedResponse, HttpStatus.OK);
+
+        when(mockRestTemplate.postForEntity(
+                eq(mockNaverOauthSecretsProvider.getNAVER_REFRESH_TOKEN_REQUEST_URL()),
+                any(HttpEntity.class),
+                eq(NaverOauthAccessTokenResponse.class)
+        )).thenReturn(responseAccessEntity);
+
+        when(mockNaverOauthSecretsProvider.getNAVER_REVOKE_URL()).thenReturn("https://testurl.com/revoke");
+        when(mockNaverOauthSecretsProvider.getNAVER_AUTH_CLIENT_ID()).thenReturn("testClientId");
+        when(mockNaverOauthSecretsProvider.getNAVER_AUTH_SECRETS()).thenReturn("testSecret");
+
+        JsonNode jsonNode = mock(JsonNode.class);
+        ResponseEntity<JsonNode> responseEntity = new ResponseEntity<>(jsonNode, HttpStatus.OK);
+        when(mockRestTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(JsonNode.class))).thenReturn(responseEntity);
+
+        when(mockUserProfileRepository.findByUser(user)).thenReturn(Optional.of(new UserProfile()));
+
+        boolean result = mockService.naverUserDelete(userToken);
+
+        assertTrue(result);
+        assertEquals(user.getActive(), Active.NO);
+        verify(mockUserRepository, times(2)).save(user);
+        verify(mockRedisService, times(1)).deleteKeyAndValueWithUserToken(userToken);
     }
 
     /*
@@ -613,5 +679,13 @@ public class UserMockingTest {
         assertEquals(userProfileResponseForm.getAddress().getAddressDetail(), modifiedAddressDetail);
 
         verify(mockUserProfileRepository, times(1)).save(userProfile);
+    }
+    @Test
+    @DisplayName("userMockingTest: userLogOut")
+    public void 유저가_로그아웃을_요청하면_유저토큰으로_레디스에서_정해준_값을_삭제합니다() {
+        final String userToken = "프론트에서 받은 유저 토큰";
+
+        mockService.logOutWithDeleteKeyAndValueInRedis(userToken);
+        verify(mockRedisService, times(1)).deleteKeyAndValueWithUserToken(eq(userToken));
     }
 }
