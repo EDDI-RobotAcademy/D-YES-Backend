@@ -1,6 +1,5 @@
 package com.dyes.backend.domain.product.service.request;
 
-import com.dyes.backend.domain.product.entity.ProductOption;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,7 +13,7 @@ public class ProductRegisterRequest {
     private String productName;
     private String productDescription;
     private String cultivationMethod;
-    private List<ProductOptionRequest> ProductOptionRequest;
+    private List<ProductOptionRegisterRequest> ProductOptionRegisterRequest;
     private String mainImg;
     private List<String> detailImgs;
 }

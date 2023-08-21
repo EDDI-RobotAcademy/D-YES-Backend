@@ -1,16 +1,22 @@
 package com.dyes.backend.domain.product.service;
 
 import com.dyes.backend.domain.product.controller.form.ProductRegisterForm;
+import com.dyes.backend.domain.product.service.Response.ProductResponseForm;
 import com.dyes.backend.domain.product.entity.*;
 import com.dyes.backend.domain.product.repository.ProductDetailImagesRepository;
 import com.dyes.backend.domain.product.repository.ProductMainImageRepository;
 import com.dyes.backend.domain.product.repository.ProductOptionRepository;
 import com.dyes.backend.domain.product.repository.ProductRepository;
+import com.dyes.backend.domain.product.service.Response.ProductDetailImagesResponse;
+import com.dyes.backend.domain.product.service.Response.ProductMainImageResponse;
+import com.dyes.backend.domain.product.service.Response.ProductOptionResponse;
+import com.dyes.backend.domain.product.service.Response.ProductResponse;
 import com.dyes.backend.domain.product.service.request.ProductRegisterRequest;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @Slf4j
@@ -24,6 +30,7 @@ public class ProductServiceImpl implements ProductService{
     // 상품 등록
     @Override
     public boolean productRegistration(ProductRegisterForm registerForm) {
+        log.info("productRegistration start");
         ProductRegisterRequest request = registerForm.toProductRegister();
         try {
             Product product = Product.builder()
@@ -31,19 +38,21 @@ public class ProductServiceImpl implements ProductService{
                     .productDescription(request.getProductDescription())
                     .cultivationMethod(cultivationMethodDecision(request.getCultivationMethod()))
                     .build();
+            log.info("product: " + product);
             productRepository.save(product);
 
-            for (int i = 0; i < request.getProductOptionRequest().size(); i++) {
+            for (int i = 0; i < request.getProductOptionRegisterRequest().size(); i++) {
                 ProductOption productOption = ProductOption.builder()
-                        .optionPrice(request.getProductOptionRequest().get(i).getOptionPrice())
-                        .stock(request.getProductOptionRequest().get(i).getStock())
-                        .optionName(request.getProductOptionRequest().get(i).getOptionName())
+                        .optionPrice(request.getProductOptionRegisterRequest().get(i).getOptionPrice())
+                        .stock(request.getProductOptionRegisterRequest().get(i).getStock())
+                        .optionName(request.getProductOptionRegisterRequest().get(i).getOptionName())
                         .amount(Amount.builder()
-                                .value(request.getProductOptionRequest().get(i).getValue())
-                                .unit(unitDecision(request.getProductOptionRequest().get(i).getUnit()))
+                                .value(request.getProductOptionRegisterRequest().get(i).getValue())
+                                .unit(unitDecision(request.getProductOptionRegisterRequest().get(i).getUnit()))
                                 .build())
                         .product(product)
                         .build();
+                log.info("productOption: " + productOption);
                 productOptionRepository.save(productOption);
             }
 
@@ -52,6 +61,7 @@ public class ProductServiceImpl implements ProductService{
                     .mainImg(request.getMainImg())
                     .product(product)
                     .build();
+            log.info("mainImage: " + mainImage);
             productMainImageRepository.save(mainImage);
 
             for (String detailImagesInRegisterForm : request.getDetailImgs()) {
@@ -59,14 +69,48 @@ public class ProductServiceImpl implements ProductService{
                         .detailImgs(detailImagesInRegisterForm)
                         .product(product)
                         .build();
+                log.info("detailImages: " + detailImages);
                 productDetailImagesRepository.save(detailImages);
             }
+            log.info("productRegistration end");
             return true;
         } catch (Exception e) {
             log.error("Can't register this product: {}", e.getMessage(), e);
+            log.info("productRegistration end");
             return false;
         }
     }
+
+    @Override
+    public ProductResponseForm readProduct(Long productId) {
+        log.info("readProduct start");
+        try {
+            Product product = productRepository.findById(productId).get();
+            log.info("product: " + product);
+            List<ProductOption> productOption = productOptionRepository.findByProduct(product);
+            log.info("productOption: " + productOption);
+            ProductMainImage productMainImage = productMainImageRepository.findByProduct(product).get();
+            log.info("productMainImage: " + productMainImage);
+            List<ProductDetailImages> productDetailImages = productDetailImagesRepository.findByProduct(product);
+            log.info("productDetailImages: " + productDetailImages);
+
+            ProductResponse productResponse = new ProductResponse().productResponse(product);
+            List<ProductOptionResponse> productOptionResponse = new ProductOptionResponse().productOptionResponseList(productOption);
+            ProductMainImageResponse productMainImageResponse = new ProductMainImageResponse().productMainImageResponse(productMainImage);
+            List<ProductDetailImagesResponse> productDetailImagesResponses = new ProductDetailImagesResponse().productDetailImagesResponseList(productDetailImages);
+
+            ProductResponseForm responseForm = new ProductResponseForm(productResponse, productOptionResponse, productMainImageResponse, productDetailImagesResponses);
+            log.info("responseForm: " + responseForm);
+
+            log.info("readProduct end");
+            return responseForm;
+        } catch (Exception e) {
+            log.error("Can't register this product: {}", e.getMessage(), e);
+            log.info("readProduct end");
+            return null;
+        }
+    }
+
     // unit 구별 util
     public Unit unitDecision (String unit) {
         if (unit.equals("KG")) {

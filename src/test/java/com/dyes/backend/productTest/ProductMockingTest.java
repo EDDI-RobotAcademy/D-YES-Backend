@@ -1,13 +1,18 @@
 package com.dyes.backend.productTest;
 
 import com.dyes.backend.domain.product.controller.form.ProductRegisterForm;
+import com.dyes.backend.domain.product.service.Response.ProductResponseForm;
 import com.dyes.backend.domain.product.entity.*;
 import com.dyes.backend.domain.product.repository.ProductDetailImagesRepository;
 import com.dyes.backend.domain.product.repository.ProductMainImageRepository;
 import com.dyes.backend.domain.product.repository.ProductOptionRepository;
 import com.dyes.backend.domain.product.repository.ProductRepository;
 import com.dyes.backend.domain.product.service.ProductServiceImpl;
-import com.dyes.backend.domain.product.service.request.ProductOptionRequest;
+import com.dyes.backend.domain.product.service.Response.ProductDetailImagesResponse;
+import com.dyes.backend.domain.product.service.Response.ProductMainImageResponse;
+import com.dyes.backend.domain.product.service.Response.ProductOptionResponse;
+import com.dyes.backend.domain.product.service.Response.ProductResponse;
+import com.dyes.backend.domain.product.service.request.ProductOptionRegisterRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,6 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -66,7 +72,7 @@ public class ProductMockingTest {
                 productName,
                 productDescription,
                 cultivationMethod,
-                Arrays.asList(new ProductOptionRequest(optionName, optionPrice, stock, value, unit)),
+                Arrays.asList(new ProductOptionRegisterRequest(optionName, optionPrice, stock, value, unit)),
                 mainImage,
                 detailImages
                 );
@@ -78,5 +84,40 @@ public class ProductMockingTest {
         verify(mockProductOptionRepository, times(1)).save(any());
         verify(mockProductMainImageRepository, times(1)).save(any());
         verify(mockProductDetailImagesRepository, times(2)).save(any());
+    }
+    @Test
+    @DisplayName("product mocking test: view product")
+    public void 사용자가_상품을_볼_수_있습니다 () {
+        final Long productId = 1L;
+
+        Product product = new Product(productId, "상품 이름","상세 설명", CultivationMethod.ORGANIC);
+        when(mockProductRepository.findById(productId)).thenReturn(Optional.of(product));
+
+        List<ProductOption> productOption = new ArrayList<>();
+        productOption.add(new ProductOption(1L, "옵션 이름", 1L, 1, new Amount(),  product));
+        ProductMainImage mainImage = new ProductMainImage(product.getId(), "메인 이미지", product);
+        List<ProductDetailImages> detailImages = new ArrayList<>();
+        detailImages.add(new ProductDetailImages(1L, "디테일 이미지", product));
+
+        when(mockProductRepository.findById(productId)).thenReturn(Optional.of(product));
+        when(mockProductOptionRepository.findByProduct(product)).thenReturn(productOption);
+        when(mockProductMainImageRepository.findByProduct(product)).thenReturn(Optional.of(mainImage));
+        when(mockProductDetailImagesRepository.findByProduct(product)).thenReturn(detailImages);
+
+        ProductResponse productResponse = new ProductResponse().productResponse(product);
+        List<ProductOptionResponse> productOptionResponse = new ProductOptionResponse().productOptionResponseList(productOption);
+        ProductMainImageResponse productMainImageResponse = new ProductMainImageResponse(mainImage.getId(), mainImage.getMainImg());
+        List<ProductDetailImagesResponse> productDetailImagesResponse = new ProductDetailImagesResponse().productDetailImagesResponseList(detailImages);
+
+        ProductResponseForm res = new ProductResponseForm(
+                productResponse,
+                productOptionResponse,
+                productMainImageResponse,
+                productDetailImagesResponse
+                );
+
+        ProductResponseForm actual = mockService.readProduct(productId);
+
+        assertEquals(res, actual);
     }
 }
