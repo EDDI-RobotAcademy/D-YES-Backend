@@ -1,9 +1,8 @@
 package com.dyes.backend.domain.product.service;
 
+import com.dyes.backend.domain.product.controller.form.ProductModifyForm;
 import com.dyes.backend.domain.product.controller.form.ProductRegisterForm;
-import com.dyes.backend.domain.product.service.request.ProductDetailImagesRegisterRequest;
-import com.dyes.backend.domain.product.service.request.ProductMainImageRegisterRequest;
-import com.dyes.backend.domain.product.service.request.ProductOptionRegisterRequest;
+import com.dyes.backend.domain.product.service.request.*;
 import com.dyes.backend.domain.product.service.Response.ProductResponseForm;
 import com.dyes.backend.domain.product.entity.*;
 import com.dyes.backend.domain.product.repository.ProductDetailImagesRepository;
@@ -14,12 +13,12 @@ import com.dyes.backend.domain.product.service.Response.ProductDetailImagesRespo
 import com.dyes.backend.domain.product.service.Response.ProductMainImageResponse;
 import com.dyes.backend.domain.product.service.Response.ProductOptionResponse;
 import com.dyes.backend.domain.product.service.Response.ProductResponse;
-import com.dyes.backend.domain.product.service.request.ProductRegisterRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -89,6 +88,7 @@ public class ProductServiceImpl implements ProductService{
         }
     }
 
+    // 상품 읽기
     @Override
     public ProductResponseForm readProduct(Long productId) {
         log.info("readProduct start");
@@ -117,6 +117,73 @@ public class ProductServiceImpl implements ProductService{
             log.info("readProduct end");
             return null;
         }
+    }
+
+    // 상품 수정
+    @Override
+    public boolean productModify(ProductModifyForm modifyForm) {
+        ProductModifyRequest productModifyRequest = modifyForm.getProductModifyRequest();
+        ProductMainImageModifyRequest productMainImageModifyRequest = modifyForm.getProductMainImageModifyRequest();
+        List<ProductDetailImagesModifyRequest> productDetailImagesModifyRequestList = modifyForm.getProductDetailImagesModifyRequest();
+        List<ProductOptionModifyRequest> productOptionModifyRequestList = modifyForm.getProductOptionModifyRequest();
+
+        // 상품 기본 정보 업데이트
+        final Long modifyProductId = productModifyRequest.getProductId();
+        Optional<Product> maybeProduct = productRepository.findById(modifyProductId);
+        if(maybeProduct.isEmpty()) {
+            log.info("Product is empty");
+            return false;
+        }
+
+        Product modifyProduct = maybeProduct.get();
+        modifyProduct.setProductName(productModifyRequest.getProductName());
+        modifyProduct.setProductDescription(productModifyRequest.getProductDescription());
+        productRepository.save(modifyProduct);
+
+        // 상품 메인 이미지 업데이트
+        final Long modifyProductMainImageId = productMainImageModifyRequest.getProductMainImageId();
+        Optional<ProductMainImage> maybeProductMainImage = productMainImageRepository.findById(modifyProductMainImageId);
+        if(maybeProductMainImage.isEmpty()) {
+            log.info("ProductMainImage is empty");
+            return false;
+        }
+
+        ProductMainImage modifyProductMainImage = maybeProductMainImage.get();
+        modifyProductMainImage.setMainImg(productMainImageModifyRequest.getMainImg());
+        modifyProductMainImage.setProduct(modifyProduct);
+        productMainImageRepository.save(modifyProductMainImage);
+
+        // 상품 상세 이미지 업데이트
+        for(ProductDetailImagesModifyRequest productDetailImage: productDetailImagesModifyRequestList) {
+            final Long productDetailImageId = productDetailImage.getProductDetailImageId();
+            Optional<ProductDetailImages> maybeProductDetailImages = productDetailImagesRepository.findById(productDetailImageId);
+            if(maybeProductDetailImages.isEmpty()) {
+                log.info("ProductDetailImages is empty");
+                return false;
+            }
+            ProductDetailImages modifyProductDetailImages = maybeProductDetailImages.get();
+            modifyProductDetailImages.setDetailImgs(productDetailImage.getDetailImgs());
+            modifyProductDetailImages.setProduct(modifyProduct);
+            productDetailImagesRepository.save(modifyProductDetailImages);
+        }
+
+        // 상품 옵션 업데이트
+        for(ProductOptionModifyRequest productOption: productOptionModifyRequestList) {
+            final Long productOptionId = productOption.getOptionId();
+            Optional<ProductOption> maybeProductOption = productOptionRepository.findById(productOptionId);
+            if(maybeProductOption.isEmpty()) {
+                log.info("ProductOption is empty");
+                return false;
+            }
+            ProductOption modifyProductOption = maybeProductOption.get();
+            modifyProductOption.setOptionName(productOption.getOptionName());
+            modifyProductOption.setOptionPrice(productOption.getOptionPrice());
+            modifyProductOption.setStock(productOption.getStock());
+            modifyProductOption.setAmount(new Amount(productOption.getValue(), productOption.getUnit()));
+            modifyProductOption.setProduct(modifyProduct);
+            productOptionRepository.save(modifyProductOption);
+        }
+        return true;
     }
 
     // unit 구별 util
