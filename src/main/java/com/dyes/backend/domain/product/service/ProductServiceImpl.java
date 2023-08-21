@@ -21,11 +21,13 @@ public class ProductServiceImpl implements ProductService{
     final private ProductMainImageRepository productMainImageRepository;
     final private ProductDetailImagesRepository productDetailImagesRepository;
 
+    // 상품 등록
     @Override
     public boolean productRegistration(ProductRegisterForm registerForm) {
         ProductRegisterRequest request = registerForm.toProductRegister();
         try {
             Product product = Product.builder()
+                    .productName(request.getProductName())
                     .productDescription(request.getProductDescription())
                     .cultivationMethod(cultivationMethodDecision(request.getCultivationMethod()))
                     .build();
@@ -65,6 +67,7 @@ public class ProductServiceImpl implements ProductService{
             return false;
         }
     }
+    // unit 구별 util
     public Unit unitDecision (String unit) {
         if (unit.equals("KG")) {
             return Unit.KG;
@@ -74,6 +77,7 @@ public class ProductServiceImpl implements ProductService{
             return Unit.EA;
         }
     }
+    // cultivation method 구별 util
     public CultivationMethod cultivationMethodDecision (String cultivationMethod) {
         if (cultivationMethod.equals("PESTICIDE_FREE")) {
             return CultivationMethod.PESTICIDE_FREE;

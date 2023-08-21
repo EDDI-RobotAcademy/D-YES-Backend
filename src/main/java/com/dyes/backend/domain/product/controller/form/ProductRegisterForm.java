@@ -12,12 +12,13 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductRegisterForm {
+    private String productName;
     private String productDescription;
     private String cultivationMethod;
     private List<ProductOptionRequest> productOptionRequest;
     private String mainImg;
     private List<String> detailImgs;
     public ProductRegisterRequest toProductRegister () {
-        return new ProductRegisterRequest(productDescription, cultivationMethod, productOptionRequest, mainImg, detailImgs);
+        return new ProductRegisterRequest(productName, productDescription, cultivationMethod, productOptionRequest, mainImg, detailImgs);
     }
 }

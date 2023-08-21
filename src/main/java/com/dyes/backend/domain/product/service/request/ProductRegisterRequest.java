@@ -11,6 +11,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductRegisterRequest {
+    private String productName;
     private String productDescription;
     private String cultivationMethod;
     private List<ProductOptionRequest> ProductOptionRequest;
