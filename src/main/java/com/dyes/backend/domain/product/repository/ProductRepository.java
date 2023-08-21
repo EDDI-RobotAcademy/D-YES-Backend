@@ -1,0 +1,7 @@
+package com.dyes.backend.domain.product.repository;
+
+import com.dyes.backend.domain.product.entity.Product;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface ProductRepository extends JpaRepository<Product, Long> {
+}
