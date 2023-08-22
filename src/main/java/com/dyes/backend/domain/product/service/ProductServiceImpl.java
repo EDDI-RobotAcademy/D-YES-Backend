@@ -138,6 +138,7 @@ public class ProductServiceImpl implements ProductService{
         Product modifyProduct = maybeProduct.get();
         modifyProduct.setProductName(productModifyRequest.getProductName());
         modifyProduct.setProductDescription(productModifyRequest.getProductDescription());
+        modifyProduct.setCultivationMethod(productModifyRequest.getCultivationMethod());
         productRepository.save(modifyProduct);
 
         // 상품 메인 이미지 업데이트
