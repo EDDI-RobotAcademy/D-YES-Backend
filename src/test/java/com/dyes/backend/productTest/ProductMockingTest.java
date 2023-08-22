@@ -246,4 +246,26 @@ public class ProductMockingTest {
         assertEquals(modifyValue2, productOption2.getAmount().getValue());
         assertEquals(modifyUnit2, productOption2.getAmount().getUnit());
     }
+
+    @Test
+    @DisplayName("product mocking test: product delete")
+    public void 관리자가_상품을_삭제합니다 () {
+        Product product = Product.builder()
+                            .id(1L)
+                            .productName("상품명")
+                            .productDescription("상품 설명")
+                            .cultivationMethod(ENVIRONMENT_FRIENDLY)
+                            .build();
+
+        List<ProductDetailImages> productDetailImagesList = new ArrayList<>();
+        List<ProductOption> productOptionList = new ArrayList<>();
+
+        when(mockProductRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(mockProductMainImageRepository.findByProduct(product)).thenReturn(Optional.of(new ProductMainImage()));
+        when(mockProductDetailImagesRepository.findByProduct(product)).thenReturn(productDetailImagesList);
+        when(mockProductOptionRepository.findByProduct(product)).thenReturn(productOptionList);
+
+        boolean result = mockService.productDelete(1L);
+        assertTrue(result);
+    }
 }
