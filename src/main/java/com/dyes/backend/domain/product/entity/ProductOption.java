@@ -23,4 +23,6 @@ public class ProductOption {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_id")
     private Product product;
+    @Enumerated(EnumType.STRING)
+    private SaleStatus optionSaleStatus;
 }

@@ -19,4 +19,6 @@ public class Product {
     private String productDescription;
     @Enumerated(EnumType.STRING)
     private CultivationMethod cultivationMethod;
+    @Enumerated(EnumType.STRING)
+    private SaleStatus productSaleStatus;
 }
