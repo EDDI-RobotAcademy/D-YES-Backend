@@ -1,5 +1,8 @@
 package com.dyes.backend.domain.user.service;
 
+import com.dyes.backend.domain.admin.entity.Admin;
+import com.dyes.backend.domain.admin.entity.RoleType;
+import com.dyes.backend.domain.admin.repository.AdminRepository;
 import com.dyes.backend.domain.user.controller.form.UserProfileModifyRequestForm;
 import com.dyes.backend.domain.user.entity.Active;
 import com.dyes.backend.domain.user.entity.Address;
@@ -38,6 +41,7 @@ public class UserServiceImpl implements UserService {
     final private KakaoOauthSecretsProvider kakaoOauthSecretsProvider;
     final private UserRepository userRepository;
     final private UserProfileRepository userProfileRepository;
+    final private AdminRepository adminRepository;
     final private RedisService redisService;
     final private RestTemplate restTemplate;
     final private ObjectMapper objectMapper;
@@ -55,7 +59,19 @@ public class UserServiceImpl implements UserService {
         User user = googleUserSave(accessTokenResponse, userInfoResponse.getBody());
         log.info("user" + user);
 
-        final String userToken = "google" + UUID.randomUUID();
+        String userToken = "google" + UUID.randomUUID();
+
+        Optional<Admin> maybeAdmin = adminRepository.findByUser(user);
+        if(maybeAdmin.isPresent()) {
+            Admin admin = maybeAdmin.get();
+
+            if(admin.getRoleType().equals(RoleType.MAIN_ADMIN)) {
+                userToken = "mainadmin" + userToken;
+            } else if (admin.getRoleType().equals(RoleType.NORMAL_ADMIN)) {
+                userToken = "normaladmin" + userToken;
+            }
+        }
+
         redisService.setUserTokenAndUser(userToken, user.getAccessToken());
 
         final String redirectUrl = googleOauthSecretsProvider.getGOOGLE_REDIRECT_VIEW_URL();
@@ -279,7 +295,19 @@ public class UserServiceImpl implements UserService {
         User user = naverUserSave(accessTokenResponse, userInfoResponse);
         log.info("user: " + user);
 
-        final String userToken = "naver" + UUID.randomUUID();
+        String userToken = "naver" + UUID.randomUUID();
+
+        Optional<Admin> maybeAdmin = adminRepository.findByUser(user);
+        if(maybeAdmin.isPresent()) {
+            Admin admin = maybeAdmin.get();
+
+            if(admin.getRoleType().equals(RoleType.MAIN_ADMIN)) {
+                userToken = "mainadmin" + userToken;
+            } else if (admin.getRoleType().equals(RoleType.NORMAL_ADMIN)) {
+                userToken = "normaladmin" + userToken;
+            }
+        }
+
         redisService.setUserTokenAndUser(userToken, user.getAccessToken());
 
         final String redirectUrl = naverOauthSecretsProvider.getNAVER_REDIRECT_VIEW_URL();
@@ -515,6 +543,7 @@ public class UserServiceImpl implements UserService {
         KakaoAccessTokenResponseForm kakaoAccessTokenResponseForm = getAccessTokenFromKakao(code);
         final String accessToken = kakaoAccessTokenResponseForm.getAccess_token();
         final String refreshToken = kakaoAccessTokenResponseForm.getRefresh_token();
+        String userToken = "kakao" + UUID.randomUUID();
 
         log.info("kakao accessToken: " + accessToken);
         log.info("kakao refreshToken: " + refreshToken);
@@ -544,7 +573,6 @@ public class UserServiceImpl implements UserService {
 
             userProfileRepository.save(userProfile);
 
-            final String userToken = "kakao" + UUID.randomUUID();
             redisService.setUserTokenAndUser(userToken, accessToken);
 
             final String redirectUrl = kakaoOauthSecretsProvider.getKAKAO_REDIRECT_VIEW_URL();
@@ -558,7 +586,17 @@ public class UserServiceImpl implements UserService {
             user.setRefreshToken(refreshToken);
             userRepository.save(user);
 
-            final String userToken = "kakao" + UUID.randomUUID();
+            Optional<Admin> maybeAdmin = adminRepository.findByUser(user);
+            if(maybeAdmin.isPresent()) {
+                Admin admin = maybeAdmin.get();
+
+                if(admin.getRoleType().equals(RoleType.MAIN_ADMIN)) {
+                    userToken = "mainadmin" + userToken;
+                } else if (admin.getRoleType().equals(RoleType.NORMAL_ADMIN)) {
+                    userToken = "normaladmin" + userToken;
+                }
+            }
+
             redisService.setUserTokenAndUser(userToken, accessToken);
 
             final String redirectUrl = kakaoOauthSecretsProvider.getKAKAO_REDIRECT_VIEW_URL();
@@ -573,6 +611,17 @@ public class UserServiceImpl implements UserService {
             user.setRefreshToken(refreshToken);
             userRepository.save(user);
 
+            Optional<Admin> maybeAdmin = adminRepository.findByUser(user);
+            if(maybeAdmin.isPresent()) {
+                Admin admin = maybeAdmin.get();
+
+                if(admin.getRoleType().equals(RoleType.MAIN_ADMIN)) {
+                    userToken = "mainadmin" + userToken;
+                } else if (admin.getRoleType().equals(RoleType.NORMAL_ADMIN)) {
+                    userToken = "normaladmin" + userToken;
+                }
+            }
+
             UserProfile userProfile = UserProfile.builder()
                     .user(user)
                     .id(kakaoUserInfoResponseForm.getId())
@@ -581,8 +630,6 @@ public class UserServiceImpl implements UserService {
                     .build();
 
             userProfileRepository.save(userProfile);
-
-            final String userToken = "kakao" + UUID.randomUUID();
             redisService.setUserTokenAndUser(userToken, accessToken);
 
             final String redirectUrl = kakaoOauthSecretsProvider.getKAKAO_REDIRECT_VIEW_URL();
@@ -637,7 +684,7 @@ public class UserServiceImpl implements UserService {
 
             // 헤더 설정
             HttpHeaders httpHeaders = setHeaders();
-            httpHeaders.add("Authorization", "Bearer " + accessToken);
+            httpHeaders.add("Authorization", "Bearer " + kakaoAccessTokenResponseForm.getAccess_token());
 
             HttpEntity<String> requestEntity = new HttpEntity<>(httpHeaders);
 

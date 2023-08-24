@@ -1,4 +1,5 @@
 package com.dyes.backend.userTest;
+import com.dyes.backend.domain.admin.repository.AdminRepository;
 import com.dyes.backend.domain.user.entity.Active;
 import com.dyes.backend.domain.user.controller.form.UserProfileModifyRequestForm;
 import com.dyes.backend.domain.user.entity.Address;
@@ -50,6 +51,8 @@ public class UserMockingTest {
     @Mock
     private UserProfileRepository mockUserProfileRepository;
     @Mock
+    private AdminRepository mockAdminRepository;
+    @Mock
     private ObjectMapper mockObjectMapper;
     @InjectMocks
     private UserServiceImpl mockService;
@@ -64,6 +67,7 @@ public class UserMockingTest {
                 mockKakaoOauthSecretsProvider,
                 mockUserRepository,
                 mockUserProfileRepository,
+                mockAdminRepository,
                 mockRedisService,
                 mockRestTemplate,
                 mockObjectMapper
