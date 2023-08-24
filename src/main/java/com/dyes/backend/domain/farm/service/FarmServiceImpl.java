@@ -36,6 +36,7 @@ public class FarmServiceImpl implements FarmService{
                 .farmName(registerRequest.getFarmName())
                 .farmOwnerName(registerRequest.getFarmOwnerName())
                 .farmAddress(address)
+                .contactNumber(registerRequest.getContactNumber())
                 .build();
         farmRepository.save(farm);
 
