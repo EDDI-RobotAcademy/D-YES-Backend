@@ -1,22 +1,21 @@
 package com.dyes.backend.domain.product.service;
 
+import com.dyes.backend.domain.admin.entity.Admin;
+import com.dyes.backend.domain.admin.service.AdminService;
 import com.dyes.backend.domain.product.controller.form.ProductModifyForm;
 import com.dyes.backend.domain.product.controller.form.ProductRegisterForm;
+import com.dyes.backend.domain.product.service.Response.*;
 import com.dyes.backend.domain.product.service.request.*;
-import com.dyes.backend.domain.product.service.Response.ProductResponseForm;
 import com.dyes.backend.domain.product.entity.*;
 import com.dyes.backend.domain.product.repository.ProductDetailImagesRepository;
 import com.dyes.backend.domain.product.repository.ProductMainImageRepository;
 import com.dyes.backend.domain.product.repository.ProductOptionRepository;
 import com.dyes.backend.domain.product.repository.ProductRepository;
-import com.dyes.backend.domain.product.service.Response.ProductDetailImagesResponse;
-import com.dyes.backend.domain.product.service.Response.ProductMainImageResponse;
-import com.dyes.backend.domain.product.service.Response.ProductOptionResponse;
-import com.dyes.backend.domain.product.service.Response.ProductResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,6 +29,7 @@ public class ProductServiceImpl implements ProductService{
     final private ProductOptionRepository productOptionRepository;
     final private ProductMainImageRepository productMainImageRepository;
     final private ProductDetailImagesRepository productDetailImagesRepository;
+    final private AdminService adminService;
 
     // 상품 등록
     @Override
@@ -221,6 +221,49 @@ public class ProductServiceImpl implements ProductService{
 
         productRepository.delete(deleteProduct);
         return true;
+    }
+
+    @Override
+    public List<AdminProductListResponseForm> getAdminProductList(String userToken) {
+        final Admin admin = adminService.findAdminByUserToken(userToken);
+
+        if(admin == null) {
+            log.info("Can not find Admin");
+            return null;
+        }
+
+        // 최종적으로 관리자가 볼 상품 목록 form
+        List<AdminProductListResponseForm> adminProductListResponseFormList = new ArrayList<>();
+
+        // DB에서 상품 목록 조회
+        List<Product> productList = productRepository.findAll();
+        for(Product product: productList) {
+
+            // 찾은 상품의 옵션 목록
+            List<AdminProductOptionListResponse> adminProductOptionListResponseList = new ArrayList<>();
+
+            // DB에서 상품 옵션 목록 조회 후 form에 담기
+            List<ProductOption> productOptionList = productOptionRepository.findByProduct(product);
+            for(ProductOption productOption: productOptionList) {
+                AdminProductOptionListResponse adminProductOptionListResponse
+                        = new AdminProductOptionListResponse(
+                                productOption.getOptionName(),
+                                productOption.getOptionPrice(),
+                                productOption.getStock(),
+                                productOption.getOptionSaleStatus());
+
+                adminProductOptionListResponseList.add(adminProductOptionListResponse);
+            }
+            AdminProductListResponseForm adminProductListResponseForm
+                    = new AdminProductListResponseForm(
+                            product.getId(),
+                            product.getProductName(),
+                            product.getProductSaleStatus(),
+                            adminProductOptionListResponseList);
+            adminProductListResponseFormList.add(adminProductListResponseForm);
+        }
+
+        return adminProductListResponseFormList;
     }
 
     // unit 구별 util

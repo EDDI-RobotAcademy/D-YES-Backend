@@ -937,6 +937,7 @@ public class UserServiceImpl implements UserService {
      */
 
     // userToken으로 Redis에서 accessToken 조회 후 Oauth 서버로 사용자 정보 요청
+    @Override
     public User findUserByUserToken (String userToken) {
         final String accessToken = redisService.getAccessToken(userToken);
         if(accessToken == null){

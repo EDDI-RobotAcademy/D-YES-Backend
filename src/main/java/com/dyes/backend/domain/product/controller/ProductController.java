@@ -3,10 +3,13 @@ package com.dyes.backend.domain.product.controller;
 import com.dyes.backend.domain.product.controller.form.ProductModifyForm;
 import com.dyes.backend.domain.product.controller.form.ProductRegisterForm;
 import com.dyes.backend.domain.product.service.ProductService;
+import com.dyes.backend.domain.product.service.Response.AdminProductListResponseForm;
 import com.dyes.backend.domain.product.service.Response.ProductResponseForm;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -37,5 +40,11 @@ public class ProductController {
     @DeleteMapping("/delete")
     public boolean productDelete(@RequestParam(name = "productId") Long productId) {
         return productService.productDelete(productId);
+    }
+
+    // 관리자용 상품 목록 조회
+    @GetMapping("/admin/list")
+    public List<AdminProductListResponseForm> getAdminProductList(@RequestParam("userToken") String userToken) {
+        return productService.getAdminProductList(userToken);
     }
 }

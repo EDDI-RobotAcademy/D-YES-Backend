@@ -1,5 +1,6 @@
 package com.dyes.backend.productTest;
 
+import com.dyes.backend.domain.admin.service.AdminServiceImpl;
 import com.dyes.backend.domain.product.controller.form.ProductModifyForm;
 import com.dyes.backend.domain.product.controller.form.ProductRegisterForm;
 import com.dyes.backend.domain.product.service.request.*;
@@ -43,6 +44,7 @@ public class ProductMockingTest {
     private ProductDetailImagesRepository mockProductDetailImagesRepository;
     @InjectMocks
     private ProductServiceImpl mockService;
+    private AdminServiceImpl mockAdminService;
     @BeforeEach
     public void setup() throws Exception {
         MockitoAnnotations.initMocks(this);
@@ -51,7 +53,8 @@ public class ProductMockingTest {
                 mockProductRepository,
                 mockProductOptionRepository,
                 mockProductMainImageRepository,
-                mockProductDetailImagesRepository
+                mockProductDetailImagesRepository,
+                mockAdminService
         );
     }
     @Test

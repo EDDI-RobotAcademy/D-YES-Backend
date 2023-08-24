@@ -6,6 +6,7 @@ import com.dyes.backend.domain.admin.repository.AdminRepository;
 import com.dyes.backend.domain.admin.service.request.AdminRegisterRequest;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.repository.UserRepository;
+import com.dyes.backend.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ public class AdminServiceImpl implements AdminService {
 
     final private AdminRepository adminRepository;
     final private UserRepository userRepository;
+    final private UserService userService;
 
     @Override
     public boolean adminRegister(AdminRegisterRequestForm registerForm) {
@@ -55,5 +57,23 @@ public class AdminServiceImpl implements AdminService {
         adminRepository.save(admin);
 
         return true;
+    }
+
+    @Override
+    public Admin findAdminByUserToken(String userToken) {
+        final User user = userService.findUserByUserToken(userToken);
+        if(user == null) {
+            log.info("Can not find User");
+            return null;
+        }
+
+        Optional<Admin> maybeAdmin = adminRepository.findByUser(user);
+        if(maybeAdmin.isEmpty()) {
+            log.info("Can not find Admin");
+            return null;
+        }
+
+        Admin admin = maybeAdmin.get();
+        return admin;
     }
 }
