@@ -637,7 +637,7 @@ public class UserServiceImpl implements UserService {
 
             // 헤더 설정
             HttpHeaders httpHeaders = setHeaders();
-            httpHeaders.add("Authorization", "Bearer " + accessToken);
+            httpHeaders.add("Authorization", "Bearer " + kakaoAccessTokenResponseForm.getAccess_token());
 
             HttpEntity<String> requestEntity = new HttpEntity<>(httpHeaders);
 
