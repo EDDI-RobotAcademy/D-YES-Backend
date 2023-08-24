@@ -94,11 +94,11 @@ public class ProductMockingTest {
     public void 사용자가_상품을_볼_수_있습니다 () {
         final Long productId = 1L;
 
-        Product product = new Product(productId, "상품 이름","상세 설명", CultivationMethod.ORGANIC);
+        Product product = new Product(productId, "상품 이름","상세 설명", CultivationMethod.ORGANIC, SaleStatus.AVAILABLE);
         when(mockProductRepository.findById(productId)).thenReturn(Optional.of(product));
 
         List<ProductOption> productOption = new ArrayList<>();
-        productOption.add(new ProductOption(1L, "옵션 이름", 1L, 1, new Amount(),  product));
+        productOption.add(new ProductOption(1L, "옵션 이름", 1L, 1, new Amount(),  product, SaleStatus.AVAILABLE));
         ProductMainImage mainImage = new ProductMainImage(product.getId(), "메인 이미지", product);
         List<ProductDetailImages> detailImages = new ArrayList<>();
         detailImages.add(new ProductDetailImages(1L, "디테일 이미지", product));

@@ -20,6 +20,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
+import static com.dyes.backend.domain.product.entity.SaleStatus.AVAILABLE;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -44,6 +46,7 @@ public class ProductServiceImpl implements ProductService{
                     .productName(productRequest.getProductName())
                     .productDescription(productRequest.getProductDescription())
                     .cultivationMethod(cultivationMethodDecision(productRequest.getCultivationMethod()))
+                    .productSaleStatus(AVAILABLE)
                     .build();
             log.info("product: " + product);
             productRepository.save(product);
@@ -58,6 +61,7 @@ public class ProductServiceImpl implements ProductService{
                                 .unit(unitDecision(productOptionRegisterRequests.get(i).getUnit()))
                                 .build())
                         .product(product)
+                        .optionSaleStatus(AVAILABLE)
                         .build();
                 log.info("productOption: " + productOption);
                 productOptionRepository.save(productOption);
