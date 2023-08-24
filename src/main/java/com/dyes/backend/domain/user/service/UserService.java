@@ -1,6 +1,7 @@
 package com.dyes.backend.domain.user.service;
 
 import com.dyes.backend.domain.user.controller.form.UserProfileModifyRequestForm;
+import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.service.response.UserProfileResponseForm;
 
 public interface UserService {
@@ -13,4 +14,5 @@ public interface UserService {
     UserProfileResponseForm modifyUserProfile(UserProfileModifyRequestForm requestForm);
     boolean userWithdraw(String userToken);
     boolean UserLogOut (String userToken);
+    User findUserByUserToken (String userToken);
 }
