@@ -3,11 +3,9 @@ package com.dyes.backend.adminTest;
 import com.dyes.backend.domain.admin.controller.form.AdminRegisterRequestForm;
 import com.dyes.backend.domain.admin.repository.AdminRepository;
 import com.dyes.backend.domain.admin.service.AdminServiceImpl;
-import com.dyes.backend.domain.product.service.ProductServiceImpl;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.repository.UserRepository;
 import com.dyes.backend.domain.user.service.UserService;
-import com.dyes.backend.domain.user.service.UserServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,6 +26,7 @@ public class AdminMockingTest {
     private AdminRepository mockAdminRepository;
     @Mock
     private UserRepository mockUserRepository;
+    @Mock
     private UserService userService;
     @InjectMocks
     private AdminServiceImpl mockAdminService;
