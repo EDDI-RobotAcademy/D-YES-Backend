@@ -3,6 +3,7 @@ package com.dyes.backend.domain.product.service;
 import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.service.AdminService;
 import com.dyes.backend.domain.product.controller.form.ProductDeleteForm;
+import com.dyes.backend.domain.product.controller.form.ProductListDeleteForm;
 import com.dyes.backend.domain.product.controller.form.ProductModifyForm;
 import com.dyes.backend.domain.product.controller.form.ProductRegisterForm;
 import com.dyes.backend.domain.product.service.Response.*;
@@ -243,6 +244,40 @@ public class ProductServiceImpl implements ProductService{
         }
 
         productRepository.delete(deleteProduct);
+        return true;
+    }
+
+    @Override
+    public boolean productListDelete(ProductListDeleteForm listDeleteForm) {
+        final Admin admin = adminService.findAdminByUserToken(listDeleteForm.getUserToken());
+
+        if(admin == null) {
+            log.info("Can not find Admin");
+            return false;
+        }
+
+        List<Product> productList = productRepository.findAllById(listDeleteForm.getProductIdList());
+        for(Product deleteProduct: productList) {
+            Optional<ProductMainImage> maybeProductMainImage = productMainImageRepository.findByProduct(deleteProduct);
+            if(maybeProductMainImage.isEmpty()) {
+                log.info("ProductMainImage is empty");
+                return false;
+            }
+            ProductMainImage deleteProductMainImage = maybeProductMainImage.get();
+            productMainImageRepository.delete(deleteProductMainImage);
+
+            List<ProductDetailImages> deleteProductDetailImagesList = productDetailImagesRepository.findByProduct(deleteProduct);
+            for(ProductDetailImages productDetailImages: deleteProductDetailImagesList) {
+                productDetailImagesRepository.delete(productDetailImages);
+            }
+
+            List<ProductOption> deleteProductOptionList = productOptionRepository.findByProduct(deleteProduct);
+            for(ProductOption productOption: deleteProductOptionList) {
+                productOptionRepository.delete(productOption);
+            }
+
+            productRepository.delete(deleteProduct);
+        }
         return true;
     }
 

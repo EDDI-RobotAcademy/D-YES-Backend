@@ -1,6 +1,7 @@
 package com.dyes.backend.domain.product.service;
 
 import com.dyes.backend.domain.product.controller.form.ProductDeleteForm;
+import com.dyes.backend.domain.product.controller.form.ProductListDeleteForm;
 import com.dyes.backend.domain.product.controller.form.ProductModifyForm;
 import com.dyes.backend.domain.product.controller.form.ProductRegisterForm;
 import com.dyes.backend.domain.product.service.Response.AdminProductListResponseForm;
@@ -14,6 +15,7 @@ public interface ProductService {
     ProductResponseForm readProduct(Long productId);
     boolean productModify(ProductModifyForm modifyForm);
     boolean productDelete(ProductDeleteForm deleteForm);
+    boolean productListDelete(ProductListDeleteForm listDeleteForm);
     List<AdminProductListResponseForm> getAdminProductList(String userToken);
     List<UserProductListResponseForm> getUserProductList();
 }

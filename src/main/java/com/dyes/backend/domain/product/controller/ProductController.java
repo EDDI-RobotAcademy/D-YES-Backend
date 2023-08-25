@@ -1,6 +1,7 @@
 package com.dyes.backend.domain.product.controller;
 
 import com.dyes.backend.domain.product.controller.form.ProductDeleteForm;
+import com.dyes.backend.domain.product.controller.form.ProductListDeleteForm;
 import com.dyes.backend.domain.product.controller.form.ProductModifyForm;
 import com.dyes.backend.domain.product.controller.form.ProductRegisterForm;
 import com.dyes.backend.domain.product.service.ProductService;
@@ -42,6 +43,12 @@ public class ProductController {
     @DeleteMapping("/delete")
     public boolean productDelete(@RequestBody ProductDeleteForm deleteForm) {
         return productService.productDelete(deleteForm);
+    }
+
+    // 상품 여러 개 삭제(관리자용)
+    @DeleteMapping("/deleteList")
+    public boolean productDelete(@RequestBody ProductListDeleteForm listDeleteForm) {
+        return productService.productListDelete(listDeleteForm);
     }
 
     // 상품 목록 조회(관리자용)
