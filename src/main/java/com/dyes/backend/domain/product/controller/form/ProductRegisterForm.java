@@ -14,6 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductRegisterForm {
+    private String userToken;
     private ProductRegisterRequest productRegisterRequest;
     private List<ProductOptionRegisterRequest> productOptionRegisterRequest;
     private ProductMainImageRegisterRequest productMainImageRegisterRequest;

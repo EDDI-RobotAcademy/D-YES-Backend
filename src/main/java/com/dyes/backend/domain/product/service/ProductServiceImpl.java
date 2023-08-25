@@ -2,6 +2,7 @@ package com.dyes.backend.domain.product.service;
 
 import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.service.AdminService;
+import com.dyes.backend.domain.product.controller.form.ProductDeleteForm;
 import com.dyes.backend.domain.product.controller.form.ProductModifyForm;
 import com.dyes.backend.domain.product.controller.form.ProductRegisterForm;
 import com.dyes.backend.domain.product.service.Response.*;
@@ -36,6 +37,13 @@ public class ProductServiceImpl implements ProductService{
     @Override
     public boolean productRegistration(ProductRegisterForm registerForm) {
         log.info("productRegistration start");
+
+        final Admin admin = adminService.findAdminByUserToken(registerForm.getUserToken());
+
+        if(admin == null) {
+            log.info("Can not find Admin");
+            return false;
+        }
 
         ProductRegisterRequest productRequest = registerForm.getProductRegisterRequest();
         List<ProductOptionRegisterRequest> productOptionRegisterRequests = registerForm.getProductOptionRegisterRequest();
@@ -127,6 +135,13 @@ public class ProductServiceImpl implements ProductService{
     // 상품 수정
     @Override
     public boolean productModify(ProductModifyForm modifyForm) {
+        final Admin admin = adminService.findAdminByUserToken(modifyForm.getUserToken());
+
+        if(admin == null) {
+            log.info("Can not find Admin");
+            return false;
+        }
+
         ProductModifyRequest productModifyRequest = modifyForm.getProductModifyRequest();
         ProductMainImageModifyRequest productMainImageModifyRequest = modifyForm.getProductMainImageModifyRequest();
         List<ProductDetailImagesModifyRequest> productDetailImagesModifyRequestList = modifyForm.getProductDetailImagesModifyRequest();
@@ -194,8 +209,15 @@ public class ProductServiceImpl implements ProductService{
 
     // 상품 삭제
     @Override
-    public boolean productDelete(Long productId) {
-        Optional<Product> maybeProduct = productRepository.findById(productId);
+    public boolean productDelete(ProductDeleteForm deleteForm) {
+        final Admin admin = adminService.findAdminByUserToken(deleteForm.getUserToken());
+
+        if(admin == null) {
+            log.info("Can not find Admin");
+            return false;
+        }
+
+        Optional<Product> maybeProduct = productRepository.findById(deleteForm.getProductId());
         if(maybeProduct.isEmpty()) {
             log.info("Product is empty");
             return false;

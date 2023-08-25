@@ -1,5 +1,6 @@
 package com.dyes.backend.domain.product.controller;
 
+import com.dyes.backend.domain.product.controller.form.ProductDeleteForm;
 import com.dyes.backend.domain.product.controller.form.ProductModifyForm;
 import com.dyes.backend.domain.product.controller.form.ProductRegisterForm;
 import com.dyes.backend.domain.product.service.ProductService;
@@ -19,37 +20,37 @@ import java.util.List;
 public class ProductController {
     final private ProductService productService;
 
-    // 상품 등록
+    // 상품 등록(관리자용)
     @PostMapping("/register")
     public boolean productRegister(@RequestBody ProductRegisterForm registerForm) {
         return productService.productRegistration(registerForm);
     }
 
-    // 상품 읽기
+    // 상품 읽기(공용)
     @GetMapping("/read")
     public ProductResponseForm productRequester(@RequestParam(name = "productId") Long productId) {
         return productService.readProduct(productId);
     }
 
-    // 상품 수정
+    // 상품 수정(관리자용)
     @PutMapping("/modify")
     public boolean productModify(@RequestBody ProductModifyForm modifyForm) {
         return productService.productModify(modifyForm);
     }
 
-    // 상품 삭제
+    // 상품 삭제(관리자용)
     @DeleteMapping("/delete")
-    public boolean productDelete(@RequestParam(name = "productId") Long productId) {
-        return productService.productDelete(productId);
+    public boolean productDelete(@RequestBody ProductDeleteForm deleteForm) {
+        return productService.productDelete(deleteForm);
     }
 
-    // 관리자용 상품 목록 조회
+    // 상품 목록 조회(관리자용)
     @GetMapping("/admin/list")
     public List<AdminProductListResponseForm> getAdminProductList(@RequestParam("userToken") String userToken) {
         return productService.getAdminProductList(userToken);
     }
 
-    // 일반 사용자용 상품 목록 조회
+    // 상품 목록 조회(사용자용)
     @GetMapping("/user/list")
     public List<UserProductListResponseForm> getUserProductList() {
         return productService.getUserProductList();

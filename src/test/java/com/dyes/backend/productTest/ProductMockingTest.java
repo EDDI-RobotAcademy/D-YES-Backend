@@ -3,6 +3,7 @@ package com.dyes.backend.productTest;
 import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.repository.AdminRepository;
 import com.dyes.backend.domain.admin.service.AdminServiceImpl;
+import com.dyes.backend.domain.product.controller.form.ProductDeleteForm;
 import com.dyes.backend.domain.product.controller.form.ProductModifyForm;
 import com.dyes.backend.domain.product.controller.form.ProductRegisterForm;
 import com.dyes.backend.domain.product.service.request.*;
@@ -87,6 +88,7 @@ public class ProductMockingTest {
         final String cultivationMethod = "organic";
         final String mainImage = "메인 이미지";
         final String detailImages = "디테일 이미지1";
+        final String userToken = "mainadmin-dskef3rkewj-welkjw";
 
         ProductRegisterRequest productRegisterRequest = new ProductRegisterRequest(productName, productDescription, cultivationMethod);
         ProductOptionRegisterRequest productOptionRegisterRequest = new ProductOptionRegisterRequest(optionName, optionPrice, stock, value, unit);
@@ -94,11 +96,18 @@ public class ProductMockingTest {
         ProductDetailImagesRegisterRequest productDetailImagesRegisterRequest = new ProductDetailImagesRegisterRequest(detailImages);
 
         ProductRegisterForm registerForm = new ProductRegisterForm(
+                userToken,
                 productRegisterRequest,
                 Arrays.asList(productOptionRegisterRequest),
                 productMainImageRegisterRequest,
                 Arrays.asList(productDetailImagesRegisterRequest)
                 );
+
+        when(mockAdminService.findAdminByUserToken(userToken)).thenReturn(new Admin());
+        when(mockUserRepository.findByStringId(anyString())).thenReturn(Optional.of(new User()));
+        when(mockAdminRepository.findByUser(new User())).thenReturn(Optional.of(new Admin()));
+        when(mockRedisService.getAccessToken(userToken)).thenReturn("accessToken");
+        when(mockUserService.findUserByUserToken(userToken)).thenReturn(new User());
 
         boolean result = mockService.productRegistration(registerForm);
         assertTrue(result);
@@ -175,6 +184,8 @@ public class ProductMockingTest {
         final Long modifyValue2 = 2L;
         final Unit modifyUnit2 = KG;
 
+        final String userToken = "mainadmin-dskef3rkewj-welkjw";
+
         Product product = Product.builder()
                             .productName("상품명")
                             .productDescription("상품 설명")
@@ -225,10 +236,17 @@ public class ProductMockingTest {
         productOptionModifyRequestList.add(productOption2ModifyRequest);
 
         ProductModifyForm modifyForm = new ProductModifyForm(
+                userToken,
                 productModifyRequest,
                 productOptionModifyRequestList,
                 productMainImageModifyRequest,
                 productDetailImagesModifyRequestList);
+
+        when(mockAdminService.findAdminByUserToken(userToken)).thenReturn(new Admin());
+        when(mockUserRepository.findByStringId(anyString())).thenReturn(Optional.of(new User()));
+        when(mockAdminRepository.findByUser(new User())).thenReturn(Optional.of(new Admin()));
+        when(mockRedisService.getAccessToken(userToken)).thenReturn("accessToken");
+        when(mockUserService.findUserByUserToken(userToken)).thenReturn(new User());
 
         when(mockProductRepository.findById(modifyProductId)).thenReturn(Optional.of(product));
         when(mockProductMainImageRepository.findById(modifyMainImageId)).thenReturn(Optional.of(productMainImage));
@@ -270,6 +288,7 @@ public class ProductMockingTest {
     @Test
     @DisplayName("product mocking test: product delete")
     public void 관리자가_상품을_삭제합니다 () {
+        final String userToken = "mainadmin-dskef3rkewj-welkjw";
         Product product = Product.builder()
                             .id(1L)
                             .productName("상품명")
@@ -280,12 +299,18 @@ public class ProductMockingTest {
         List<ProductDetailImages> productDetailImagesList = new ArrayList<>();
         List<ProductOption> productOptionList = new ArrayList<>();
 
+        when(mockAdminService.findAdminByUserToken(userToken)).thenReturn(new Admin());
+        when(mockUserRepository.findByStringId(anyString())).thenReturn(Optional.of(new User()));
+        when(mockAdminRepository.findByUser(new User())).thenReturn(Optional.of(new Admin()));
+        when(mockRedisService.getAccessToken(userToken)).thenReturn("accessToken");
+        when(mockUserService.findUserByUserToken(userToken)).thenReturn(new User());
+
         when(mockProductRepository.findById(1L)).thenReturn(Optional.of(product));
         when(mockProductMainImageRepository.findByProduct(product)).thenReturn(Optional.of(new ProductMainImage()));
         when(mockProductDetailImagesRepository.findByProduct(product)).thenReturn(productDetailImagesList);
         when(mockProductOptionRepository.findByProduct(product)).thenReturn(productOptionList);
 
-        boolean result = mockService.productDelete(1L);
+        boolean result = mockService.productDelete(new ProductDeleteForm(userToken, 1L));
         assertTrue(result);
     }
 
