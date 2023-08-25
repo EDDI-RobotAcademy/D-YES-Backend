@@ -1,5 +1,7 @@
 package com.dyes.backend.productTest;
 
+import com.dyes.backend.domain.admin.entity.Admin;
+import com.dyes.backend.domain.admin.repository.AdminRepository;
 import com.dyes.backend.domain.admin.service.AdminServiceImpl;
 import com.dyes.backend.domain.product.controller.form.ProductModifyForm;
 import com.dyes.backend.domain.product.controller.form.ProductRegisterForm;
@@ -11,6 +13,10 @@ import com.dyes.backend.domain.product.repository.ProductOptionRepository;
 import com.dyes.backend.domain.product.repository.ProductRepository;
 import com.dyes.backend.domain.product.service.ProductServiceImpl;
 import com.dyes.backend.domain.product.service.Response.*;
+import com.dyes.backend.domain.user.entity.User;
+import com.dyes.backend.domain.user.repository.UserRepository;
+import com.dyes.backend.domain.user.service.UserServiceImpl;
+import com.dyes.backend.utility.redis.RedisServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,6 +32,8 @@ import java.util.Optional;
 
 import static com.dyes.backend.domain.product.entity.CultivationMethod.ENVIRONMENT_FRIENDLY;
 import static com.dyes.backend.domain.product.entity.CultivationMethod.PESTICIDE_FREE;
+import static com.dyes.backend.domain.product.entity.SaleStatus.AVAILABLE;
+import static com.dyes.backend.domain.product.entity.SaleStatus.UNAVAILABLE;
 import static com.dyes.backend.domain.product.entity.Unit.KG;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -42,9 +50,18 @@ public class ProductMockingTest {
     private ProductMainImageRepository mockProductMainImageRepository;
     @Mock
     private ProductDetailImagesRepository mockProductDetailImagesRepository;
+    @Mock
+    private AdminRepository mockAdminRepository;
+    @Mock
+    private UserRepository mockUserRepository;
+    @Mock
+    private AdminServiceImpl mockAdminService;
+    @Mock
+    private UserServiceImpl mockUserService;
+    @Mock
+    private RedisServiceImpl mockRedisService;
     @InjectMocks
     private ProductServiceImpl mockService;
-    private AdminServiceImpl mockAdminService;
     @BeforeEach
     public void setup() throws Exception {
         MockitoAnnotations.initMocks(this);
@@ -97,11 +114,11 @@ public class ProductMockingTest {
     public void 사용자가_상품을_볼_수_있습니다 () {
         final Long productId = 1L;
 
-        Product product = new Product(productId, "상품 이름","상세 설명", CultivationMethod.ORGANIC, SaleStatus.AVAILABLE);
+        Product product = new Product(productId, "상품 이름","상세 설명", CultivationMethod.ORGANIC, AVAILABLE);
         when(mockProductRepository.findById(productId)).thenReturn(Optional.of(product));
 
         List<ProductOption> productOption = new ArrayList<>();
-        productOption.add(new ProductOption(1L, "옵션 이름", 1L, 1, new Amount(),  product, SaleStatus.AVAILABLE));
+        productOption.add(new ProductOption(1L, "옵션 이름", 1L, 1, new Amount(),  product, AVAILABLE));
         ProductMainImage mainImage = new ProductMainImage(product.getId(), "메인 이미지", product);
         List<ProductDetailImages> detailImages = new ArrayList<>();
         detailImages.add(new ProductDetailImages(1L, "디테일 이미지", product));
@@ -270,5 +287,139 @@ public class ProductMockingTest {
 
         boolean result = mockService.productDelete(1L);
         assertTrue(result);
+    }
+
+    @Test
+    @DisplayName("product mocking test: admin product list")
+    public void 관리자가_상품목록을_조회합니다 () {
+        final String userToken = "normaladmin-ekjfw3rlkgj-4oi34klng";
+        List<Product> productList = new ArrayList<>();
+        List<ProductOption> productOptionList = new ArrayList<>();
+
+        Product product1 = Product.builder()
+                .id(1L)
+                .productName("상품명1")
+                .productDescription("상품 설명1")
+                .cultivationMethod(ENVIRONMENT_FRIENDLY)
+                .productSaleStatus(AVAILABLE)
+                .build();
+
+        Product product2 = Product.builder()
+                .id(2L)
+                .productName("상품명2")
+                .productDescription("상품 설명2")
+                .cultivationMethod(ENVIRONMENT_FRIENDLY)
+                .productSaleStatus(UNAVAILABLE)
+                .build();
+
+        productList.add(product1);
+        productList.add(product2);
+
+        ProductOption productOption1 = ProductOption.builder()
+                .optionName("상품옵션1")
+                .optionPrice(13000L)
+                .stock(20)
+                .amount(new Amount())
+                .product(product1)
+                .optionSaleStatus(AVAILABLE)
+                .build();
+
+        ProductOption productOption2 = ProductOption.builder()
+                .optionName("상품옵션2")
+                .optionPrice(15000L)
+                .stock(70)
+                .amount(new Amount())
+                .product(product2)
+                .optionSaleStatus(AVAILABLE)
+                .build();
+
+        productOptionList.add(productOption1);
+        productOptionList.add(productOption2);
+
+        when(mockAdminService.findAdminByUserToken(userToken)).thenReturn(new Admin());
+        when(mockUserRepository.findByStringId(anyString())).thenReturn(Optional.of(new User()));
+        when(mockAdminRepository.findByUser(new User())).thenReturn(Optional.of(new Admin()));
+        when(mockProductRepository.findAll()).thenReturn(productList);
+        when(mockProductOptionRepository.findByProduct(productList.get(0))).thenReturn(productOptionList);
+        when(mockProductOptionRepository.findByProduct(productList.get(1))).thenReturn(productOptionList);
+        when(mockRedisService.getAccessToken(userToken)).thenReturn("accessToken");
+        when(mockUserService.findUserByUserToken(userToken)).thenReturn(new User());
+
+        List<AdminProductListResponseForm> result = mockService.getAdminProductList(userToken);
+
+        assertEquals(result.get(0).getProductName(), "상품명1");
+        assertEquals(result.get(0).getProductId(), 1L);
+        assertEquals(result.get(0).getProductSaleStatus(), AVAILABLE);
+        assertEquals(result.get(0).getProductOptionListResponse().get(0).getOptionName(), "상품옵션1");
+        assertEquals(result.get(0).getProductOptionListResponse().get(0).getStock(), 20);
+
+        assertEquals(result.get(1).getProductName(), "상품명2");
+        assertEquals(result.get(1).getProductId(), 2L);
+        assertEquals(result.get(1).getProductSaleStatus(), UNAVAILABLE);
+        assertEquals(result.get(1).getProductOptionListResponse().get(1).getOptionName(), "상품옵션2");
+        assertEquals(result.get(1).getProductOptionListResponse().get(1).getStock(), 70);
+    }
+
+    @Test
+    @DisplayName("product mocking test: user product list")
+    public void 사용자가_상품목록을_조회합니다 () {
+        List<Product> productList = new ArrayList<>();
+        List<ProductOption> productOptionList = new ArrayList<>();
+
+        Product product1 = Product.builder()
+                .id(1L)
+                .productName("상품명1")
+                .productDescription("상품 설명1")
+                .cultivationMethod(ENVIRONMENT_FRIENDLY)
+                .productSaleStatus(AVAILABLE)
+                .build();
+
+        Product product2 = Product.builder()
+                .id(2L)
+                .productName("상품명2")
+                .productDescription("상품 설명2")
+                .cultivationMethod(ENVIRONMENT_FRIENDLY)
+                .productSaleStatus(UNAVAILABLE)
+                .build();
+
+        productList.add(product1);
+        productList.add(product2);
+
+        ProductOption productOption1 = ProductOption.builder()
+                .optionName("상품옵션1")
+                .optionPrice(13000L)
+                .stock(20)
+                .amount(new Amount())
+                .product(product1)
+                .optionSaleStatus(AVAILABLE)
+                .build();
+
+        ProductOption productOption2 = ProductOption.builder()
+                .optionName("상품옵션2")
+                .optionPrice(15000L)
+                .stock(70)
+                .amount(new Amount())
+                .product(product2)
+                .optionSaleStatus(AVAILABLE)
+                .build();
+
+        productOptionList.add(productOption1);
+        productOptionList.add(productOption2);
+
+        when(mockProductRepository.findAll()).thenReturn(productList);
+        when(mockProductOptionRepository.findByProduct(productList.get(0))).thenReturn(productOptionList);
+        when(mockProductOptionRepository.findByProduct(productList.get(1))).thenReturn(productOptionList);
+
+        List<UserProductListResponseForm> result = mockService.getUserProductList();
+
+        assertEquals(result.get(0).getProductName(), "상품명1");
+        assertEquals(result.get(0).getProductId(), 1L);
+        assertEquals(result.get(0).getIsSoldOut(), false);
+        assertEquals(result.get(0).getMinOptionPrice(), 13000L);
+
+        assertEquals(result.get(1).getProductName(), "상품명2");
+        assertEquals(result.get(1).getProductId(), 2L);
+        assertEquals(result.get(1).getIsSoldOut(), false);
+        assertEquals(result.get(1).getMinOptionPrice(), 13000L);
     }
 }

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.dyes.backend.domain.product.entity.SaleStatus.AVAILABLE;
+import static com.dyes.backend.utility.number.NumberUtils.findMinValue;
 
 @Service
 @Slf4j
@@ -223,6 +224,7 @@ public class ProductServiceImpl implements ProductService{
         return true;
     }
 
+    // 관리자용 상품 목록 조회
     @Override
     public List<AdminProductListResponseForm> getAdminProductList(String userToken) {
         final Admin admin = adminService.findAdminByUserToken(userToken);
@@ -266,6 +268,55 @@ public class ProductServiceImpl implements ProductService{
         return adminProductListResponseFormList;
     }
 
+    // 일반 사용자용 상품 목록 조회
+    @Override
+    public List<UserProductListResponseForm> getUserProductList() {
+        List<UserProductListResponseForm> userProductListResponseFormList = new ArrayList<>();
+
+        // DB에서 상품 목록 조회
+        List<Product> productList = productRepository.findAll();
+        for(Product product: productList) {
+
+            List<Long> optionPriceList = new ArrayList<>();
+            Long minOptionPrice = 0L;
+            int totalOptionStock = 0;
+            Boolean isSoldOut = false;
+            String productMainImage = null;
+
+            // DB에서 상품 옵션 최저가 및 재고 조회
+            List<ProductOption> productOptionList = productOptionRepository.findByProduct(product);
+            for(ProductOption productOption: productOptionList) {
+
+                optionPriceList.add(productOption.getOptionPrice());
+                minOptionPrice = findMinValue(optionPriceList);
+
+                totalOptionStock = totalOptionStock + productOption.getStock();
+            }
+            if(totalOptionStock == 0) {
+                isSoldOut = true;
+            }
+
+            // DB에서 상품 메인 이미지 이름 조회
+            Optional<ProductMainImage> maybeProductMainImage = productMainImageRepository.findByProduct(product);
+            if(maybeProductMainImage.isPresent()) {
+                productMainImage = maybeProductMainImage.get().getMainImg();
+            }
+
+            // 최종적으로 반환할 상품 목록 form
+            UserProductListResponseForm userProductListResponseForm
+                    = new UserProductListResponseForm(
+                    product.getId(),
+                    product.getProductName(),
+                    product.getCultivationMethod(),
+                    productMainImage,
+                    minOptionPrice,
+                    isSoldOut);
+            userProductListResponseFormList.add(userProductListResponseForm);
+        }
+
+        return userProductListResponseFormList;
+    }
+
     // unit 구별 util
     public Unit unitDecision (String unit) {
         if (unit.equals("KG")) {
@@ -276,6 +327,7 @@ public class ProductServiceImpl implements ProductService{
             return Unit.EA;
         }
     }
+
     // cultivation method 구별 util
     public CultivationMethod cultivationMethodDecision (String cultivationMethod) {
         if (cultivationMethod.equals("PESTICIDE_FREE")) {

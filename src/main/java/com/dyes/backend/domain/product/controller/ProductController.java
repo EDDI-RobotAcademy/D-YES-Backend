@@ -5,6 +5,7 @@ import com.dyes.backend.domain.product.controller.form.ProductRegisterForm;
 import com.dyes.backend.domain.product.service.ProductService;
 import com.dyes.backend.domain.product.service.Response.AdminProductListResponseForm;
 import com.dyes.backend.domain.product.service.Response.ProductResponseForm;
+import com.dyes.backend.domain.product.service.Response.UserProductListResponseForm;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -46,5 +47,11 @@ public class ProductController {
     @GetMapping("/admin/list")
     public List<AdminProductListResponseForm> getAdminProductList(@RequestParam("userToken") String userToken) {
         return productService.getAdminProductList(userToken);
+    }
+
+    // 일반 사용자용 상품 목록 조회
+    @GetMapping("/user/list")
+    public List<UserProductListResponseForm> getUserProductList() {
+        return productService.getUserProductList();
     }
 }
