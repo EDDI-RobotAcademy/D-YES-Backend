@@ -19,7 +19,7 @@ public class FarmRegisterRequestForm {
 
     // 소비자가 보는 농가 정보
     private String farmName;
-    private String CSContactNumber;
+    private String csContactNumber;
     private String address;
     private String zipCode;
     private String addressDetail;
@@ -34,7 +34,7 @@ public class FarmRegisterRequestForm {
     private String representativeContactNumber;
 
     public FarmRegisterRequest toFarmRegisterRequest () {
-        return new FarmRegisterRequest(farmName, CSContactNumber, address, zipCode, addressDetail, mainImage, introduction, produceTypes);
+        return new FarmRegisterRequest(farmName, csContactNumber, address, zipCode, addressDetail, mainImage, introduction, produceTypes);
     }
 
     public FarmOperationRegisterRequest toFarmOperationRegisterRequest () {

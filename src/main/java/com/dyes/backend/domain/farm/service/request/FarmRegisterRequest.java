@@ -12,7 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 public class FarmRegisterRequest {
     private String farmName;
-    private String CSContactNumber;
+    private String csContactNumber;
     private String address;
     private String zipCode;
     private String addressDetail;

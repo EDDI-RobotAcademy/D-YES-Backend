@@ -40,7 +40,7 @@ public class FarmServiceImpl implements FarmService{
         Address address = new Address(registerRequest.getAddress(), registerRequest.getZipCode(), registerRequest.getAddressDetail());
         Farm farm = Farm.builder()
                 .farmName(registerRequest.getFarmName())
-                .CSContactNumber(registerRequest.getCSContactNumber())
+                .CSContactNumber(registerRequest.getCsContactNumber())
                 .farmAddress(address)
                 .mainImage(registerRequest.getMainImage())
                 .introduction(registerRequest.getIntroduction())
@@ -49,10 +49,12 @@ public class FarmServiceImpl implements FarmService{
         farmRepository.save(farm);
 
         FarmOperation farmOperation = FarmOperation.builder()
+                .id(farm.getId())
                 .businessName(operationRegisterRequest.getBusinessName())
                 .businessNumber(operationRegisterRequest.getBusinessNumber())
                 .representativeName(operationRegisterRequest.getRepresentativeName())
                 .representativeContactNumber(operationRegisterRequest.getRepresentativeContactNumber())
+                .farm(farm)
                 .build();
         farmOperationRepository.save(farmOperation);
 
