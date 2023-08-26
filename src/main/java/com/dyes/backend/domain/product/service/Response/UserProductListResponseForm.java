@@ -15,4 +15,7 @@ public class UserProductListResponseForm {
     private String productMainImage;
     private Long minOptionPrice;
     private Boolean isSoldOut;
+    private String farmName;
+    private String mainImage;
+    private String representativeName;
 }

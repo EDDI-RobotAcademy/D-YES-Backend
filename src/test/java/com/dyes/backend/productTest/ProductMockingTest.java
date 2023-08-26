@@ -4,6 +4,8 @@ import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.repository.AdminRepository;
 import com.dyes.backend.domain.admin.service.AdminService;
 import com.dyes.backend.domain.farm.entity.Farm;
+import com.dyes.backend.domain.farm.entity.FarmOperation;
+import com.dyes.backend.domain.farm.repository.FarmOperationRepository;
 import com.dyes.backend.domain.farm.repository.FarmRepository;
 import com.dyes.backend.domain.product.controller.form.ProductDeleteForm;
 import com.dyes.backend.domain.product.controller.form.ProductModifyForm;
@@ -60,6 +62,8 @@ public class ProductMockingTest {
     @Mock
     private FarmRepository mockFarmRepository;
     @Mock
+    private FarmOperationRepository mockFarmOperationRepository;
+    @Mock
     private AdminService mockAdminService;
     @Mock
     private UserServiceImpl mockUserService;
@@ -77,6 +81,7 @@ public class ProductMockingTest {
                 mockProductMainImageRepository,
                 mockProductDetailImagesRepository,
                 mockFarmRepository,
+                mockFarmOperationRepository,
                 mockAdminService
         );
     }
@@ -401,12 +406,24 @@ public class ProductMockingTest {
         List<Product> productList = new ArrayList<>();
         List<ProductOption> productOptionList = new ArrayList<>();
 
+        Farm farm = Farm.builder()
+                .farmName("투투농장")
+                .mainImage("mainImage")
+                .build();
+
+        FarmOperation farmOperation = FarmOperation.builder()
+                .id(farm.getId())
+                .representativeName("정다운")
+                .farm(farm)
+                .build();
+
         Product product1 = Product.builder()
                 .id(1L)
                 .productName("상품명1")
                 .productDescription("상품 설명1")
                 .cultivationMethod(ENVIRONMENT_FRIENDLY)
                 .productSaleStatus(AVAILABLE)
+                .farm(farm)
                 .build();
 
         Product product2 = Product.builder()
@@ -415,6 +432,7 @@ public class ProductMockingTest {
                 .productDescription("상품 설명2")
                 .cultivationMethod(ENVIRONMENT_FRIENDLY)
                 .productSaleStatus(UNAVAILABLE)
+                .farm(farm)
                 .build();
 
         productList.add(product1);
@@ -441,9 +459,10 @@ public class ProductMockingTest {
         productOptionList.add(productOption1);
         productOptionList.add(productOption2);
 
-        when(mockProductRepository.findAll()).thenReturn(productList);
+        when(mockProductRepository.findAllWithFarm()).thenReturn(productList);
         when(mockProductOptionRepository.findByProduct(productList.get(0))).thenReturn(productOptionList);
         when(mockProductOptionRepository.findByProduct(productList.get(1))).thenReturn(productOptionList);
+        when(mockFarmOperationRepository.findByFarm(farm)).thenReturn(farmOperation);
 
         List<UserProductListResponseForm> result = mockService.getUserProductList();
 
@@ -451,10 +470,16 @@ public class ProductMockingTest {
         assertEquals(result.get(0).getProductId(), 1L);
         assertEquals(result.get(0).getIsSoldOut(), false);
         assertEquals(result.get(0).getMinOptionPrice(), 13000L);
+        assertEquals(result.get(0).getFarmName(), "투투농장");
+        assertEquals(result.get(0).getMainImage(), "mainImage");
+        assertEquals(result.get(0).getRepresentativeName(), "정다운");
 
         assertEquals(result.get(1).getProductName(), "상품명2");
         assertEquals(result.get(1).getProductId(), 2L);
         assertEquals(result.get(1).getIsSoldOut(), false);
         assertEquals(result.get(1).getMinOptionPrice(), 13000L);
+        assertEquals(result.get(0).getFarmName(), "투투농장");
+        assertEquals(result.get(0).getMainImage(), "mainImage");
+        assertEquals(result.get(0).getRepresentativeName(), "정다운");
     }
 }

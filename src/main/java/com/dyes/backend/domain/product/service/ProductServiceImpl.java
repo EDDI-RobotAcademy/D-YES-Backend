@@ -3,6 +3,8 @@ package com.dyes.backend.domain.product.service;
 import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.service.AdminService;
 import com.dyes.backend.domain.farm.entity.Farm;
+import com.dyes.backend.domain.farm.entity.FarmOperation;
+import com.dyes.backend.domain.farm.repository.FarmOperationRepository;
 import com.dyes.backend.domain.farm.repository.FarmRepository;
 import com.dyes.backend.domain.product.controller.form.ProductDeleteForm;
 import com.dyes.backend.domain.product.controller.form.ProductListDeleteForm;
@@ -35,6 +37,7 @@ public class ProductServiceImpl implements ProductService{
     final private ProductMainImageRepository productMainImageRepository;
     final private ProductDetailImagesRepository productDetailImagesRepository;
     final private FarmRepository farmRepository;
+    final private FarmOperationRepository farmOperationRepository;
     final private AdminService adminService;
 
     // 상품 등록
@@ -351,7 +354,7 @@ public class ProductServiceImpl implements ProductService{
         List<UserProductListResponseForm> userProductListResponseFormList = new ArrayList<>();
 
         // DB에서 상품 목록 조회
-        List<Product> productList = productRepository.findAll();
+        List<Product> productList = productRepository.findAllWithFarm();
         for(Product product: productList) {
 
             List<Long> optionPriceList = new ArrayList<>();
@@ -379,6 +382,10 @@ public class ProductServiceImpl implements ProductService{
                 productMainImage = maybeProductMainImage.get().getMainImg();
             }
 
+            // DB에서 해당 상품의 공급자(농가) 조회
+            Farm farm = product.getFarm();
+            FarmOperation farmOperation = farmOperationRepository.findByFarm(farm);
+
             // 최종적으로 반환할 상품 목록 form
             UserProductListResponseForm userProductListResponseForm
                     = new UserProductListResponseForm(
@@ -387,7 +394,10 @@ public class ProductServiceImpl implements ProductService{
                     product.getCultivationMethod(),
                     productMainImage,
                     minOptionPrice,
-                    isSoldOut);
+                    isSoldOut,
+                    farm.getFarmName(),
+                    farm.getMainImage(),
+                    farmOperation.getRepresentativeName());
             userProductListResponseFormList.add(userProductListResponseForm);
         }
 
