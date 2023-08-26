@@ -108,7 +108,12 @@ public class ProductServiceImpl implements ProductService{
     public UserProductResponseForm readProduct(Long productId) {
         log.info("readProduct start");
         try {
-            Product product = productRepository.findByIdWithFarm(productId);
+            Optional<Product> maybeProduct = productRepository.findByIdWithFarm(productId);
+            if(maybeProduct.isEmpty()) {
+                log.info("Can not find Product");
+                return null;
+            }
+            Product product = maybeProduct.get();
             log.info("product: " + product);
             List<ProductOption> productOption = productOptionRepository.findByProduct(product);
             log.info("productOption: " + productOption);
@@ -221,7 +226,7 @@ public class ProductServiceImpl implements ProductService{
             return false;
         }
 
-        Optional<Product> maybeProduct = productRepository.findById(deleteForm.getProductId());
+        Optional<Product> maybeProduct = productRepository.findByIdWithFarm(deleteForm.getProductId());
         if(maybeProduct.isEmpty()) {
             log.info("Product is empty");
             return false;
@@ -259,7 +264,7 @@ public class ProductServiceImpl implements ProductService{
             return false;
         }
 
-        List<Product> productList = productRepository.findAllById(listDeleteForm.getProductIdList());
+        List<Product> productList = productRepository.findAllByIdWithFarm(listDeleteForm.getProductIdList());
         for(Product deleteProduct: productList) {
             Optional<ProductMainImage> maybeProductMainImage = productMainImageRepository.findByProduct(deleteProduct);
             if(maybeProductMainImage.isEmpty()) {

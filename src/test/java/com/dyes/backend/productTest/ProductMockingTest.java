@@ -133,7 +133,7 @@ public class ProductMockingTest {
         List<ProductDetailImages> detailImages = new ArrayList<>();
         detailImages.add(new ProductDetailImages(1L, "디테일 이미지", product));
 
-        when(mockProductRepository.findByIdWithFarm(productId)).thenReturn(product);
+        when(mockProductRepository.findByIdWithFarm(productId)).thenReturn(Optional.of(product));
         when(mockProductOptionRepository.findByProduct(product)).thenReturn(productOption);
         when(mockProductMainImageRepository.findByProduct(product)).thenReturn(Optional.of(mainImage));
         when(mockProductDetailImagesRepository.findByProduct(product)).thenReturn(detailImages);
@@ -308,7 +308,7 @@ public class ProductMockingTest {
         when(mockRedisService.getAccessToken(userToken)).thenReturn("accessToken");
         when(mockUserService.findUserByUserToken(userToken)).thenReturn(new User());
 
-        when(mockProductRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(mockProductRepository.findByIdWithFarm(1L)).thenReturn(Optional.of(product));
         when(mockProductMainImageRepository.findByProduct(product)).thenReturn(Optional.of(new ProductMainImage()));
         when(mockProductDetailImagesRepository.findByProduct(product)).thenReturn(productDetailImagesList);
         when(mockProductOptionRepository.findByProduct(product)).thenReturn(productOptionList);
