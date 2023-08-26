@@ -2,7 +2,8 @@ package com.dyes.backend.productTest;
 
 import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.repository.AdminRepository;
-import com.dyes.backend.domain.admin.service.AdminServiceImpl;
+import com.dyes.backend.domain.admin.service.AdminService;
+import com.dyes.backend.domain.farm.entity.Farm;
 import com.dyes.backend.domain.product.controller.form.ProductDeleteForm;
 import com.dyes.backend.domain.product.controller.form.ProductModifyForm;
 import com.dyes.backend.domain.product.controller.form.ProductRegisterForm;
@@ -56,7 +57,7 @@ public class ProductMockingTest {
     @Mock
     private UserRepository mockUserRepository;
     @Mock
-    private AdminServiceImpl mockAdminService;
+    private AdminService mockAdminService;
     @Mock
     private UserServiceImpl mockUserService;
     @Mock
@@ -123,7 +124,7 @@ public class ProductMockingTest {
     public void 사용자가_상품을_볼_수_있습니다 () {
         final Long productId = 1L;
 
-        Product product = new Product(productId, "상품 이름","상세 설명", CultivationMethod.ORGANIC, AVAILABLE);
+        Product product = new Product(productId, "상품 이름","상세 설명", CultivationMethod.ORGANIC, AVAILABLE, new Farm());
         when(mockProductRepository.findById(productId)).thenReturn(Optional.of(product));
 
         List<ProductOption> productOption = new ArrayList<>();
@@ -132,7 +133,7 @@ public class ProductMockingTest {
         List<ProductDetailImages> detailImages = new ArrayList<>();
         detailImages.add(new ProductDetailImages(1L, "디테일 이미지", product));
 
-        when(mockProductRepository.findById(productId)).thenReturn(Optional.of(product));
+        when(mockProductRepository.findByIdWithFarm(productId)).thenReturn(product);
         when(mockProductOptionRepository.findByProduct(product)).thenReturn(productOption);
         when(mockProductMainImageRepository.findByProduct(product)).thenReturn(Optional.of(mainImage));
         when(mockProductDetailImagesRepository.findByProduct(product)).thenReturn(detailImages);
@@ -141,15 +142,17 @@ public class ProductMockingTest {
         List<ProductOptionResponse> productOptionResponse = new ProductOptionResponse().productOptionResponseList(productOption);
         ProductMainImageResponse productMainImageResponse = new ProductMainImageResponse(mainImage.getId(), mainImage.getMainImg());
         List<ProductDetailImagesResponse> productDetailImagesResponse = new ProductDetailImagesResponse().productDetailImagesResponseList(detailImages);
+        FarmInfoResponse farmInfoResponse = new FarmInfoResponse().farmInfoResponse(new Farm());
 
-        ProductResponseForm res = new ProductResponseForm(
+        UserProductResponseForm res = new UserProductResponseForm(
                 productResponse,
                 productOptionResponse,
                 productMainImageResponse,
-                productDetailImagesResponse
+                productDetailImagesResponse,
+                farmInfoResponse
                 );
 
-        ProductResponseForm actual = mockService.readProduct(productId);
+        UserProductResponseForm actual = mockService.readProduct(productId);
 
         assertEquals(res, actual);
     }

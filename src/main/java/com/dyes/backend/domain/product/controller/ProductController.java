@@ -6,7 +6,7 @@ import com.dyes.backend.domain.product.controller.form.ProductModifyForm;
 import com.dyes.backend.domain.product.controller.form.ProductRegisterForm;
 import com.dyes.backend.domain.product.service.ProductService;
 import com.dyes.backend.domain.product.service.Response.AdminProductListResponseForm;
-import com.dyes.backend.domain.product.service.Response.ProductResponseForm;
+import com.dyes.backend.domain.product.service.Response.UserProductResponseForm;
 import com.dyes.backend.domain.product.service.Response.UserProductListResponseForm;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,9 +27,9 @@ public class ProductController {
         return productService.productRegistration(registerForm);
     }
 
-    // 상품 읽기(공용)
+    // 상품 읽기(사용자용)
     @GetMapping("/read")
-    public ProductResponseForm productRequester(@RequestParam(name = "productId") Long productId) {
+    public UserProductResponseForm productRequester(@RequestParam(name = "productId") Long productId) {
         return productService.readProduct(productId);
     }
 

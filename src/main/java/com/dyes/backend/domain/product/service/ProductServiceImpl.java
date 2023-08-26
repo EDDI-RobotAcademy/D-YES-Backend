@@ -2,6 +2,7 @@ package com.dyes.backend.domain.product.service;
 
 import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.service.AdminService;
+import com.dyes.backend.domain.farm.entity.Farm;
 import com.dyes.backend.domain.product.controller.form.ProductDeleteForm;
 import com.dyes.backend.domain.product.controller.form.ProductListDeleteForm;
 import com.dyes.backend.domain.product.controller.form.ProductModifyForm;
@@ -104,10 +105,10 @@ public class ProductServiceImpl implements ProductService{
 
     // 상품 읽기
     @Override
-    public ProductResponseForm readProduct(Long productId) {
+    public UserProductResponseForm readProduct(Long productId) {
         log.info("readProduct start");
         try {
-            Product product = productRepository.findById(productId).get();
+            Product product = productRepository.findByIdWithFarm(productId);
             log.info("product: " + product);
             List<ProductOption> productOption = productOptionRepository.findByProduct(product);
             log.info("productOption: " + productOption);
@@ -115,13 +116,15 @@ public class ProductServiceImpl implements ProductService{
             log.info("productMainImage: " + productMainImage);
             List<ProductDetailImages> productDetailImages = productDetailImagesRepository.findByProduct(product);
             log.info("productDetailImages: " + productDetailImages);
+            Farm farm = product.getFarm();
+            log.info("farm: " + farm);
 
             ProductResponse productResponse = new ProductResponse().productResponse(product);
             List<ProductOptionResponse> productOptionResponse = new ProductOptionResponse().productOptionResponseList(productOption);
             ProductMainImageResponse productMainImageResponse = new ProductMainImageResponse().productMainImageResponse(productMainImage);
             List<ProductDetailImagesResponse> productDetailImagesResponses = new ProductDetailImagesResponse().productDetailImagesResponseList(productDetailImages);
-
-            ProductResponseForm responseForm = new ProductResponseForm(productResponse, productOptionResponse, productMainImageResponse, productDetailImagesResponses);
+            FarmInfoResponse farmInfoResponse = new FarmInfoResponse().farmInfoResponse(farm);
+            UserProductResponseForm responseForm = new UserProductResponseForm(productResponse, productOptionResponse, productMainImageResponse, productDetailImagesResponses, farmInfoResponse);
             log.info("responseForm: " + responseForm);
 
             log.info("readProduct end");

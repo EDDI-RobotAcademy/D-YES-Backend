@@ -40,7 +40,7 @@ public class FarmServiceImpl implements FarmService{
         Address address = new Address(registerRequest.getAddress(), registerRequest.getZipCode(), registerRequest.getAddressDetail());
         Farm farm = Farm.builder()
                 .farmName(registerRequest.getFarmName())
-                .CSContactNumber(registerRequest.getCsContactNumber())
+                .csContactNumber(registerRequest.getCsContactNumber())
                 .farmAddress(address)
                 .mainImage(registerRequest.getMainImage())
                 .introduction(registerRequest.getIntroduction())

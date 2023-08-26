@@ -9,9 +9,10 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProductResponseForm {
+public class UserProductResponseForm {
     private ProductResponse productResponse;
     private List<ProductOptionResponse> OptionList;
     private ProductMainImageResponse mainImage;
     private List<ProductDetailImagesResponse> detailImagesList;
+    private FarmInfoResponse farmInfoResponse;
 }

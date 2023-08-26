@@ -19,7 +19,7 @@ public class Farm {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String farmName;
-    private String CSContactNumber;
+    private String csContactNumber;
     @Embedded
     private Address farmAddress;
     private String mainImage;
