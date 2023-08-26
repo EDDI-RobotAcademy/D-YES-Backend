@@ -28,7 +28,7 @@ public class ProductController {
     }
 
     // 상품 읽기(사용자용)
-    @GetMapping("/read")
+    @GetMapping("/user/read")
     public UserProductResponseForm productRequester(@RequestParam(name = "productId") Long productId) {
         return productService.readProduct(productId);
     }
