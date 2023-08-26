@@ -4,6 +4,7 @@ import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.repository.AdminRepository;
 import com.dyes.backend.domain.admin.service.AdminService;
 import com.dyes.backend.domain.farm.entity.Farm;
+import com.dyes.backend.domain.farm.repository.FarmRepository;
 import com.dyes.backend.domain.product.controller.form.ProductDeleteForm;
 import com.dyes.backend.domain.product.controller.form.ProductModifyForm;
 import com.dyes.backend.domain.product.controller.form.ProductRegisterForm;
@@ -57,6 +58,8 @@ public class ProductMockingTest {
     @Mock
     private UserRepository mockUserRepository;
     @Mock
+    private FarmRepository mockFarmRepository;
+    @Mock
     private AdminService mockAdminService;
     @Mock
     private UserServiceImpl mockUserService;
@@ -73,6 +76,7 @@ public class ProductMockingTest {
                 mockProductOptionRepository,
                 mockProductMainImageRepository,
                 mockProductDetailImagesRepository,
+                mockFarmRepository,
                 mockAdminService
         );
     }
@@ -90,6 +94,7 @@ public class ProductMockingTest {
         final String mainImage = "메인 이미지";
         final String detailImages = "디테일 이미지1";
         final String userToken = "mainadmin-dskef3rkewj-welkjw";
+        final String farmName = "투투농장";
 
         ProductRegisterRequest productRegisterRequest = new ProductRegisterRequest(productName, productDescription, cultivationMethod);
         ProductOptionRegisterRequest productOptionRegisterRequest = new ProductOptionRegisterRequest(optionName, optionPrice, stock, value, unit);
@@ -101,7 +106,8 @@ public class ProductMockingTest {
                 productRegisterRequest,
                 Arrays.asList(productOptionRegisterRequest),
                 productMainImageRegisterRequest,
-                Arrays.asList(productDetailImagesRegisterRequest)
+                Arrays.asList(productDetailImagesRegisterRequest),
+                farmName
                 );
 
         when(mockAdminService.findAdminByUserToken(userToken)).thenReturn(new Admin());
@@ -109,6 +115,7 @@ public class ProductMockingTest {
         when(mockAdminRepository.findByUser(new User())).thenReturn(Optional.of(new Admin()));
         when(mockRedisService.getAccessToken(userToken)).thenReturn("accessToken");
         when(mockUserService.findUserByUserToken(userToken)).thenReturn(new User());
+        when(mockFarmRepository.findByFarmName(farmName)).thenReturn(Optional.of(new Farm()));
 
         boolean result = mockService.productRegistration(registerForm);
         assertTrue(result);

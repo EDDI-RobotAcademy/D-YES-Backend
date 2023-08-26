@@ -3,6 +3,7 @@ package com.dyes.backend.domain.product.service;
 import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.service.AdminService;
 import com.dyes.backend.domain.farm.entity.Farm;
+import com.dyes.backend.domain.farm.repository.FarmRepository;
 import com.dyes.backend.domain.product.controller.form.ProductDeleteForm;
 import com.dyes.backend.domain.product.controller.form.ProductListDeleteForm;
 import com.dyes.backend.domain.product.controller.form.ProductModifyForm;
@@ -33,6 +34,7 @@ public class ProductServiceImpl implements ProductService{
     final private ProductOptionRepository productOptionRepository;
     final private ProductMainImageRepository productMainImageRepository;
     final private ProductDetailImagesRepository productDetailImagesRepository;
+    final private FarmRepository farmRepository;
     final private AdminService adminService;
 
     // 상품 등록
@@ -47,6 +49,15 @@ public class ProductServiceImpl implements ProductService{
             return false;
         }
 
+        final String farmName = registerForm.getFarmName();
+
+        Optional<Farm> maybeFarm = farmRepository.findByFarmName(farmName);
+        if(maybeFarm.isEmpty()) {
+            log.info("Can not find Farm");
+            return false;
+        }
+        Farm farm = maybeFarm.get();
+
         ProductRegisterRequest productRequest = registerForm.getProductRegisterRequest();
         List<ProductOptionRegisterRequest> productOptionRegisterRequests = registerForm.getProductOptionRegisterRequest();
         ProductMainImageRegisterRequest productMainImageRegisterRequest = registerForm.getProductMainImageRegisterRequest();
@@ -58,6 +69,7 @@ public class ProductServiceImpl implements ProductService{
                     .productDescription(productRequest.getProductDescription())
                     .cultivationMethod(cultivationMethodDecision(productRequest.getCultivationMethod()))
                     .productSaleStatus(AVAILABLE)
+                    .farm(farm)
                     .build();
             log.info("product: " + product);
             productRepository.save(product);

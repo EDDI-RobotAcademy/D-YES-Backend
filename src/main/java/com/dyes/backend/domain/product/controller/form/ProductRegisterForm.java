@@ -19,4 +19,5 @@ public class ProductRegisterForm {
     private List<ProductOptionRegisterRequest> productOptionRegisterRequest;
     private ProductMainImageRegisterRequest productMainImageRegisterRequest;
     private List<ProductDetailImagesRegisterRequest> productDetailImagesRegisterRequests;
+    private String farmName;
 }
