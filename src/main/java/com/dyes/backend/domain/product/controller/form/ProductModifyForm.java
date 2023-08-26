@@ -11,6 +11,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductModifyForm {
+    private String userToken;
     private ProductModifyRequest productModifyRequest;
     private List<ProductOptionModifyRequest> productOptionModifyRequest;
     private ProductMainImageModifyRequest productMainImageModifyRequest;

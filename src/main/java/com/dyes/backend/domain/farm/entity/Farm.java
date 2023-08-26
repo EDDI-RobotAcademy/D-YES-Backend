@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Entity
 @Data
 @Builder
@@ -17,8 +19,10 @@ public class Farm {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String farmName;
-    private String farmOwnerName;
+    private String csContactNumber;
     @Embedded
     private Address farmAddress;
-    private String contactNumber;
+    private String mainImage;
+    private String introduction;
+    private List<ProduceType> produceTypes;
 }

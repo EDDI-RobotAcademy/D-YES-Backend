@@ -2,6 +2,10 @@ package com.dyes.backend.domain.product.service;
 
 import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.service.AdminService;
+import com.dyes.backend.domain.farm.entity.Farm;
+import com.dyes.backend.domain.farm.repository.FarmRepository;
+import com.dyes.backend.domain.product.controller.form.ProductDeleteForm;
+import com.dyes.backend.domain.product.controller.form.ProductListDeleteForm;
 import com.dyes.backend.domain.product.controller.form.ProductModifyForm;
 import com.dyes.backend.domain.product.controller.form.ProductRegisterForm;
 import com.dyes.backend.domain.product.service.Response.*;
@@ -30,12 +34,29 @@ public class ProductServiceImpl implements ProductService{
     final private ProductOptionRepository productOptionRepository;
     final private ProductMainImageRepository productMainImageRepository;
     final private ProductDetailImagesRepository productDetailImagesRepository;
+    final private FarmRepository farmRepository;
     final private AdminService adminService;
 
     // 상품 등록
     @Override
     public boolean productRegistration(ProductRegisterForm registerForm) {
         log.info("productRegistration start");
+
+        final Admin admin = adminService.findAdminByUserToken(registerForm.getUserToken());
+
+        if(admin == null) {
+            log.info("Can not find Admin");
+            return false;
+        }
+
+        final String farmName = registerForm.getFarmName();
+
+        Optional<Farm> maybeFarm = farmRepository.findByFarmName(farmName);
+        if(maybeFarm.isEmpty()) {
+            log.info("Can not find Farm");
+            return false;
+        }
+        Farm farm = maybeFarm.get();
 
         ProductRegisterRequest productRequest = registerForm.getProductRegisterRequest();
         List<ProductOptionRegisterRequest> productOptionRegisterRequests = registerForm.getProductOptionRegisterRequest();
@@ -48,6 +69,7 @@ public class ProductServiceImpl implements ProductService{
                     .productDescription(productRequest.getProductDescription())
                     .cultivationMethod(cultivationMethodDecision(productRequest.getCultivationMethod()))
                     .productSaleStatus(AVAILABLE)
+                    .farm(farm)
                     .build();
             log.info("product: " + product);
             productRepository.save(product);
@@ -95,10 +117,15 @@ public class ProductServiceImpl implements ProductService{
 
     // 상품 읽기
     @Override
-    public ProductResponseForm readProduct(Long productId) {
+    public UserProductResponseForm readProduct(Long productId) {
         log.info("readProduct start");
         try {
-            Product product = productRepository.findById(productId).get();
+            Optional<Product> maybeProduct = productRepository.findByIdWithFarm(productId);
+            if(maybeProduct.isEmpty()) {
+                log.info("Can not find Product");
+                return null;
+            }
+            Product product = maybeProduct.get();
             log.info("product: " + product);
             List<ProductOption> productOption = productOptionRepository.findByProduct(product);
             log.info("productOption: " + productOption);
@@ -106,13 +133,15 @@ public class ProductServiceImpl implements ProductService{
             log.info("productMainImage: " + productMainImage);
             List<ProductDetailImages> productDetailImages = productDetailImagesRepository.findByProduct(product);
             log.info("productDetailImages: " + productDetailImages);
+            Farm farm = product.getFarm();
+            log.info("farm: " + farm);
 
             ProductResponse productResponse = new ProductResponse().productResponse(product);
             List<ProductOptionResponse> productOptionResponse = new ProductOptionResponse().productOptionResponseList(productOption);
             ProductMainImageResponse productMainImageResponse = new ProductMainImageResponse().productMainImageResponse(productMainImage);
             List<ProductDetailImagesResponse> productDetailImagesResponses = new ProductDetailImagesResponse().productDetailImagesResponseList(productDetailImages);
-
-            ProductResponseForm responseForm = new ProductResponseForm(productResponse, productOptionResponse, productMainImageResponse, productDetailImagesResponses);
+            FarmInfoResponse farmInfoResponse = new FarmInfoResponse().farmInfoResponse(farm);
+            UserProductResponseForm responseForm = new UserProductResponseForm(productResponse, productOptionResponse, productMainImageResponse, productDetailImagesResponses, farmInfoResponse);
             log.info("responseForm: " + responseForm);
 
             log.info("readProduct end");
@@ -127,6 +156,13 @@ public class ProductServiceImpl implements ProductService{
     // 상품 수정
     @Override
     public boolean productModify(ProductModifyForm modifyForm) {
+        final Admin admin = adminService.findAdminByUserToken(modifyForm.getUserToken());
+
+        if(admin == null) {
+            log.info("Can not find Admin");
+            return false;
+        }
+
         ProductModifyRequest productModifyRequest = modifyForm.getProductModifyRequest();
         ProductMainImageModifyRequest productMainImageModifyRequest = modifyForm.getProductMainImageModifyRequest();
         List<ProductDetailImagesModifyRequest> productDetailImagesModifyRequestList = modifyForm.getProductDetailImagesModifyRequest();
@@ -194,8 +230,15 @@ public class ProductServiceImpl implements ProductService{
 
     // 상품 삭제
     @Override
-    public boolean productDelete(Long productId) {
-        Optional<Product> maybeProduct = productRepository.findById(productId);
+    public boolean productDelete(ProductDeleteForm deleteForm) {
+        final Admin admin = adminService.findAdminByUserToken(deleteForm.getUserToken());
+
+        if(admin == null) {
+            log.info("Can not find Admin");
+            return false;
+        }
+
+        Optional<Product> maybeProduct = productRepository.findByIdWithFarm(deleteForm.getProductId());
         if(maybeProduct.isEmpty()) {
             log.info("Product is empty");
             return false;
@@ -221,6 +264,40 @@ public class ProductServiceImpl implements ProductService{
         }
 
         productRepository.delete(deleteProduct);
+        return true;
+    }
+
+    @Override
+    public boolean productListDelete(ProductListDeleteForm listDeleteForm) {
+        final Admin admin = adminService.findAdminByUserToken(listDeleteForm.getUserToken());
+
+        if(admin == null) {
+            log.info("Can not find Admin");
+            return false;
+        }
+
+        List<Product> productList = productRepository.findAllByIdWithFarm(listDeleteForm.getProductIdList());
+        for(Product deleteProduct: productList) {
+            Optional<ProductMainImage> maybeProductMainImage = productMainImageRepository.findByProduct(deleteProduct);
+            if(maybeProductMainImage.isEmpty()) {
+                log.info("ProductMainImage is empty");
+                return false;
+            }
+            ProductMainImage deleteProductMainImage = maybeProductMainImage.get();
+            productMainImageRepository.delete(deleteProductMainImage);
+
+            List<ProductDetailImages> deleteProductDetailImagesList = productDetailImagesRepository.findByProduct(deleteProduct);
+            for(ProductDetailImages productDetailImages: deleteProductDetailImagesList) {
+                productDetailImagesRepository.delete(productDetailImages);
+            }
+
+            List<ProductOption> deleteProductOptionList = productOptionRepository.findByProduct(deleteProduct);
+            for(ProductOption productOption: deleteProductOptionList) {
+                productOptionRepository.delete(productOption);
+            }
+
+            productRepository.delete(deleteProduct);
+        }
         return true;
     }
 

@@ -725,7 +725,8 @@ public class UserServiceImpl implements UserService {
         user.setAccessToken(renewAccessToken);
 
         // refreshToken의 유효 기간이 1개월 미만인 경우 새로운 refreshToken을 받아오므로 새롭게 저장
-        if(!renewAccessToken.equals(user.getRefreshToken())) {
+        if(renewAccessToken.equals(null)) {
+            log.info("RefreshToken successfully renewed");
             user.setRefreshToken(renewRefreshToken);
         }
         userRepository.save(user);
