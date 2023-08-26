@@ -3,10 +3,13 @@ package com.dyes.backend.farmTest;
 import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.service.AdminService;
 import com.dyes.backend.domain.farm.controller.form.FarmRegisterRequestForm;
+import com.dyes.backend.domain.farm.entity.Farm;
 import com.dyes.backend.domain.farm.entity.ProduceType;
 import com.dyes.backend.domain.farm.repository.FarmOperationRepository;
 import com.dyes.backend.domain.farm.repository.FarmRepository;
 import com.dyes.backend.domain.farm.service.FarmServiceImpl;
+import com.dyes.backend.domain.farm.service.response.FarmInfoListResponse;
+import com.dyes.backend.domain.user.entity.Address;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,6 +21,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -44,7 +48,7 @@ public class FarmMockingTest {
     }
 
     @Test
-    @DisplayName("farm mocking test: farm register")
+    @DisplayName("farm mocking test: farmRegister")
     public void 관리자가_농가를_등록합니다 () {
         List<ProduceType> produceTypeList = new ArrayList<>();
         FarmRegisterRequestForm requestForm
@@ -58,5 +62,27 @@ public class FarmMockingTest {
 
         verify(mockFarmRepository, times(1)).save(any());
         verify(mockFarmOperationRepository, times(1)).save(any());
+    }
+
+    @Test
+    @DisplayName("farm mocking test: searchFarmList")
+    public void 관리자가_농가목록을_조회합니다 () {
+        Farm farm1 = Farm.builder()
+                .farmName("투투농원1")
+                .farmAddress(new Address())
+                .build();
+        Farm farm2 = Farm.builder()
+                .farmName("투투농원2")
+                .farmAddress(new Address())
+                .build();
+        List<Farm> farmList = new ArrayList<>();
+        farmList.add(farm1);
+        farmList.add(farm2);
+
+        when(mockFarmRepository.findAll()).thenReturn(farmList);
+
+        List<FarmInfoListResponse> result = farmService.searchFarmList();
+        assertEquals(result.get(0).getFarmName(), "투투농원1");
+        assertEquals(result.get(1).getFarmName(), "투투농원2");
     }
 }
