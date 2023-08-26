@@ -4,7 +4,10 @@ import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.service.AdminService;
 import com.dyes.backend.domain.farm.controller.form.FarmRegisterRequestForm;
 import com.dyes.backend.domain.farm.entity.Farm;
+import com.dyes.backend.domain.farm.entity.FarmOperation;
+import com.dyes.backend.domain.farm.repository.FarmOperationRepository;
 import com.dyes.backend.domain.farm.repository.FarmRepository;
+import com.dyes.backend.domain.farm.service.request.FarmOperationRegisterRequest;
 import com.dyes.backend.domain.farm.service.request.FarmRegisterRequest;
 import com.dyes.backend.domain.user.entity.Address;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +21,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class FarmServiceImpl implements FarmService{
     final private FarmRepository farmRepository;
+    final private FarmOperationRepository farmOperationRepository;
     final private AdminService adminService;
 
     @Override
@@ -31,14 +35,26 @@ public class FarmServiceImpl implements FarmService{
         }
 
         final FarmRegisterRequest registerRequest = registerRequestForm.toFarmRegisterRequest();
+        final FarmOperationRegisterRequest operationRegisterRequest = registerRequestForm.toFarmOperationRegisterRequest();
+
         Address address = new Address(registerRequest.getAddress(), registerRequest.getZipCode(), registerRequest.getAddressDetail());
         Farm farm = Farm.builder()
                 .farmName(registerRequest.getFarmName())
-                .farmOwnerName(registerRequest.getFarmOwnerName())
+                .CSContactNumber(registerRequest.getCSContactNumber())
                 .farmAddress(address)
-                .contactNumber(registerRequest.getContactNumber())
+                .mainImage(registerRequest.getMainImage())
+                .introduction(registerRequest.getIntroduction())
+                .produceTypes(registerRequest.getProduceTypes())
                 .build();
         farmRepository.save(farm);
+
+        FarmOperation farmOperation = FarmOperation.builder()
+                .businessName(operationRegisterRequest.getBusinessName())
+                .businessNumber(operationRegisterRequest.getBusinessNumber())
+                .representativeName(operationRegisterRequest.getRepresentativeName())
+                .representativeContactNumber(operationRegisterRequest.getRepresentativeContactNumber())
+                .build();
+        farmOperationRepository.save(farmOperation);
 
         return true;
     }
