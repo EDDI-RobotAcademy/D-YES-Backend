@@ -318,7 +318,7 @@ public class ProductServiceImpl implements ProductService{
         List<AdminProductListResponseForm> adminProductListResponseFormList = new ArrayList<>();
 
         // DB에서 상품 목록 조회
-        List<Product> productList = productRepository.findAll();
+        List<Product> productList = productRepository.findAllWithFarm();
         for(Product product: productList) {
 
             // 찾은 상품의 옵션 목록
@@ -336,12 +336,15 @@ public class ProductServiceImpl implements ProductService{
 
                 adminProductOptionListResponseList.add(adminProductOptionListResponse);
             }
+
+            Farm farm = product.getFarm();
             AdminProductListResponseForm adminProductListResponseForm
                     = new AdminProductListResponseForm(
                             product.getId(),
                             product.getProductName(),
                             product.getProductSaleStatus(),
-                            adminProductOptionListResponseList);
+                            adminProductOptionListResponseList,
+                            farm.getFarmName());
             adminProductListResponseFormList.add(adminProductListResponseForm);
         }
 

@@ -15,4 +15,5 @@ public class AdminProductListResponseForm {
     private String productName;
     private SaleStatus productSaleStatus;
     private List<AdminProductOptionListResponse> productOptionListResponse;
+    private String farmName;
 }

@@ -335,6 +335,10 @@ public class ProductMockingTest {
         final String userToken = "normaladmin-ekjfw3rlkgj-4oi34klng";
         List<Product> productList = new ArrayList<>();
         List<ProductOption> productOptionList = new ArrayList<>();
+        
+        Farm farm = Farm.builder()
+                .farmName("투투농장")
+                .build();
 
         Product product1 = Product.builder()
                 .id(1L)
@@ -342,6 +346,7 @@ public class ProductMockingTest {
                 .productDescription("상품 설명1")
                 .cultivationMethod(ENVIRONMENT_FRIENDLY)
                 .productSaleStatus(AVAILABLE)
+                .farm(farm)
                 .build();
 
         Product product2 = Product.builder()
@@ -350,6 +355,7 @@ public class ProductMockingTest {
                 .productDescription("상품 설명2")
                 .cultivationMethod(ENVIRONMENT_FRIENDLY)
                 .productSaleStatus(UNAVAILABLE)
+                .farm(farm)
                 .build();
 
         productList.add(product1);
@@ -379,7 +385,7 @@ public class ProductMockingTest {
         when(mockAdminService.findAdminByUserToken(userToken)).thenReturn(new Admin());
         when(mockUserRepository.findByStringId(anyString())).thenReturn(Optional.of(new User()));
         when(mockAdminRepository.findByUser(new User())).thenReturn(Optional.of(new Admin()));
-        when(mockProductRepository.findAll()).thenReturn(productList);
+        when(mockProductRepository.findAllWithFarm()).thenReturn(productList);
         when(mockProductOptionRepository.findByProduct(productList.get(0))).thenReturn(productOptionList);
         when(mockProductOptionRepository.findByProduct(productList.get(1))).thenReturn(productOptionList);
         when(mockRedisService.getAccessToken(userToken)).thenReturn("accessToken");
@@ -392,12 +398,14 @@ public class ProductMockingTest {
         assertEquals(result.get(0).getProductSaleStatus(), AVAILABLE);
         assertEquals(result.get(0).getProductOptionListResponse().get(0).getOptionName(), "상품옵션1");
         assertEquals(result.get(0).getProductOptionListResponse().get(0).getStock(), 20);
+        assertEquals(result.get(0).getFarmName(), "투투농장");
 
         assertEquals(result.get(1).getProductName(), "상품명2");
         assertEquals(result.get(1).getProductId(), 2L);
         assertEquals(result.get(1).getProductSaleStatus(), UNAVAILABLE);
         assertEquals(result.get(1).getProductOptionListResponse().get(1).getOptionName(), "상품옵션2");
         assertEquals(result.get(1).getProductOptionListResponse().get(1).getStock(), 70);
+        assertEquals(result.get(1).getFarmName(), "투투농장");
     }
 
     @Test
