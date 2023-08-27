@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductModifyRequest {
-    private Long productId;
     private String productName;
     private String productDescription;
     private CultivationMethod cultivationMethod;

@@ -158,7 +158,7 @@ public class ProductServiceImpl implements ProductService{
 
     // 상품 수정
     @Override
-    public boolean productModify(ProductModifyForm modifyForm) {
+    public boolean productModify(Long productId, ProductModifyForm modifyForm) {
         final Admin admin = adminService.findAdminByUserToken(modifyForm.getUserToken());
 
         if(admin == null) {
@@ -172,7 +172,7 @@ public class ProductServiceImpl implements ProductService{
         List<ProductOptionModifyRequest> productOptionModifyRequestList = modifyForm.getProductOptionModifyRequest();
 
         // 상품 기본 정보 업데이트
-        final Long modifyProductId = productModifyRequest.getProductId();
+        final Long modifyProductId = productId;
         Optional<Product> maybeProduct = productRepository.findById(modifyProductId);
         if(maybeProduct.isEmpty()) {
             log.info("Product is empty");

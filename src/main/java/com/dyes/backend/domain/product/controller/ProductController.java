@@ -34,9 +34,10 @@ public class ProductController {
     }
 
     // 상품 수정(관리자용)
-    @PutMapping("/modify")
-    public boolean productModify(@RequestBody ProductModifyForm modifyForm) {
-        return productService.productModify(modifyForm);
+    @PutMapping("/modify/{productId}")
+    public boolean productModify(@PathVariable("productId") Long productId,
+                                 @RequestBody ProductModifyForm modifyForm) {
+        return productService.productModify(productId, modifyForm);
     }
 
     // 상품 삭제(관리자용)

@@ -233,7 +233,7 @@ public class ProductMockingTest {
                                         .amount(new Amount())
                                         .build();
 
-        ProductModifyRequest productModifyRequest = new ProductModifyRequest(modifyProductId, modifyProductName, modifyProductDescription, modifyCultivationMethod);
+        ProductModifyRequest productModifyRequest = new ProductModifyRequest(modifyProductName, modifyProductDescription, modifyCultivationMethod);
 
         ProductMainImageModifyRequest productMainImageModifyRequest = new ProductMainImageModifyRequest(modifyMainImageId, modifyMainImage);
 
@@ -270,7 +270,7 @@ public class ProductMockingTest {
         when(mockProductOptionRepository.findById(modifyOption1Id)).thenReturn(Optional.of(productOption1));
         when(mockProductOptionRepository.findById(modifyOption2Id)).thenReturn(Optional.of(productOption2));
 
-        boolean result = mockService.productModify(modifyForm);
+        boolean result = mockService.productModify(modifyProductId, modifyForm);
         assertTrue(result);
 
         verify(mockProductRepository, times(1)).save(any());

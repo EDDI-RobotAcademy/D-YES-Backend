@@ -13,7 +13,7 @@ import java.util.List;
 public interface ProductService {
     boolean productRegistration(ProductRegisterForm registerForm);
     UserProductResponseForm readProduct(Long productId);
-    boolean productModify(ProductModifyForm modifyForm);
+    boolean productModify(Long productId, ProductModifyForm modifyForm);
     boolean productDelete(ProductDeleteForm deleteForm);
     boolean productListDelete(ProductListDeleteForm listDeleteForm);
     List<AdminProductListResponseForm> getAdminProductList(String userToken);
