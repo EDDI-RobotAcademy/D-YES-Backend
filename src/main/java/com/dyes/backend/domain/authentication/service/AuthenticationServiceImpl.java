@@ -2,6 +2,8 @@ package com.dyes.backend.domain.authentication.service;
 
 import com.dyes.backend.domain.authentication.service.google.GoogleAuthenticationService;
 import com.dyes.backend.domain.authentication.service.google.response.GoogleOauthUserInfoResponse;
+import com.dyes.backend.domain.authentication.service.naver.NaverAuthenticationService;
+import com.dyes.backend.domain.authentication.service.naver.response.NaverOauthUserInfoResponse;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserType;
 import com.dyes.backend.domain.user.repository.UserRepository;
@@ -20,6 +22,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class AuthenticationServiceImpl implements AuthenticationService{
     final private GoogleAuthenticationService googleAuthenticationService;
+    final private NaverAuthenticationService naverAuthenticationService;
     final private UserRepository userRepository;
     final private RedisService redisService;
 
@@ -61,9 +64,9 @@ public class AuthenticationServiceImpl implements AuthenticationService{
                     = googleAuthenticationService.googleRequestUserInfoWithAccessToken(accessToken);
             userId = googleOauthUserInfoResponse.getBody().getId();
         } else if(userType.equals(UserType.NAVER)) {
-//            NaverOauthUserInfoResponse naverOauthUserInfoResponse
-//                    = naverAuthenticationService.naverRequestUserInfoWithAccessToken(accessToken);
-//            userId = naverOauthUserInfoResponse.getId();
+            NaverOauthUserInfoResponse naverOauthUserInfoResponse
+                    = naverAuthenticationService.naverRequestUserInfoWithAccessToken(accessToken);
+            userId = naverOauthUserInfoResponse.getId();
         } else if(userType.equals(UserType.KAKAO)) {
 //            KakaoUserInfoResponseForm kakaoUserInfoResponseForm
 //                    = kakaoAuthenticationService.getUserInfoFromKakao(accessToken);

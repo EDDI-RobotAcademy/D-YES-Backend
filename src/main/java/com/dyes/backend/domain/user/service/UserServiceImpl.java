@@ -5,7 +5,9 @@ import com.dyes.backend.domain.admin.entity.RoleType;
 import com.dyes.backend.domain.admin.repository.AdminRepository;
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
 import com.dyes.backend.domain.authentication.service.google.GoogleAuthenticationService;
+import com.dyes.backend.domain.authentication.service.naver.NaverAuthenticationService;
 import com.dyes.backend.domain.user.controller.form.GoogleUserLoginRequestForm;
+import com.dyes.backend.domain.user.controller.form.NaverUserLoginRequestForm;
 import com.dyes.backend.domain.user.controller.form.UserProfileModifyRequestForm;
 import com.dyes.backend.domain.user.entity.*;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
@@ -34,270 +36,17 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     final private GoogleOauthSecretsProvider googleOauthSecretsProvider;
-//    final private NaverOauthSecretsProvider naverOauthSecretsProvider;
+    final private NaverOauthSecretsProvider naverOauthSecretsProvider;
 //    final private KakaoOauthSecretsProvider kakaoOauthSecretsProvider;
-    final private AuthenticationService authenticationService;
     final private GoogleAuthenticationService googleAuthenticationService;
+    final private NaverAuthenticationService naverAuthenticationService;
+    final private AuthenticationService authenticationService;
     final private UserRepository userRepository;
     final private UserProfileRepository userProfileRepository;
     final private AdminRepository adminRepository;
     final private RedisService redisService;
     final private RestTemplate restTemplate;
 
-//    // 네이버 로그인
-//    @Override
-//    public String naverUserLogin(String code) {
-//        log.info("naverUserLogin start");
-//
-//        final NaverOauthAccessTokenResponse accessTokenResponse = naverRequestAccessTokenWithAuthorizationCode(code);
-//
-//        NaverOauthUserInfoResponse userInfoResponse =
-//                naverRequestUserInfoWithAccessToken(accessTokenResponse.getAccessToken());
-//
-//        log.info("userInfoResponse: " + userInfoResponse);
-//        User user = naverUserSave(accessTokenResponse, userInfoResponse);
-//        log.info("user: " + user);
-//
-//        String userToken = "naver" + UUID.randomUUID();
-//
-//        Optional<Admin> maybeAdmin = adminRepository.findByUser(user);
-//        if(maybeAdmin.isPresent()) {
-//            Admin admin = maybeAdmin.get();
-//
-//            if(admin.getRoleType().equals(RoleType.MAIN_ADMIN)) {
-//                userToken = "mainadmin" + userToken;
-//            } else if (admin.getRoleType().equals(RoleType.NORMAL_ADMIN)) {
-//                userToken = "normaladmin" + userToken;
-//            }
-//        }
-//
-//        redisService.setUserTokenAndUser(userToken, user.getAccessToken());
-//
-//        final String redirectUrl = naverOauthSecretsProvider.getNAVER_REDIRECT_VIEW_URL();
-//        log.info("naverUserLogin end");
-//
-//        return redirectUrl + userToken;
-//    }
-//
-//    // 네이버에서 인가 코드를 받으면 엑세스 코드 요청
-//    public NaverOauthAccessTokenResponse naverRequestAccessTokenWithAuthorizationCode(String code) {
-//        log.info("requestAccessToken start");
-//
-//        final String naverClientId = naverOauthSecretsProvider.getNAVER_AUTH_CLIENT_ID();
-//        final String naverRedirectUrl = naverOauthSecretsProvider.getNAVER_AUTH_REDIRECT_URL();
-//        final String naverClientSecret = naverOauthSecretsProvider.getNAVER_AUTH_SECRETS();
-//        final String naverTokenRequestUrl = naverOauthSecretsProvider.getNAVER_TOKEN_REQUEST_URL();
-//
-//        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-//
-//        body.add("code", code);
-//        body.add("client_id", naverClientId);
-//        body.add("client_secret", naverClientSecret);
-//        body.add("redirect_uri", naverRedirectUrl);
-//        body.add("grant_type", "authorization_code");
-//
-//        HttpHeaders headers = new HttpHeaders();
-//        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-//
-//        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(body, headers);
-//
-//        ResponseEntity<NaverOauthAccessTokenResponse> accessTokenResponse = restTemplate.postForEntity(naverTokenRequestUrl, requestEntity, NaverOauthAccessTokenResponse.class);
-//        log.info("accessTokenRequest: " + accessTokenResponse);
-//
-//        if(accessTokenResponse.getStatusCode() == HttpStatus.OK){
-//            log.info("requestAccessToken end");
-//            return accessTokenResponse.getBody();
-//        }
-//        log.info("requestAccessToken end");
-//        return null;
-//    }
-//
-//    // 네이버 엑세스 토큰으로 유저 정보 요청
-//    public NaverOauthUserInfoResponse naverRequestUserInfoWithAccessToken(String AccessToken) {
-//        log.info("requestUserInfoWithAccessTokenForSignIn start");
-//
-//        HttpHeaders headers = new HttpHeaders();
-//
-//
-//        try {
-//            headers.add("Authorization","Bearer "+ AccessToken);
-//
-//            HttpEntity<MultiValueMap<String, String>> request = new HttpEntity(headers);
-//            log.info("request: " + request);
-//
-//            ResponseEntity<JsonNode> response = restTemplate.exchange(
-//                    naverOauthSecretsProvider.getNAVER_USERINFO_REQUEST_URL(), HttpMethod.GET, request, JsonNode.class);
-//            log.info("response: " + response);
-//
-//            JsonNode responseNode = response.getBody().get("response");
-//
-//            NaverOauthUserInfoResponse userInfoResponse =
-//                    objectMapper.convertValue(responseNode, NaverOauthUserInfoResponse.class);
-//
-//            log.info("requestUserInfoWithAccessTokenForSignIn end");
-//
-//            return userInfoResponse;
-//        } catch (RestClientException e) {
-//            log.error("Error during requestUserInfoWithAccessTokenForSignIn: " + e.getMessage());
-//
-//            String responseAccessToken = expiredNaverAccessTokenRequester(AccessToken);
-//            headers.add("Authorization","Bearer "+ responseAccessToken);
-//
-//            HttpEntity<MultiValueMap<String, String>> request = new HttpEntity(headers);
-//            log.info("request: " + request);
-//
-//            ResponseEntity<JsonNode> response = restTemplate.exchange(
-//                    naverOauthSecretsProvider.getNAVER_USERINFO_REQUEST_URL(), HttpMethod.GET, request, JsonNode.class);
-//            log.info("response: " + response);
-//
-//            JsonNode responseNode = response.getBody().get("response");
-//
-//            NaverOauthUserInfoResponse userInfoResponse =
-//                    objectMapper.convertValue(responseNode, NaverOauthUserInfoResponse.class);
-//
-//            log.info("requestUserInfoWithAccessTokenForSignIn end");
-//
-//            return userInfoResponse;
-//        }
-//
-//    }
-//
-//    // 네이버 리프래쉬 토큰으로 엑세스 토큰 재발급 받은 후 유저 정보 요청
-//    public String expiredNaverAccessTokenRequester (String accessToken) {
-//        log.info("expiredNaverAccessTokenRequester start");
-//
-//        User user = authenticationService.findUserByAccessTokenInDatabase(accessToken);
-//
-//        String refreshToken = user.getRefreshToken();
-//
-//        final String naverClientId = naverOauthSecretsProvider.getNAVER_AUTH_CLIENT_ID();
-//        final String naverClientSecret = naverOauthSecretsProvider.getNAVER_AUTH_SECRETS();
-//        final String naverRefreshTokenRequestUrl = naverOauthSecretsProvider.getNAVER_REFRESH_TOKEN_REQUEST_URL();
-//        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-//
-//        body.add("refresh_token", refreshToken);
-//        body.add("client_id", naverClientId);
-//        body.add("client_secret", naverClientSecret);
-//        body.add("grant_type", "refresh_token");
-//
-//        HttpHeaders headers = new HttpHeaders();
-//        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-//
-//        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(body, headers);
-//
-//        ResponseEntity<NaverOauthAccessTokenResponse> accessTokenResponse = restTemplate.postForEntity(naverRefreshTokenRequestUrl, requestEntity, NaverOauthAccessTokenResponse.class);
-//        if(accessTokenResponse.getStatusCode() == HttpStatus.OK){
-//            user.setAccessToken(accessTokenResponse.getBody().getAccessToken());
-//            userRepository.save(user);
-//            log.info("expiredNaverAccessTokenRequester end");
-//
-//            return user.getAccessToken();
-//        }
-//        log.info("expiredNaverAccessTokenRequester end");
-//        return null;
-//    }
-//
-//    // 네이버 유저 찾기 후 없으면 저장
-//    public User naverUserSave (NaverOauthAccessTokenResponse accessTokenResponse, NaverOauthUserInfoResponse userInfoResponse) {
-//        log.info("userCheckIsOurUser start");
-//        Optional<User> maybeUser = userRepository.findByStringId(userInfoResponse.getId());
-//        if (maybeUser.isEmpty()) {
-//            User user = User.builder()
-//                    .id(userInfoResponse.getId())
-//                    .active(Active.YES)
-//                    .accessToken(accessTokenResponse.getAccessToken())
-//                    .refreshToken(accessTokenResponse.getRefreshToken())
-//                    .build();
-//            userRepository.save(user);
-//
-//            UserProfile userProfile = UserProfile.builder()
-//                    .user(user)
-//                    .id(userInfoResponse.getId())
-//                    .contactNumber(userInfoResponse.getMobile_e164())
-//                    .email(userInfoResponse.getEmail())
-//                    .profileImg(userInfoResponse.getProfile_image())
-//                    .build();
-//            userProfileRepository.save(userProfile);
-//            log.info("userCheckIsOurUser NotOurUser");
-//            log.info("userCheckIsOurUser end");
-//            return user;
-//        } else if (maybeUser.get().getActive() == Active.NO) {
-//            User user = maybeUser.get();
-//            user.setActive(Active.YES);
-//            user.setAccessToken(accessTokenResponse.getAccessToken());
-//            user.setRefreshToken(accessTokenResponse.getRefreshToken());
-//            userRepository.save(user);
-//
-//            UserProfile userProfile = UserProfile.builder()
-//                    .user(user)
-//                    .id(userInfoResponse.getId())
-//                    .contactNumber(userInfoResponse.getMobile_e164())
-//                    .email(userInfoResponse.getEmail())
-//                    .profileImg(userInfoResponse.getProfile_image())
-//                    .build();
-//            userProfileRepository.save(userProfile);
-//            log.info("userCheckIsOurUser rejoin user");
-//            log.info("userCheckIsOurUser end");
-//            return user;
-//        } else {
-//            log.info("userCheckIsOurUser OurUser");
-//            User user = maybeUser.get();
-//            user.setAccessToken(accessTokenResponse.getAccessToken());
-//            userRepository.save(user);
-//            log.info("userCheckIsOurUser end");
-//            return user;
-//        }
-//    }
-//
-//    // 네이버 유저 탈퇴
-//    public Boolean naverUserDelete (String userToken) throws NullPointerException{
-//        User user = authenticationService.findUserByAccessTokenInDatabase(redisService.getAccessToken(userToken));
-//        log.info("user.getAccessToken(): " + user.getAccessToken());
-//        String responseAccessToken = expiredNaverAccessTokenRequester(user.getAccessToken());
-//        log.info("responseAccessToken: " + responseAccessToken);
-//
-//        final String naverRevokeUrl = naverOauthSecretsProvider.getNAVER_REVOKE_URL();
-//        final String naverClientId = naverOauthSecretsProvider.getNAVER_AUTH_CLIENT_ID();
-//        final String naverSecrets = naverOauthSecretsProvider.getNAVER_AUTH_SECRETS();
-//
-//        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-//        body.add("access_token", responseAccessToken);
-//        body.add("client_id", naverClientId);
-//        body.add("client_secret", naverSecrets);
-//        body.add("grant_type", "delete");
-//        body.add("service_provider", "NAVER");
-//        HttpHeaders headers = new HttpHeaders();
-//        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-//        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(body, headers);
-//        try {
-//            ResponseEntity<JsonNode> jsonNodeResponseEntity = restTemplate.postForEntity(naverRevokeUrl, requestEntity, JsonNode.class);
-//            JsonNode responseBody = jsonNodeResponseEntity.getBody();
-//            log.info("jsonNodeResponseEntity: " + responseBody);
-//            if (responseBody.has("error")) {
-//                String error = responseBody.get("error").asText();
-//                String errorDescription = responseBody.get("error_description").asText();
-//
-//                log.error("Error: " + error + ", Error Description: " + errorDescription);
-//                return false;
-//            } else {
-//                user.setActive(Active.NO);
-//                userRepository.save(user);
-//
-//                UserProfile userProfile = userProfileRepository.findByUser(user).get();
-//                userProfileRepository.delete(userProfile);
-//
-//                redisService.deleteKeyAndValueWithUserToken(userToken);
-//                return true;
-//            }
-//        }catch (Exception e){
-//            log.error("Can't Delete User", e);
-//            return false;
-//        }
-//    }
-//
-//    /*
-//    <------------------------------------------------------------------------------------------------------------------>
-//     */
 //
 //    // 카카오 로그인
 //    @Override
@@ -674,7 +423,7 @@ public class UserServiceImpl implements UserService {
         return userProfileResponseForm;
     }
 
-    // Google Oauth 로그인
+    // Google 사용자의 TTMARKET 회원가입
     @Override
     public RedirectView userRegisterAndLoginForGoogle(GoogleUserLoginRequestForm requestForm) {
         log.info("userLogInForGoogle start");
@@ -737,6 +486,71 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    // Naver 사용자의 TTMARKET 회원가입
+    @Override
+    public RedirectView userRegisterAndLoginForNaver(NaverUserLoginRequestForm requestForm) {
+        log.info("userRegisterAndLoginForNaver start");
+
+        Optional<User> maybeUser = userRepository.findByStringId(requestForm.getId());
+        if (maybeUser.isEmpty()) {
+            User user = User.builder()
+                    .id(requestForm.getId())
+                    .active(Active.YES)
+                    .userType(UserType.NAVER)
+                    .accessToken(requestForm.getAccessToken())
+                    .refreshToken(requestForm.getRefreshToken())
+                    .build();
+            userRepository.save(user);
+
+            UserProfile userProfile = UserProfile.builder()
+                    .user(user)
+                    .id(requestForm.getId())
+                    .contactNumber(requestForm.getMobile_e164())
+                    .email(requestForm.getEmail())
+                    .profileImg(requestForm.getProfile_image())
+                    .build();
+            userProfileRepository.save(userProfile);
+            log.info("userRegisterAndLoginForNaver Not Our User");
+            log.info("userRegisterAndLoginForNaver end");
+
+            String redirectUrl = naverOauthSecretsProvider.getNAVER_REDIRECT_VIEW_URL();
+            String userToken = userLogIn(user, "naver");
+            return new RedirectView(redirectUrl + userToken);
+
+        } else if (maybeUser.get().getActive() == Active.NO) {
+            User user = maybeUser.get();
+            user.setActive(Active.YES);
+            user.setAccessToken(requestForm.getAccessToken());
+            user.setRefreshToken(requestForm.getRefreshToken());
+            userRepository.save(user);
+
+            UserProfile userProfile = UserProfile.builder()
+                    .user(user)
+                    .id(requestForm.getId())
+                    .contactNumber(requestForm.getMobile_e164())
+                    .email(requestForm.getEmail())
+                    .profileImg(requestForm.getProfile_image())
+                    .build();
+            userProfileRepository.save(userProfile);
+            log.info("userRegisterAndLoginForNaver rejoin user");
+            log.info("userRegisterAndLoginForNaver end");
+
+            String redirectUrl = naverOauthSecretsProvider.getNAVER_REDIRECT_VIEW_URL();
+            String userToken = userLogIn(user, "naver");
+            return new RedirectView(redirectUrl + userToken);
+        } else {
+            log.info("userRegisterAndLoginForNaver OurUser");
+            User user = maybeUser.get();
+            user.setAccessToken(requestForm.getAccessToken());
+            userRepository.save(user);
+            log.info("userRegisterAndLoginForNaver end");
+
+            String redirectUrl = naverOauthSecretsProvider.getNAVER_REDIRECT_VIEW_URL();
+            String userToken = userLogIn(user, "naver");
+            return new RedirectView(redirectUrl + userToken);
+        }
+    }
+
     // TTMARKET 로그인
     @Override
     public String userLogIn(User user, String platform) {
@@ -789,18 +603,16 @@ public class UserServiceImpl implements UserService {
             return userLogOut(userToken);
 
         } else if (platform.contains("naver")) {
-//            final User user = authenticationService.findUserByUserToken(userToken);
-//            User withdrawlUser = naverAuthenticationService.naverUserDisconnect(user);
-//            if(withdrawlUser == null) {
-//                return false;
-//            }
-//            Boolean isCompleteDeleteUser = inactiveUser(withdrawlUser);
-//            if(isCompleteDeleteUser == false) {
-//                return false;
-//            }
-//            return userLogOut(userToken);
-            log.info("divideUserByPlatform end");
-            return false;
+            final User user = authenticationService.findUserByUserToken(userToken);
+            User withdrawlUser = naverAuthenticationService.naverUserDisconnect(user);
+            if(withdrawlUser == null) {
+                return false;
+            }
+            Boolean isCompleteDeleteUser = inactiveUser(withdrawlUser);
+            if(isCompleteDeleteUser == false) {
+                return false;
+            }
+            return userLogOut(userToken);
 
         } else {
             log.info("divideUserByPlatform end");

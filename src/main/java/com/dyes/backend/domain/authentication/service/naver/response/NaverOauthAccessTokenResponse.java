@@ -1,4 +1,4 @@
-package com.dyes.backend.domain.user.service.response;
+package com.dyes.backend.domain.authentication.service.naver.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;

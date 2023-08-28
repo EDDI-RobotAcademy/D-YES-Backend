@@ -1,7 +1,9 @@
 package com.dyes.backend.domain.authentication.controller;
 
 import com.dyes.backend.domain.authentication.service.google.GoogleAuthenticationService;
+import com.dyes.backend.domain.authentication.service.naver.NaverAuthenticationService;
 import com.dyes.backend.domain.user.controller.form.GoogleUserLoginRequestForm;
+import com.dyes.backend.domain.user.controller.form.NaverUserLoginRequestForm;
 import com.dyes.backend.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
@@ -19,6 +21,7 @@ import org.springframework.web.servlet.view.RedirectView;
 @RequestMapping("/oauth")
 public class AuthenticationController {
     final private GoogleAuthenticationService googleAuthenticationService;
+    final private NaverAuthenticationService naverAuthenticationService;
     final private UserService userService;
 
     // 구글 로그인 및 회원가입
@@ -26,5 +29,12 @@ public class AuthenticationController {
     public RedirectView googleUserLogin(@RequestParam(name = "code") String code) {
         GoogleUserLoginRequestForm requestForm = googleAuthenticationService.googleUserLogin(code);
         return userService.userRegisterAndLoginForGoogle(requestForm);
+    }
+
+    // 네이버 로그인 및 회원가입
+    @GetMapping("/naver/login")
+    public RedirectView naverUserLogin(@RequestParam(name = "code") String code) {
+        NaverUserLoginRequestForm requestForm = naverAuthenticationService.naverUserLogin(code);
+        return userService.userRegisterAndLoginForNaver(requestForm);
     }
 }
