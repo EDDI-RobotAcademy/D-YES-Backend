@@ -27,6 +27,8 @@ public class GoogleAuthenticationServiceImpl implements GoogleAuthenticationServ
     final private GoogleOauthSecretsProvider googleOauthSecretsProvider;
     final private UserRepository userRepository;
     final private RestTemplate restTemplate;
+
+    // 구글 로그인
     @Override
     public GoogleUserLoginRequestForm googleUserLogin(String code) {
         log.info("googleUserLogin start");
@@ -120,6 +122,7 @@ public class GoogleAuthenticationServiceImpl implements GoogleAuthenticationServ
         }
     }
 
+    // 구글 리프래쉬 토큰으로 엑세스 토큰 재발급 받은 후 유저 정보 요청
     @Override
     public String expiredGoogleAccessTokenRequester(User user) {
         log.info("expiredGoogleAccessTokenRequester start");

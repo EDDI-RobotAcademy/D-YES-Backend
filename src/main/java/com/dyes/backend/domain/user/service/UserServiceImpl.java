@@ -24,7 +24,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.view.RedirectView;
 
 import java.util.Optional;
@@ -73,7 +72,7 @@ public class UserServiceImpl implements UserService {
         return true;
     }
 
-    // 유저 프로필 가져오기
+    // 프로필 확인
     @Override
     public UserProfileResponseForm getUserProfile(String userToken) {
         final User user = authenticationService.findUserByUserToken(userToken);
@@ -101,7 +100,7 @@ public class UserServiceImpl implements UserService {
         return userProfileResponseForm;
     }
 
-    // 유저 프로필 수정하기
+    // 프로필 수정
     @Override
     public UserProfileResponseForm modifyUserProfile(UserProfileModifyRequestForm requestForm) {
         final User user = authenticationService.findUserByUserToken(requestForm.getUserToken());
@@ -378,7 +377,7 @@ public class UserServiceImpl implements UserService {
         return userToken;
     }
 
-    // userToken으로 사용자 로그아웃
+    // 로그아웃
     @Override
     public boolean userLogOut(String userToken) {
         log.info("userLogOut start");

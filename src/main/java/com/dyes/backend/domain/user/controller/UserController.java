@@ -16,22 +16,6 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
     final private UserService userService;
 
-//    // 네이버 로그인 및 회원가입
-//    @GetMapping("/oauth/naver/login")
-//    public RedirectView naverUserLogin (@RequestParam(name = "code") String code) {
-//        String naverUserTokenWithUrl = userService.naverUserLogin(code);
-//        RedirectView redirectView = new RedirectView(naverUserTokenWithUrl);
-//        return redirectView;
-//    }
-
-//    // 카카오 로그인 및 회원가입
-//    @GetMapping("/oauth/kakao/login")
-//    public RedirectView kakaoUserLogin(@RequestParam(name = "code") String code) {
-//        String kakaoUserTokenWithUrl = userService.kakaoUserLogin(code);
-//        RedirectView redirectView = new RedirectView(kakaoUserTokenWithUrl);
-//        return redirectView;
-//    }
-
     // 닉네임 중복 확인
     @GetMapping("/check-nickName")
     public Boolean checkNickNameDuplicate(@RequestParam("nickName") String nickName) {
