@@ -17,7 +17,7 @@ import com.dyes.backend.domain.product.repository.ProductMainImageRepository;
 import com.dyes.backend.domain.product.repository.ProductOptionRepository;
 import com.dyes.backend.domain.product.repository.ProductRepository;
 import com.dyes.backend.domain.product.service.ProductServiceImpl;
-import com.dyes.backend.domain.product.service.Response.*;
+import com.dyes.backend.domain.product.service.response.*;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.repository.UserRepository;
 import com.dyes.backend.domain.user.service.UserServiceImpl;

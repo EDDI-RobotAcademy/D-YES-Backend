@@ -10,13 +10,14 @@ import com.dyes.backend.domain.product.controller.form.ProductDeleteForm;
 import com.dyes.backend.domain.product.controller.form.ProductListDeleteForm;
 import com.dyes.backend.domain.product.controller.form.ProductModifyForm;
 import com.dyes.backend.domain.product.controller.form.ProductRegisterForm;
-import com.dyes.backend.domain.product.service.Response.*;
+import com.dyes.backend.domain.product.service.response.*;
 import com.dyes.backend.domain.product.service.request.*;
 import com.dyes.backend.domain.product.entity.*;
 import com.dyes.backend.domain.product.repository.ProductDetailImagesRepository;
 import com.dyes.backend.domain.product.repository.ProductMainImageRepository;
 import com.dyes.backend.domain.product.repository.ProductOptionRepository;
 import com.dyes.backend.domain.product.repository.ProductRepository;
+import com.dyes.backend.domain.product.service.response.admin.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -115,6 +116,47 @@ public class ProductServiceImpl implements ProductService{
             log.error("Can't register this product: {}", e.getMessage(), e);
             log.info("productRegistration end");
             return false;
+        }
+    }
+
+    // 관리자의 상품 읽기
+    @Override
+    public ProductResponseFormForAdmin readProductForAdmin(Long productId) {
+        try {
+            Optional<Product> maybeProduct = productRepository.findByIdWithFarm(productId);
+            if(maybeProduct.isEmpty()) {
+                log.info("Can not find Product");
+                return null;
+            }
+
+            Product product = maybeProduct.get();
+            List<ProductOption> productOption = productOptionRepository.findByProduct(product);
+            ProductMainImage productMainImage = productMainImageRepository.findByProduct(product).get();
+            List<ProductDetailImages> productDetailImages = productDetailImagesRepository.findByProduct(product);
+            Farm farm = product.getFarm();
+            FarmOperation farmOperation = farmOperationRepository.findByFarm(farm);
+
+            ProductResponseForAdmin productResponseForAdmin = new ProductResponseForAdmin().productResponseForAdmin(product);
+            List<ProductOptionResponseForAdmin> productOptionResponseForAdmin = new ProductOptionResponseForAdmin().productOptionResponseForAdmin(productOption);
+            ProductMainImageResponseForAdmin productMainImageResponseForAdmin = new ProductMainImageResponseForAdmin().productMainImageResponseForAdmin(productMainImage);
+            List<ProductDetailImagesResponseForAdmin> productDetailImagesResponsesForAdmin = new ProductDetailImagesResponseForAdmin().productDetailImagesResponseForAdminList(productDetailImages);
+            FarmInfoResponseForAdmin farmInfoResponseForAdmin = new FarmInfoResponseForAdmin().farmInfoResponseForAdmin(farm);
+            FarmOperationInfoResponseForAdmin farmOperationInfoResponseForAdmin = new FarmOperationInfoResponseForAdmin().farmOperationInfoResponseForAdmin(farmOperation);
+
+            ProductResponseFormForAdmin responseForm
+                    = new ProductResponseFormForAdmin(
+                            productResponseForAdmin,
+                            productOptionResponseForAdmin,
+                            productMainImageResponseForAdmin,
+                            productDetailImagesResponsesForAdmin,
+                            farmInfoResponseForAdmin,
+                            farmOperationInfoResponseForAdmin);
+
+            return responseForm;
+
+        } catch (Exception e) {
+            log.error("Can't read this product: {}", e.getMessage(), e);
+            return null;
         }
     }
 
