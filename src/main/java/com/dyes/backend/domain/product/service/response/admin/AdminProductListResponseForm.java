@@ -1,4 +1,4 @@
-package com.dyes.backend.domain.product.service.response;
+package com.dyes.backend.domain.product.service.response.admin;
 
 import com.dyes.backend.domain.product.entity.SaleStatus;
 import lombok.AllArgsConstructor;

@@ -4,7 +4,7 @@ import com.dyes.backend.domain.product.controller.form.ProductDeleteForm;
 import com.dyes.backend.domain.product.controller.form.ProductListDeleteForm;
 import com.dyes.backend.domain.product.controller.form.ProductModifyForm;
 import com.dyes.backend.domain.product.controller.form.ProductRegisterForm;
-import com.dyes.backend.domain.product.service.response.AdminProductListResponseForm;
+import com.dyes.backend.domain.product.service.response.admin.AdminProductListResponseForm;
 import com.dyes.backend.domain.product.service.response.admin.ProductResponseFormForAdmin;
 import com.dyes.backend.domain.product.service.response.UserProductResponseForm;
 import com.dyes.backend.domain.product.service.response.UserProductListResponseForm;
