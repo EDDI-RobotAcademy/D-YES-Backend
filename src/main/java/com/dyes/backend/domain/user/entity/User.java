@@ -22,4 +22,6 @@ public class User {
     private String refreshToken;
     @Enumerated(EnumType.STRING)
     private Active active;
+    @Enumerated(EnumType.STRING)
+    private UserType userType;
 }
