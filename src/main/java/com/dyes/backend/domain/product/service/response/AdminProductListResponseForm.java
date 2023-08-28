@@ -1,4 +1,4 @@
-package com.dyes.backend.domain.product.service.Response;
+package com.dyes.backend.domain.product.service.response;
 
 import com.dyes.backend.domain.product.entity.SaleStatus;
 import lombok.AllArgsConstructor;
@@ -15,4 +15,5 @@ public class AdminProductListResponseForm {
     private String productName;
     private SaleStatus productSaleStatus;
     private List<AdminProductOptionListResponse> productOptionListResponse;
+    private String farmName;
 }

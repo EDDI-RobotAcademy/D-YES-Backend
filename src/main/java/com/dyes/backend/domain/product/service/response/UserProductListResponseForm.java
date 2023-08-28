@@ -1,4 +1,4 @@
-package com.dyes.backend.domain.product.service.Response;
+package com.dyes.backend.domain.product.service.response;
 
 import com.dyes.backend.domain.product.entity.CultivationMethod;
 import lombok.AllArgsConstructor;
@@ -15,4 +15,7 @@ public class UserProductListResponseForm {
     private String productMainImage;
     private Long minOptionPrice;
     private Boolean isSoldOut;
+    private String farmName;
+    private String mainImage;
+    private String representativeName;
 }

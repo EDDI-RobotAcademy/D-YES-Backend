@@ -1,4 +1,4 @@
-package com.dyes.backend.domain.product.service.Response;
+package com.dyes.backend.domain.product.service.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

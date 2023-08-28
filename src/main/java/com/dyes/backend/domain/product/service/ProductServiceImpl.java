@@ -3,18 +3,21 @@ package com.dyes.backend.domain.product.service;
 import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.service.AdminService;
 import com.dyes.backend.domain.farm.entity.Farm;
+import com.dyes.backend.domain.farm.entity.FarmOperation;
+import com.dyes.backend.domain.farm.repository.FarmOperationRepository;
 import com.dyes.backend.domain.farm.repository.FarmRepository;
 import com.dyes.backend.domain.product.controller.form.ProductDeleteForm;
 import com.dyes.backend.domain.product.controller.form.ProductListDeleteForm;
 import com.dyes.backend.domain.product.controller.form.ProductModifyForm;
 import com.dyes.backend.domain.product.controller.form.ProductRegisterForm;
-import com.dyes.backend.domain.product.service.Response.*;
+import com.dyes.backend.domain.product.service.response.*;
 import com.dyes.backend.domain.product.service.request.*;
 import com.dyes.backend.domain.product.entity.*;
 import com.dyes.backend.domain.product.repository.ProductDetailImagesRepository;
 import com.dyes.backend.domain.product.repository.ProductMainImageRepository;
 import com.dyes.backend.domain.product.repository.ProductOptionRepository;
 import com.dyes.backend.domain.product.repository.ProductRepository;
+import com.dyes.backend.domain.product.service.response.admin.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,6 +38,7 @@ public class ProductServiceImpl implements ProductService{
     final private ProductMainImageRepository productMainImageRepository;
     final private ProductDetailImagesRepository productDetailImagesRepository;
     final private FarmRepository farmRepository;
+    final private FarmOperationRepository farmOperationRepository;
     final private AdminService adminService;
 
     // 상품 등록
@@ -115,6 +119,47 @@ public class ProductServiceImpl implements ProductService{
         }
     }
 
+    // 관리자의 상품 읽기
+    @Override
+    public ProductResponseFormForAdmin readProductForAdmin(Long productId) {
+        try {
+            Optional<Product> maybeProduct = productRepository.findByIdWithFarm(productId);
+            if(maybeProduct.isEmpty()) {
+                log.info("Can not find Product");
+                return null;
+            }
+
+            Product product = maybeProduct.get();
+            List<ProductOption> productOption = productOptionRepository.findByProduct(product);
+            ProductMainImage productMainImage = productMainImageRepository.findByProduct(product).get();
+            List<ProductDetailImages> productDetailImages = productDetailImagesRepository.findByProduct(product);
+            Farm farm = product.getFarm();
+            FarmOperation farmOperation = farmOperationRepository.findByFarm(farm);
+
+            ProductResponseForAdmin productResponseForAdmin = new ProductResponseForAdmin().productResponseForAdmin(product);
+            List<ProductOptionResponseForAdmin> productOptionResponseForAdmin = new ProductOptionResponseForAdmin().productOptionResponseForAdmin(productOption);
+            ProductMainImageResponseForAdmin productMainImageResponseForAdmin = new ProductMainImageResponseForAdmin().productMainImageResponseForAdmin(productMainImage);
+            List<ProductDetailImagesResponseForAdmin> productDetailImagesResponsesForAdmin = new ProductDetailImagesResponseForAdmin().productDetailImagesResponseForAdminList(productDetailImages);
+            FarmInfoResponseForAdmin farmInfoResponseForAdmin = new FarmInfoResponseForAdmin().farmInfoResponseForAdmin(farm);
+            FarmOperationInfoResponseForAdmin farmOperationInfoResponseForAdmin = new FarmOperationInfoResponseForAdmin().farmOperationInfoResponseForAdmin(farmOperation);
+
+            ProductResponseFormForAdmin responseForm
+                    = new ProductResponseFormForAdmin(
+                            productResponseForAdmin,
+                            productOptionResponseForAdmin,
+                            productMainImageResponseForAdmin,
+                            productDetailImagesResponsesForAdmin,
+                            farmInfoResponseForAdmin,
+                            farmOperationInfoResponseForAdmin);
+
+            return responseForm;
+
+        } catch (Exception e) {
+            log.error("Can't read this product: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+
     // 상품 읽기
     @Override
     public UserProductResponseForm readProduct(Long productId) {
@@ -155,7 +200,7 @@ public class ProductServiceImpl implements ProductService{
 
     // 상품 수정
     @Override
-    public boolean productModify(ProductModifyForm modifyForm) {
+    public boolean productModify(Long productId, ProductModifyForm modifyForm) {
         final Admin admin = adminService.findAdminByUserToken(modifyForm.getUserToken());
 
         if(admin == null) {
@@ -169,7 +214,7 @@ public class ProductServiceImpl implements ProductService{
         List<ProductOptionModifyRequest> productOptionModifyRequestList = modifyForm.getProductOptionModifyRequest();
 
         // 상품 기본 정보 업데이트
-        final Long modifyProductId = productModifyRequest.getProductId();
+        final Long modifyProductId = productId;
         Optional<Product> maybeProduct = productRepository.findById(modifyProductId);
         if(maybeProduct.isEmpty()) {
             log.info("Product is empty");
@@ -315,7 +360,7 @@ public class ProductServiceImpl implements ProductService{
         List<AdminProductListResponseForm> adminProductListResponseFormList = new ArrayList<>();
 
         // DB에서 상품 목록 조회
-        List<Product> productList = productRepository.findAll();
+        List<Product> productList = productRepository.findAllWithFarm();
         for(Product product: productList) {
 
             // 찾은 상품의 옵션 목록
@@ -333,12 +378,15 @@ public class ProductServiceImpl implements ProductService{
 
                 adminProductOptionListResponseList.add(adminProductOptionListResponse);
             }
+
+            Farm farm = product.getFarm();
             AdminProductListResponseForm adminProductListResponseForm
                     = new AdminProductListResponseForm(
                             product.getId(),
                             product.getProductName(),
                             product.getProductSaleStatus(),
-                            adminProductOptionListResponseList);
+                            adminProductOptionListResponseList,
+                            farm.getFarmName());
             adminProductListResponseFormList.add(adminProductListResponseForm);
         }
 
@@ -351,7 +399,7 @@ public class ProductServiceImpl implements ProductService{
         List<UserProductListResponseForm> userProductListResponseFormList = new ArrayList<>();
 
         // DB에서 상품 목록 조회
-        List<Product> productList = productRepository.findAll();
+        List<Product> productList = productRepository.findAllWithFarm();
         for(Product product: productList) {
 
             List<Long> optionPriceList = new ArrayList<>();
@@ -379,6 +427,10 @@ public class ProductServiceImpl implements ProductService{
                 productMainImage = maybeProductMainImage.get().getMainImg();
             }
 
+            // DB에서 해당 상품의 공급자(농가) 조회
+            Farm farm = product.getFarm();
+            FarmOperation farmOperation = farmOperationRepository.findByFarm(farm);
+
             // 최종적으로 반환할 상품 목록 form
             UserProductListResponseForm userProductListResponseForm
                     = new UserProductListResponseForm(
@@ -387,7 +439,10 @@ public class ProductServiceImpl implements ProductService{
                     product.getCultivationMethod(),
                     productMainImage,
                     minOptionPrice,
-                    isSoldOut);
+                    isSoldOut,
+                    farm.getFarmName(),
+                    farm.getMainImage(),
+                    farmOperation.getRepresentativeName());
             userProductListResponseFormList.add(userProductListResponseForm);
         }
 

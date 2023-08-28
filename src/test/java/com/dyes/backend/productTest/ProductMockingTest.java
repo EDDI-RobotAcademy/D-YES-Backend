@@ -4,6 +4,8 @@ import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.repository.AdminRepository;
 import com.dyes.backend.domain.admin.service.AdminService;
 import com.dyes.backend.domain.farm.entity.Farm;
+import com.dyes.backend.domain.farm.entity.FarmOperation;
+import com.dyes.backend.domain.farm.repository.FarmOperationRepository;
 import com.dyes.backend.domain.farm.repository.FarmRepository;
 import com.dyes.backend.domain.product.controller.form.ProductDeleteForm;
 import com.dyes.backend.domain.product.controller.form.ProductModifyForm;
@@ -15,7 +17,7 @@ import com.dyes.backend.domain.product.repository.ProductMainImageRepository;
 import com.dyes.backend.domain.product.repository.ProductOptionRepository;
 import com.dyes.backend.domain.product.repository.ProductRepository;
 import com.dyes.backend.domain.product.service.ProductServiceImpl;
-import com.dyes.backend.domain.product.service.Response.*;
+import com.dyes.backend.domain.product.service.response.*;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.repository.UserRepository;
 import com.dyes.backend.domain.user.service.UserServiceImpl;
@@ -60,6 +62,8 @@ public class ProductMockingTest {
     @Mock
     private FarmRepository mockFarmRepository;
     @Mock
+    private FarmOperationRepository mockFarmOperationRepository;
+    @Mock
     private AdminService mockAdminService;
     @Mock
     private UserServiceImpl mockUserService;
@@ -77,6 +81,7 @@ public class ProductMockingTest {
                 mockProductMainImageRepository,
                 mockProductDetailImagesRepository,
                 mockFarmRepository,
+                mockFarmOperationRepository,
                 mockAdminService
         );
     }
@@ -228,7 +233,7 @@ public class ProductMockingTest {
                                         .amount(new Amount())
                                         .build();
 
-        ProductModifyRequest productModifyRequest = new ProductModifyRequest(modifyProductId, modifyProductName, modifyProductDescription, modifyCultivationMethod);
+        ProductModifyRequest productModifyRequest = new ProductModifyRequest(modifyProductName, modifyProductDescription, modifyCultivationMethod);
 
         ProductMainImageModifyRequest productMainImageModifyRequest = new ProductMainImageModifyRequest(modifyMainImageId, modifyMainImage);
 
@@ -265,7 +270,7 @@ public class ProductMockingTest {
         when(mockProductOptionRepository.findById(modifyOption1Id)).thenReturn(Optional.of(productOption1));
         when(mockProductOptionRepository.findById(modifyOption2Id)).thenReturn(Optional.of(productOption2));
 
-        boolean result = mockService.productModify(modifyForm);
+        boolean result = mockService.productModify(modifyProductId, modifyForm);
         assertTrue(result);
 
         verify(mockProductRepository, times(1)).save(any());
@@ -330,6 +335,10 @@ public class ProductMockingTest {
         final String userToken = "normaladmin-ekjfw3rlkgj-4oi34klng";
         List<Product> productList = new ArrayList<>();
         List<ProductOption> productOptionList = new ArrayList<>();
+        
+        Farm farm = Farm.builder()
+                .farmName("투투농장")
+                .build();
 
         Product product1 = Product.builder()
                 .id(1L)
@@ -337,6 +346,7 @@ public class ProductMockingTest {
                 .productDescription("상품 설명1")
                 .cultivationMethod(ENVIRONMENT_FRIENDLY)
                 .productSaleStatus(AVAILABLE)
+                .farm(farm)
                 .build();
 
         Product product2 = Product.builder()
@@ -345,6 +355,7 @@ public class ProductMockingTest {
                 .productDescription("상품 설명2")
                 .cultivationMethod(ENVIRONMENT_FRIENDLY)
                 .productSaleStatus(UNAVAILABLE)
+                .farm(farm)
                 .build();
 
         productList.add(product1);
@@ -374,7 +385,7 @@ public class ProductMockingTest {
         when(mockAdminService.findAdminByUserToken(userToken)).thenReturn(new Admin());
         when(mockUserRepository.findByStringId(anyString())).thenReturn(Optional.of(new User()));
         when(mockAdminRepository.findByUser(new User())).thenReturn(Optional.of(new Admin()));
-        when(mockProductRepository.findAll()).thenReturn(productList);
+        when(mockProductRepository.findAllWithFarm()).thenReturn(productList);
         when(mockProductOptionRepository.findByProduct(productList.get(0))).thenReturn(productOptionList);
         when(mockProductOptionRepository.findByProduct(productList.get(1))).thenReturn(productOptionList);
         when(mockRedisService.getAccessToken(userToken)).thenReturn("accessToken");
@@ -387,12 +398,14 @@ public class ProductMockingTest {
         assertEquals(result.get(0).getProductSaleStatus(), AVAILABLE);
         assertEquals(result.get(0).getProductOptionListResponse().get(0).getOptionName(), "상품옵션1");
         assertEquals(result.get(0).getProductOptionListResponse().get(0).getStock(), 20);
+        assertEquals(result.get(0).getFarmName(), "투투농장");
 
         assertEquals(result.get(1).getProductName(), "상품명2");
         assertEquals(result.get(1).getProductId(), 2L);
         assertEquals(result.get(1).getProductSaleStatus(), UNAVAILABLE);
         assertEquals(result.get(1).getProductOptionListResponse().get(1).getOptionName(), "상품옵션2");
         assertEquals(result.get(1).getProductOptionListResponse().get(1).getStock(), 70);
+        assertEquals(result.get(1).getFarmName(), "투투농장");
     }
 
     @Test
@@ -401,12 +414,24 @@ public class ProductMockingTest {
         List<Product> productList = new ArrayList<>();
         List<ProductOption> productOptionList = new ArrayList<>();
 
+        Farm farm = Farm.builder()
+                .farmName("투투농장")
+                .mainImage("mainImage")
+                .build();
+
+        FarmOperation farmOperation = FarmOperation.builder()
+                .id(farm.getId())
+                .representativeName("정다운")
+                .farm(farm)
+                .build();
+
         Product product1 = Product.builder()
                 .id(1L)
                 .productName("상품명1")
                 .productDescription("상품 설명1")
                 .cultivationMethod(ENVIRONMENT_FRIENDLY)
                 .productSaleStatus(AVAILABLE)
+                .farm(farm)
                 .build();
 
         Product product2 = Product.builder()
@@ -415,6 +440,7 @@ public class ProductMockingTest {
                 .productDescription("상품 설명2")
                 .cultivationMethod(ENVIRONMENT_FRIENDLY)
                 .productSaleStatus(UNAVAILABLE)
+                .farm(farm)
                 .build();
 
         productList.add(product1);
@@ -441,9 +467,10 @@ public class ProductMockingTest {
         productOptionList.add(productOption1);
         productOptionList.add(productOption2);
 
-        when(mockProductRepository.findAll()).thenReturn(productList);
+        when(mockProductRepository.findAllWithFarm()).thenReturn(productList);
         when(mockProductOptionRepository.findByProduct(productList.get(0))).thenReturn(productOptionList);
         when(mockProductOptionRepository.findByProduct(productList.get(1))).thenReturn(productOptionList);
+        when(mockFarmOperationRepository.findByFarm(farm)).thenReturn(farmOperation);
 
         List<UserProductListResponseForm> result = mockService.getUserProductList();
 
@@ -451,10 +478,16 @@ public class ProductMockingTest {
         assertEquals(result.get(0).getProductId(), 1L);
         assertEquals(result.get(0).getIsSoldOut(), false);
         assertEquals(result.get(0).getMinOptionPrice(), 13000L);
+        assertEquals(result.get(0).getFarmName(), "투투농장");
+        assertEquals(result.get(0).getMainImage(), "mainImage");
+        assertEquals(result.get(0).getRepresentativeName(), "정다운");
 
         assertEquals(result.get(1).getProductName(), "상품명2");
         assertEquals(result.get(1).getProductId(), 2L);
         assertEquals(result.get(1).getIsSoldOut(), false);
         assertEquals(result.get(1).getMinOptionPrice(), 13000L);
+        assertEquals(result.get(0).getFarmName(), "투투농장");
+        assertEquals(result.get(0).getMainImage(), "mainImage");
+        assertEquals(result.get(0).getRepresentativeName(), "정다운");
     }
 }
