@@ -1,8 +1,10 @@
 package com.dyes.backend.domain.authentication.controller;
 
 import com.dyes.backend.domain.authentication.service.google.GoogleAuthenticationService;
+import com.dyes.backend.domain.authentication.service.kakao.service.KakaoAuthenticationService;
 import com.dyes.backend.domain.authentication.service.naver.NaverAuthenticationService;
 import com.dyes.backend.domain.user.controller.form.GoogleUserLoginRequestForm;
+import com.dyes.backend.domain.user.controller.form.KakaoUserLoginRequestForm;
 import com.dyes.backend.domain.user.controller.form.NaverUserLoginRequestForm;
 import com.dyes.backend.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ import org.springframework.web.servlet.view.RedirectView;
 public class AuthenticationController {
     final private GoogleAuthenticationService googleAuthenticationService;
     final private NaverAuthenticationService naverAuthenticationService;
+    final private KakaoAuthenticationService kakaoAuthenticationService;
     final private UserService userService;
 
     // 구글 로그인 및 회원가입
@@ -36,5 +39,12 @@ public class AuthenticationController {
     public RedirectView naverUserLogin(@RequestParam(name = "code") String code) {
         NaverUserLoginRequestForm requestForm = naverAuthenticationService.naverUserLogin(code);
         return userService.userRegisterAndLoginForNaver(requestForm);
+    }
+
+    // 카카오 로그인 및 회원가입
+    @GetMapping("/kakao/login")
+    public RedirectView kakaoUserLogin(@RequestParam(name = "code") String code) {
+        KakaoUserLoginRequestForm requestForm = kakaoAuthenticationService.kakaoUserLogin(code);
+        return userService.userRegisterAndLoginForKakao(requestForm);
     }
 }

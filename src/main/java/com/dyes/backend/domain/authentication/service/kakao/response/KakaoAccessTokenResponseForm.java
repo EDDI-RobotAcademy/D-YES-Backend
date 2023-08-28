@@ -1,4 +1,4 @@
-package com.dyes.backend.domain.user.service.response;
+package com.dyes.backend.domain.authentication.service.kakao.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
