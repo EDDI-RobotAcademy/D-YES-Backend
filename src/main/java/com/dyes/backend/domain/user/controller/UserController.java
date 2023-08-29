@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.view.RedirectView;
 
 @Slf4j
 @ToString
@@ -16,30 +15,6 @@ import org.springframework.web.servlet.view.RedirectView;
 @RequestMapping("/user")
 public class UserController {
     final private UserService userService;
-
-    // 구글 로그인 및 회원가입
-    @GetMapping("/oauth/google/login")
-    public RedirectView googleUserLogin (@RequestParam(name = "code") String code) {
-        String googleUserTokenWithUrl = userService.googleUserLogin(code);
-        RedirectView redirectView = new RedirectView(googleUserTokenWithUrl);
-        return redirectView;
-    }
-
-    // 네이버 로그인 및 회원가입
-    @GetMapping("/oauth/naver/login")
-    public RedirectView naverUserLogin (@RequestParam(name = "code") String code) {
-        String naverUserTokenWithUrl = userService.naverUserLogin(code);
-        RedirectView redirectView = new RedirectView(naverUserTokenWithUrl);
-        return redirectView;
-    }
-
-    // 카카오 로그인 및 회원가입
-    @GetMapping("/oauth/kakao/login")
-    public RedirectView kakaoUserLogin(@RequestParam(name = "code") String code) {
-        String kakaoUserTokenWithUrl = userService.kakaoUserLogin(code);
-        RedirectView redirectView = new RedirectView(kakaoUserTokenWithUrl);
-        return redirectView;
-    }
 
     // 닉네임 중복 확인
     @GetMapping("/check-nickName")
@@ -73,13 +48,13 @@ public class UserController {
     @GetMapping("/logOut")
     public Boolean userLogOut(@RequestParam("userToken") String userToken) {
 
-        return userService.UserLogOut(userToken);
+        return userService.userLogOut(userToken);
     }
 
     // 사용자 탈퇴
     @DeleteMapping("/withdrawal")
-    public Boolean userWithdraw (@RequestParam("userToken") String userToken) {
+    public Boolean userWithdrawal(@RequestParam("userToken") String userToken) {
 
-        return userService.userWithdraw(userToken);
+        return userService.userWithdrawal(userToken);
     }
 }

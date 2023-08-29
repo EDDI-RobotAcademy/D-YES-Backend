@@ -3,6 +3,7 @@ package com.dyes.backend.productTest;
 import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.repository.AdminRepository;
 import com.dyes.backend.domain.admin.service.AdminService;
+import com.dyes.backend.domain.authentication.service.AuthenticationServiceImpl;
 import com.dyes.backend.domain.farm.entity.Farm;
 import com.dyes.backend.domain.farm.entity.FarmOperation;
 import com.dyes.backend.domain.farm.repository.FarmOperationRepository;
@@ -18,9 +19,9 @@ import com.dyes.backend.domain.product.repository.ProductOptionRepository;
 import com.dyes.backend.domain.product.repository.ProductRepository;
 import com.dyes.backend.domain.product.service.ProductServiceImpl;
 import com.dyes.backend.domain.product.service.response.*;
+import com.dyes.backend.domain.product.service.response.admin.AdminProductListResponseForm;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.repository.UserRepository;
-import com.dyes.backend.domain.user.service.UserServiceImpl;
 import com.dyes.backend.utility.redis.RedisServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -66,7 +67,7 @@ public class ProductMockingTest {
     @Mock
     private AdminService mockAdminService;
     @Mock
-    private UserServiceImpl mockUserService;
+    private AuthenticationServiceImpl mockAuthenticationService;
     @Mock
     private RedisServiceImpl mockRedisService;
     @InjectMocks
@@ -119,7 +120,7 @@ public class ProductMockingTest {
         when(mockUserRepository.findByStringId(anyString())).thenReturn(Optional.of(new User()));
         when(mockAdminRepository.findByUser(new User())).thenReturn(Optional.of(new Admin()));
         when(mockRedisService.getAccessToken(userToken)).thenReturn("accessToken");
-        when(mockUserService.findUserByUserToken(userToken)).thenReturn(new User());
+        when(mockAuthenticationService.findUserByUserToken(userToken)).thenReturn(new User());
         when(mockFarmRepository.findByFarmName(farmName)).thenReturn(Optional.of(new Farm()));
 
         boolean result = mockService.productRegistration(registerForm);
@@ -261,7 +262,7 @@ public class ProductMockingTest {
         when(mockUserRepository.findByStringId(anyString())).thenReturn(Optional.of(new User()));
         when(mockAdminRepository.findByUser(new User())).thenReturn(Optional.of(new Admin()));
         when(mockRedisService.getAccessToken(userToken)).thenReturn("accessToken");
-        when(mockUserService.findUserByUserToken(userToken)).thenReturn(new User());
+        when(mockAuthenticationService.findUserByUserToken(userToken)).thenReturn(new User());
 
         when(mockProductRepository.findById(modifyProductId)).thenReturn(Optional.of(product));
         when(mockProductMainImageRepository.findById(modifyMainImageId)).thenReturn(Optional.of(productMainImage));
@@ -318,7 +319,7 @@ public class ProductMockingTest {
         when(mockUserRepository.findByStringId(anyString())).thenReturn(Optional.of(new User()));
         when(mockAdminRepository.findByUser(new User())).thenReturn(Optional.of(new Admin()));
         when(mockRedisService.getAccessToken(userToken)).thenReturn("accessToken");
-        when(mockUserService.findUserByUserToken(userToken)).thenReturn(new User());
+        when(mockAuthenticationService.findUserByUserToken(userToken)).thenReturn(new User());
 
         when(mockProductRepository.findByIdWithFarm(1L)).thenReturn(Optional.of(product));
         when(mockProductMainImageRepository.findByProduct(product)).thenReturn(Optional.of(new ProductMainImage()));
@@ -335,7 +336,7 @@ public class ProductMockingTest {
         final String userToken = "normaladmin-ekjfw3rlkgj-4oi34klng";
         List<Product> productList = new ArrayList<>();
         List<ProductOption> productOptionList = new ArrayList<>();
-        
+
         Farm farm = Farm.builder()
                 .farmName("투투농장")
                 .build();
@@ -389,7 +390,7 @@ public class ProductMockingTest {
         when(mockProductOptionRepository.findByProduct(productList.get(0))).thenReturn(productOptionList);
         when(mockProductOptionRepository.findByProduct(productList.get(1))).thenReturn(productOptionList);
         when(mockRedisService.getAccessToken(userToken)).thenReturn("accessToken");
-        when(mockUserService.findUserByUserToken(userToken)).thenReturn(new User());
+        when(mockAuthenticationService.findUserByUserToken(userToken)).thenReturn(new User());
 
         List<AdminProductListResponseForm> result = mockService.getAdminProductList(userToken);
 
