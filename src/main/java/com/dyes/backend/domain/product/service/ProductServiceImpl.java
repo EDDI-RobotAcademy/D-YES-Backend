@@ -171,15 +171,15 @@ public class ProductServiceImpl implements ProductService{
                 return null;
             }
             Product product = maybeProduct.get();
-//            log.info("product: " + product);
+            log.info("product: " + product);
             List<ProductOption> productOption = productOptionRepository.findByProduct(product);
-//            log.info("productOption: " + productOption);
+            log.info("productOption: " + productOption);
             ProductMainImage productMainImage = productMainImageRepository.findByProduct(product).get();
-//            log.info("productMainImage: " + productMainImage);
+            log.info("productMainImage: " + productMainImage);
             List<ProductDetailImages> productDetailImages = productDetailImagesRepository.findByProduct(product);
-//            log.info("productDetailImages: " + productDetailImages);
+            log.info("productDetailImages: " + productDetailImages);
             Farm farm = product.getFarm();
-//            log.info("farm: " + farm);
+            log.info("farm: " + farm);
 
             ProductResponse productResponse = new ProductResponse().productResponse(product);
             List<ProductOptionResponse> productOptionResponse = new ProductOptionResponse().productOptionResponseList(productOption);
