@@ -8,6 +8,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductDetailImagesModifyRequest {
-    private Long productDetailImageId;
+    private Long detailImageId;
     private String detailImgs;
 }

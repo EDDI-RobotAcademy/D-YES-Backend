@@ -228,7 +228,7 @@ public class ProductServiceImpl implements ProductService{
         productRepository.save(modifyProduct);
 
         // 상품 메인 이미지 업데이트
-        final Long modifyProductMainImageId = productMainImageModifyRequest.getProductMainImageId();
+        final Long modifyProductMainImageId = productMainImageModifyRequest.getMainImageId();
         Optional<ProductMainImage> maybeProductMainImage = productMainImageRepository.findById(modifyProductMainImageId);
         if(maybeProductMainImage.isEmpty()) {
             log.info("ProductMainImage is empty");
@@ -242,7 +242,7 @@ public class ProductServiceImpl implements ProductService{
 
         // 상품 상세 이미지 업데이트
         for(ProductDetailImagesModifyRequest productDetailImage: productDetailImagesModifyRequestList) {
-            final Long productDetailImageId = productDetailImage.getProductDetailImageId();
+            final Long productDetailImageId = productDetailImage.getDetailImageId();
             Optional<ProductDetailImages> maybeProductDetailImages = productDetailImagesRepository.findById(productDetailImageId);
             if(maybeProductDetailImages.isEmpty()) {
                 log.info("ProductDetailImages is empty");
