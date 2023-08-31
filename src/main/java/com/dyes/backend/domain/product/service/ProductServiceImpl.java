@@ -225,6 +225,7 @@ public class ProductServiceImpl implements ProductService{
         modifyProduct.setProductName(productModifyRequest.getProductName());
         modifyProduct.setProductDescription(productModifyRequest.getProductDescription());
         modifyProduct.setCultivationMethod(productModifyRequest.getCultivationMethod());
+        modifyProduct.setProductSaleStatus(productModifyRequest.getProductSaleStatus());
         productRepository.save(modifyProduct);
 
         // 상품 메인 이미지 업데이트
@@ -267,6 +268,7 @@ public class ProductServiceImpl implements ProductService{
             modifyProductOption.setOptionPrice(productOption.getOptionPrice());
             modifyProductOption.setStock(productOption.getStock());
             modifyProductOption.setAmount(new Amount(productOption.getValue(), productOption.getUnit()));
+            modifyProductOption.setOptionSaleStatus(productOption.getOptionSaleStatus());
             modifyProductOption.setProduct(modifyProduct);
             productOptionRepository.save(modifyProductOption);
         }
