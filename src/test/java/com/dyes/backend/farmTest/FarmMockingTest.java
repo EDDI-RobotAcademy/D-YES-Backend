@@ -20,6 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -55,6 +56,7 @@ public class FarmMockingTest {
                 = new FarmRegisterRequestForm("mainadmin-kfweg", "투투농가", "070-1234-5678",
                 "서울특별시 강남구 테헤란로14길 6", "06234", "6층", "mainImage", "introduction", produceTypeList,
                 "(주)투투농장", "123-45-67891", "정다운", "010-1234-5678");
+        when(mockFarmRepository.findByFarmName("투투농가")).thenReturn(Optional.empty());
         when(mockAdminService.findAdminByUserToken("mainadmin-kfweg")).thenReturn(new Admin());
 
         boolean result = farmService.farmRegister(requestForm);

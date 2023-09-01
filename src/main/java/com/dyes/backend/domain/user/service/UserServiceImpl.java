@@ -26,8 +26,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.view.RedirectView;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.Optional;
 import java.util.UUID;
+
+import static com.dyes.backend.utility.nickName.NickNameUtils.getRandomNickName;
 
 @Service
 @Slf4j
@@ -179,6 +183,7 @@ public class UserServiceImpl implements UserService {
             UserProfile userProfile = UserProfile.builder()
                     .user(user)
                     .id(requestForm.getId())
+                    .nickName(getRandomNickName())
                     .email(requestForm.getEmail())
                     .profileImg(requestForm.getPicture())
                     .build();
@@ -187,8 +192,8 @@ public class UserServiceImpl implements UserService {
             log.info("userLogInForGoogle end");
 
             String redirectUrl = googleOauthSecretsProvider.getGOOGLE_REDIRECT_VIEW_URL();
-            String userToken = userLogIn(user, "google");
-            return new RedirectView(redirectUrl + userToken);
+            String mainPageUserInfo = userLogIn(user, "google");
+            return new RedirectView(redirectUrl + mainPageUserInfo);
 
         } else if (maybeUser.get().getActive() == Active.NO) {
             User user = maybeUser.get();
@@ -200,6 +205,7 @@ public class UserServiceImpl implements UserService {
             UserProfile userProfile = UserProfile.builder()
                     .user(user)
                     .id(requestForm.getId())
+                    .nickName(getRandomNickName())
                     .email(requestForm.getEmail())
                     .profileImg(requestForm.getPicture())
                     .build();
@@ -208,8 +214,8 @@ public class UserServiceImpl implements UserService {
             log.info("userLogInForGoogle end");
 
             String redirectUrl = googleOauthSecretsProvider.getGOOGLE_REDIRECT_VIEW_URL();
-            String userToken = userLogIn(user, "google");
-            return new RedirectView(redirectUrl + userToken);
+            String mainPageUserInfo = userLogIn(user, "google");
+            return new RedirectView(redirectUrl + mainPageUserInfo);
         } else {
             log.info("userLogInForGoogle OurUser");
             User user = maybeUser.get();
@@ -218,8 +224,8 @@ public class UserServiceImpl implements UserService {
             log.info("userLogInForGoogle end");
 
             String redirectUrl = googleOauthSecretsProvider.getGOOGLE_REDIRECT_VIEW_URL();
-            String userToken = userLogIn(user, "google");
-            return new RedirectView(redirectUrl + userToken);
+            String mainPageUserInfo = userLogIn(user, "google");
+            return new RedirectView(redirectUrl + mainPageUserInfo);
         }
     }
 
@@ -242,6 +248,7 @@ public class UserServiceImpl implements UserService {
             UserProfile userProfile = UserProfile.builder()
                     .user(user)
                     .id(requestForm.getId())
+                    .nickName(getRandomNickName())
                     .contactNumber(requestForm.getMobile_e164())
                     .email(requestForm.getEmail())
                     .profileImg(requestForm.getProfile_image())
@@ -251,8 +258,8 @@ public class UserServiceImpl implements UserService {
             log.info("userRegisterAndLoginForNaver end");
 
             String redirectUrl = naverOauthSecretsProvider.getNAVER_REDIRECT_VIEW_URL();
-            String userToken = userLogIn(user, "naver");
-            return new RedirectView(redirectUrl + userToken);
+            String mainPageUserInfo = userLogIn(user, "naver");
+            return new RedirectView(redirectUrl + mainPageUserInfo);
 
         } else if (maybeUser.get().getActive() == Active.NO) {
             User user = maybeUser.get();
@@ -264,6 +271,7 @@ public class UserServiceImpl implements UserService {
             UserProfile userProfile = UserProfile.builder()
                     .user(user)
                     .id(requestForm.getId())
+                    .nickName(getRandomNickName())
                     .contactNumber(requestForm.getMobile_e164())
                     .email(requestForm.getEmail())
                     .profileImg(requestForm.getProfile_image())
@@ -273,8 +281,8 @@ public class UserServiceImpl implements UserService {
             log.info("userRegisterAndLoginForNaver end");
 
             String redirectUrl = naverOauthSecretsProvider.getNAVER_REDIRECT_VIEW_URL();
-            String userToken = userLogIn(user, "naver");
-            return new RedirectView(redirectUrl + userToken);
+            String mainPageUserInfo = userLogIn(user, "naver");
+            return new RedirectView(redirectUrl + mainPageUserInfo);
         } else {
             log.info("userRegisterAndLoginForNaver OurUser");
             User user = maybeUser.get();
@@ -283,8 +291,8 @@ public class UserServiceImpl implements UserService {
             log.info("userRegisterAndLoginForNaver end");
 
             String redirectUrl = naverOauthSecretsProvider.getNAVER_REDIRECT_VIEW_URL();
-            String userToken = userLogIn(user, "naver");
-            return new RedirectView(redirectUrl + userToken);
+            String mainPageUserInfo = userLogIn(user, "naver");
+            return new RedirectView(redirectUrl + mainPageUserInfo);
         }
     }
 
@@ -315,8 +323,8 @@ public class UserServiceImpl implements UserService {
             userProfileRepository.save(userProfile);
 
             String redirectUrl = kakaoOauthSecretsProvider.getKAKAO_REDIRECT_VIEW_URL();
-            String userToken = userLogIn(user, "kakao");
-            return new RedirectView(redirectUrl + userToken);
+            String mainPageUserInfo = userLogIn(user, "kakao");
+            return new RedirectView(redirectUrl + mainPageUserInfo);
 
         } else if(maybeUser.isPresent() && maybeUser.get().getActive().equals(Active.YES)) {
 
@@ -327,8 +335,8 @@ public class UserServiceImpl implements UserService {
             userRepository.save(user);
 
             String redirectUrl = kakaoOauthSecretsProvider.getKAKAO_REDIRECT_VIEW_URL();
-            String userToken = userLogIn(user, "kakao");
-            return new RedirectView(redirectUrl + userToken);
+            String mainPageUserInfo = userLogIn(user, "kakao");
+            return new RedirectView(redirectUrl + mainPageUserInfo);
 
         } else if(maybeUser.isPresent() && maybeUser.get().getActive().equals(Active.NO)) {
 
@@ -349,8 +357,8 @@ public class UserServiceImpl implements UserService {
             userProfileRepository.save(userProfile);
 
             String redirectUrl = kakaoOauthSecretsProvider.getKAKAO_REDIRECT_VIEW_URL();
-            String userToken = userLogIn(user, "kakao");
-            return new RedirectView(redirectUrl + userToken);
+            String mainPageUserInfo = userLogIn(user, "kakao");
+            return new RedirectView(redirectUrl + mainPageUserInfo);
         }
 
         return null;
@@ -359,22 +367,33 @@ public class UserServiceImpl implements UserService {
     // TTMARKET 로그인
     @Override
     public String userLogIn(User user, String platform) {
-        String userToken = platform + UUID.randomUUID();
+        Optional<UserProfile> userProfile = userProfileRepository.findByUser(user);
 
-        Optional<Admin> maybeAdmin = adminRepository.findByUser(user);
-        if(maybeAdmin.isPresent()) {
-            Admin admin = maybeAdmin.get();
+        try {
+            String encodedProfileImg = URLEncoder.encode(userProfile.get().getProfileImg(), "UTF-8");
+            String encodedNickName = URLEncoder.encode(userProfile.get().getNickName(), "UTF-8");
 
-            if(admin.getRoleType().equals(RoleType.MAIN_ADMIN)) {
-                userToken = "mainadmin" + userToken;
-            } else if (admin.getRoleType().equals(RoleType.NORMAL_ADMIN)) {
-                userToken = "normaladmin" + userToken;
+            String userToken = platform + UUID.randomUUID();
+
+            Optional<Admin> maybeAdmin = adminRepository.findByUser(user);
+            if(maybeAdmin.isPresent()) {
+                Admin admin = maybeAdmin.get();
+
+                if(admin.getRoleType().equals(RoleType.MAIN_ADMIN)) {
+                    userToken = "mainadmin" + userToken;
+                } else if (admin.getRoleType().equals(RoleType.NORMAL_ADMIN)) {
+                    userToken = "normaladmin" + userToken;
+                }
             }
+
+            redisService.setUserTokenAndUser(userToken, user.getAccessToken());
+
+            // 로그인 후 헤더에 프로필 사진, 닉네임을 띄우기 위해 url에 담아서 전달
+            String mainPageUserInfo = userToken + "&profileImg=" + encodedProfileImg + "&nickName=" + encodedNickName;
+            return mainPageUserInfo;
+        } catch (UnsupportedEncodingException e) {
+            return null;
         }
-
-        redisService.setUserTokenAndUser(userToken, user.getAccessToken());
-
-        return userToken;
     }
 
     // 로그아웃
@@ -393,10 +412,17 @@ public class UserServiceImpl implements UserService {
     // 회원 탈퇴(Oauth 연결 끊기 및 DB 삭제)
     @Override
     public boolean userWithdrawal(String userToken) {
-        String platform = divideUserByPlatform(userToken);
-        if (platform.contains("google")) {
-            log.info("divideUserByPlatform end");
-            final User user = authenticationService.findUserByUserToken(userToken);
+        User user = authenticationService.findUserByUserToken(userToken);
+        Optional<Admin> maybeAdmin = adminRepository.findByUser(user);
+
+        if(maybeAdmin.isPresent()) {
+            log.info("Admin can not withdrawal");
+            return false;
+        }
+
+        final UserType userType = user.getUserType();
+
+        if (userType.equals(UserType.GOOGLE)) {
             User withdrawlUser = googleAuthenticationService.googleUserDisconnect(user);
             if(withdrawlUser == null) {
                 return false;
@@ -407,8 +433,7 @@ public class UserServiceImpl implements UserService {
             }
             return userLogOut(userToken);
 
-        } else if (platform.contains("naver")) {
-            final User user = authenticationService.findUserByUserToken(userToken);
+        } else if (userType.equals(UserType.NAVER)) {
             User withdrawlUser = naverAuthenticationService.naverUserDisconnect(user);
             if(withdrawlUser == null) {
                 return false;
@@ -419,9 +444,7 @@ public class UserServiceImpl implements UserService {
             }
             return userLogOut(userToken);
 
-        } else {
-            log.info("divideUserByPlatform end");
-            final User user = authenticationService.findUserByUserToken(userToken);
+        } else if (userType.equals(UserType.KAKAO)){
             User withdrawlUser = kakaoAuthenticationService.kakaoUserDisconnect(user);
             if(withdrawlUser == null) {
                 return false;
@@ -431,6 +454,8 @@ public class UserServiceImpl implements UserService {
                 return false;
             }
             return userLogOut(userToken);
+        } else {
+            return false;
         }
     }
 

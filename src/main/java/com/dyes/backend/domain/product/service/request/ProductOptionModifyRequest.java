@@ -1,5 +1,6 @@
 package com.dyes.backend.domain.product.service.request;
 
+import com.dyes.backend.domain.product.entity.SaleStatus;
 import com.dyes.backend.domain.product.entity.Unit;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,4 +16,5 @@ public class ProductOptionModifyRequest {
     private int stock;
     private Long value;
     private Unit unit;
+    private SaleStatus optionSaleStatus;
 }
