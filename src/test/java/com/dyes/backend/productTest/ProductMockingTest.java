@@ -177,6 +177,7 @@ public class ProductMockingTest {
         final String modifyProductName = "수정된 상품명";
         final String modifyProductDescription = "수정된 상세설명";
         final CultivationMethod modifyCultivationMethod = PESTICIDE_FREE;
+        final SaleStatus modifyProductSaleStatus = UNAVAILABLE;
 
         final Long modifyMainImageId = 1L;
         final String modifyMainImage = "수정된 메인 이미지";
@@ -192,6 +193,7 @@ public class ProductMockingTest {
         final int modifyStock1 = 10;
         final Long modifyValue1 = 1L;
         final Unit modifyUnit1 = KG;
+        final SaleStatus modifyOption1SaleStatus = UNAVAILABLE;
 
         final Long modifyOption2Id = 2L;
         final String modifyOptionName2 = "수정된 옵션명2";
@@ -199,6 +201,7 @@ public class ProductMockingTest {
         final int modifyStock2 = 20;
         final Long modifyValue2 = 2L;
         final Unit modifyUnit2 = KG;
+        final SaleStatus modifyOption2SaleStatus = UNAVAILABLE;
 
         final String userToken = "mainadmin-dskef3rkewj-welkjw";
 
@@ -234,20 +237,26 @@ public class ProductMockingTest {
                                         .amount(new Amount())
                                         .build();
 
-        ProductModifyRequest productModifyRequest = new ProductModifyRequest(modifyProductName, modifyProductDescription, modifyCultivationMethod);
+        ProductModifyRequest productModifyRequest
+                = new ProductModifyRequest(modifyProductName, modifyProductDescription, modifyCultivationMethod, modifyProductSaleStatus);
 
-        ProductMainImageModifyRequest productMainImageModifyRequest = new ProductMainImageModifyRequest(modifyMainImageId, modifyMainImage);
+        ProductMainImageModifyRequest productMainImageModifyRequest
+                = new ProductMainImageModifyRequest(modifyMainImageId, modifyMainImage);
 
         List<ProductDetailImagesModifyRequest> productDetailImagesModifyRequestList = new ArrayList<>();
 
-        ProductDetailImagesModifyRequest productDetailImages1ModifyRequest = new ProductDetailImagesModifyRequest(modifyDetailImages1Id, modifyDetailImages1);
-        ProductDetailImagesModifyRequest productDetailImages2ModifyRequest = new ProductDetailImagesModifyRequest(modifyDetailImages2Id, modifyDetailImages2);
+        ProductDetailImagesModifyRequest productDetailImages1ModifyRequest
+                = new ProductDetailImagesModifyRequest(modifyDetailImages1Id, modifyDetailImages1);
+        ProductDetailImagesModifyRequest productDetailImages2ModifyRequest
+                = new ProductDetailImagesModifyRequest(modifyDetailImages2Id, modifyDetailImages2);
         productDetailImagesModifyRequestList.add(productDetailImages1ModifyRequest);
         productDetailImagesModifyRequestList.add(productDetailImages2ModifyRequest);
 
         List<ProductOptionModifyRequest> productOptionModifyRequestList = new ArrayList<>();
-        ProductOptionModifyRequest productOption1ModifyRequest = new ProductOptionModifyRequest(modifyOption1Id, modifyOptionName1, modifyOptionPrice1, modifyStock1, modifyValue1, modifyUnit1);
-        ProductOptionModifyRequest productOption2ModifyRequest = new ProductOptionModifyRequest(modifyOption2Id, modifyOptionName2, modifyOptionPrice2, modifyStock2, modifyValue2, modifyUnit2);
+        ProductOptionModifyRequest productOption1ModifyRequest
+                = new ProductOptionModifyRequest(modifyOption1Id, modifyOptionName1, modifyOptionPrice1, modifyStock1, modifyValue1, modifyUnit1, modifyOption1SaleStatus);
+        ProductOptionModifyRequest productOption2ModifyRequest
+                = new ProductOptionModifyRequest(modifyOption2Id, modifyOptionName2, modifyOptionPrice2, modifyStock2, modifyValue2, modifyUnit2, modifyOption2SaleStatus);
         productOptionModifyRequestList.add(productOption1ModifyRequest);
         productOptionModifyRequestList.add(productOption2ModifyRequest);
 
