@@ -1,5 +1,6 @@
 package com.dyes.backend.domain.farm.controller;
 
+import com.dyes.backend.domain.farm.controller.form.FarmDeleteForm;
 import com.dyes.backend.domain.farm.controller.form.FarmRegisterRequestForm;
 import com.dyes.backend.domain.farm.service.FarmService;
 import com.dyes.backend.domain.farm.service.response.FarmInfoListResponse;
@@ -28,5 +29,11 @@ public class FarmController {
     @GetMapping("/list")
     public List<FarmInfoListResponse> searchFarmList () {
         return farmService.searchFarmList();
+    }
+
+    // 농가 삭제
+    @DeleteMapping("/delete")
+    public Boolean deleteFarm (@RequestBody FarmDeleteForm deleteForm) {
+        return farmService.deleteFarm(deleteForm);
     }
 }
