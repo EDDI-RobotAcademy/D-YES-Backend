@@ -22,9 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static com.dyes.backend.domain.product.entity.SaleStatus.AVAILABLE;
 import static com.dyes.backend.utility.number.NumberUtils.findMinValue;
@@ -46,6 +44,17 @@ public class ProductServiceImpl implements ProductService{
     public boolean productRegistration(ProductRegisterForm registerForm) {
         log.info("productRegistration start");
 
+        List<ProductOptionRegisterRequest> productOptionRegisterRequests = registerForm.getProductOptionRegisterRequest();
+
+        Set<String> optionNames = new HashSet<>();
+        for (ProductOptionRegisterRequest request : productOptionRegisterRequests) {
+            if (optionNames.contains(request.getOptionName())) {
+                log.info("OptionName is Duplicated");
+                return false;
+            }
+            optionNames.add(request.getOptionName());
+        }
+
         final Admin admin = adminService.findAdminByUserToken(registerForm.getUserToken());
 
         if(admin == null) {
@@ -63,7 +72,6 @@ public class ProductServiceImpl implements ProductService{
         Farm farm = maybeFarm.get();
 
         ProductRegisterRequest productRequest = registerForm.getProductRegisterRequest();
-        List<ProductOptionRegisterRequest> productOptionRegisterRequests = registerForm.getProductOptionRegisterRequest();
         ProductMainImageRegisterRequest productMainImageRegisterRequest = registerForm.getProductMainImageRegisterRequest();
         List<ProductDetailImagesRegisterRequest> productDetailImagesRegisterRequests = registerForm.getProductDetailImagesRegisterRequests();
 
