@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -40,6 +41,13 @@ public class FarmServiceImpl implements FarmService{
         }
 
         final FarmRegisterRequest registerRequest = registerRequestForm.toFarmRegisterRequest();
+
+        Optional<Farm> maybeFarm = farmRepository.findByFarmName(registerRequest.getFarmName());
+        if(maybeFarm.isPresent()) {
+            log.info("Can not Register Farm: Farm name '{}' already exists", registerRequest.getFarmName());
+            return false;
+        }
+
         final FarmOperationRegisterRequest operationRegisterRequest = registerRequestForm.toFarmOperationRegisterRequest();
 
         Address address = new Address(registerRequest.getAddress(), registerRequest.getZipCode(), registerRequest.getAddressDetail());
