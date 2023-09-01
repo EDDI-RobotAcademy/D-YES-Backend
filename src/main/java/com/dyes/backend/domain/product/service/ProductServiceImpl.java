@@ -250,35 +250,102 @@ public class ProductServiceImpl implements ProductService{
         productMainImageRepository.save(modifyProductMainImage);
 
         // 상품 상세 이미지 업데이트
+        // DB에 저장된 상품 상세 이미지 가져오기
+        List<ProductDetailImages> productDetailImagesList = productDetailImagesRepository.findByProduct(modifyProduct);
+        List<Long> savedProductDetailImagesList = new ArrayList<>();
+        for(ProductDetailImages savedProductDetailImages: productDetailImagesList) {
+            savedProductDetailImagesList.add(savedProductDetailImages.getId());
+        }
+
+        // 수정 요청된 상품 상세 이미지 가져오기
+        List<Long> modifyProductDetailImagesList = new ArrayList<>();
+        for(ProductDetailImagesModifyRequest modifyProductDetailImages: productDetailImagesModifyRequestList) {
+            modifyProductDetailImagesList.add(modifyProductDetailImages.getDetailImageId());
+        }
+
+        // 이미지 개수가 줄어서 삭제가 필요할 때
+        List<Long> needRemoveProductDetailImagesList = new ArrayList<>(savedProductDetailImagesList);
+        if(savedProductDetailImagesList.size() > modifyProductDetailImagesList.size()) {
+            needRemoveProductDetailImagesList.removeAll(modifyProductDetailImagesList);
+            for(Long removeProductDetailImages : needRemoveProductDetailImagesList) {
+                productDetailImagesRepository.deleteById(removeProductDetailImages);
+            }
+        }
+
         for(ProductDetailImagesModifyRequest productDetailImage: productDetailImagesModifyRequestList) {
             final Long productDetailImageId = productDetailImage.getDetailImageId();
             Optional<ProductDetailImages> maybeProductDetailImages = productDetailImagesRepository.findById(productDetailImageId);
             if(maybeProductDetailImages.isEmpty()) {
-                log.info("ProductDetailImages is empty");
-                return false;
+                log.info("ProductDetailImages is empty, Register new ProductDetailImages");
+                ProductDetailImages newProductDetailImages = ProductDetailImages.builder()
+                        .detailImgs(productDetailImage.getDetailImgs())
+                        .product(modifyProduct)
+                        .build();
+
+                productDetailImagesRepository.save(newProductDetailImages);
             }
-            ProductDetailImages modifyProductDetailImages = maybeProductDetailImages.get();
-            modifyProductDetailImages.setDetailImgs(productDetailImage.getDetailImgs());
-            modifyProductDetailImages.setProduct(modifyProduct);
-            productDetailImagesRepository.save(modifyProductDetailImages);
+            if(maybeProductDetailImages.isPresent()) {
+                ProductDetailImages modifyProductDetailImages = maybeProductDetailImages.get();
+                modifyProductDetailImages.setDetailImgs(productDetailImage.getDetailImgs());
+                modifyProductDetailImages.setProduct(modifyProduct);
+                productDetailImagesRepository.save(modifyProductDetailImages);
+            }
         }
 
-        // 상품 옵션 업데이트
+        // DB에 저장된 상품 옵션 리스트 가져오기
+        List<ProductOption> productOptionList = productOptionRepository.findByProduct(modifyProduct);
+        List<Long> savedOptionList = new ArrayList<>();
+        for(ProductOption savedProductOption: productOptionList) {
+            savedOptionList.add(savedProductOption.getId());
+        }
+
+        // 수정 요청 온 상품 옵션 리스트 가져오기
+        List<Long> modifyOptionList = new ArrayList<>();
+        for(ProductOptionModifyRequest modifyProductOption: productOptionModifyRequestList) {
+            modifyOptionList.add(modifyProductOption.getOptionId());
+        }
+
+        // 옵션 개수가 줄어서 삭제가 필요할 때
+        List<Long> needRemoveOptionList = new ArrayList<>(savedOptionList);
+
+        if(savedOptionList.size() > modifyOptionList.size()) {
+            needRemoveOptionList.removeAll(modifyOptionList);
+            for(Long removeOption : needRemoveOptionList) {
+                productOptionRepository.deleteById(removeOption);
+            }
+        }
+
+        // 위에서 삭제된 옵션 DB에서 삭제 후 상품 옵션 업데이트
         for(ProductOptionModifyRequest productOption: productOptionModifyRequestList) {
             final Long productOptionId = productOption.getOptionId();
             Optional<ProductOption> maybeProductOption = productOptionRepository.findById(productOptionId);
             if(maybeProductOption.isEmpty()) {
-                log.info("ProductOption is empty");
-                return false;
+                log.info("ProductOption is empty, Register new ProductOption");
+
+                ProductOption newProductOption = ProductOption.builder()
+                        .optionPrice(productOption.getOptionPrice())
+                        .stock(productOption.getStock())
+                        .optionName(productOption.getOptionName())
+                        .amount(Amount.builder()
+                                .value(productOption.getValue())
+                                .unit(productOption.getUnit())
+                                .build())
+                        .product(modifyProduct)
+                        .optionSaleStatus(AVAILABLE)
+                        .build();
+
+                productOptionRepository.save(newProductOption);
             }
-            ProductOption modifyProductOption = maybeProductOption.get();
-            modifyProductOption.setOptionName(productOption.getOptionName());
-            modifyProductOption.setOptionPrice(productOption.getOptionPrice());
-            modifyProductOption.setStock(productOption.getStock());
-            modifyProductOption.setAmount(new Amount(productOption.getValue(), productOption.getUnit()));
-            modifyProductOption.setOptionSaleStatus(productOption.getOptionSaleStatus());
-            modifyProductOption.setProduct(modifyProduct);
-            productOptionRepository.save(modifyProductOption);
+            if(maybeProductOption.isPresent()) {
+                ProductOption modifyProductOption = maybeProductOption.get();
+                modifyProductOption.setOptionName(productOption.getOptionName());
+                modifyProductOption.setOptionPrice(productOption.getOptionPrice());
+                modifyProductOption.setStock(productOption.getStock());
+                modifyProductOption.setAmount(new Amount(productOption.getValue(), productOption.getUnit()));
+                modifyProductOption.setOptionSaleStatus(productOption.getOptionSaleStatus());
+                modifyProductOption.setProduct(modifyProduct);
+                productOptionRepository.save(modifyProductOption);
+            }
         }
         return true;
     }
@@ -322,6 +389,7 @@ public class ProductServiceImpl implements ProductService{
         return true;
     }
 
+    // 상품 여러 개 삭제
     @Override
     public boolean productListDelete(ProductListDeleteForm listDeleteForm) {
         final Admin admin = adminService.findAdminByUserToken(listDeleteForm.getUserToken());
