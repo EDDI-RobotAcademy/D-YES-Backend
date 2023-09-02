@@ -1,6 +1,7 @@
 package com.dyes.backend.cartTest;
 
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
+import com.dyes.backend.domain.cart.controller.form.ContainProductDeleteRequestForm;
 import com.dyes.backend.domain.cart.controller.form.ContainProductModifyRequestForm;
 import com.dyes.backend.domain.cart.controller.form.ContainProductRequestForm;
 import com.dyes.backend.domain.cart.entity.Cart;
@@ -8,6 +9,7 @@ import com.dyes.backend.domain.cart.entity.ContainProductOption;
 import com.dyes.backend.domain.cart.repository.CartRepository;
 import com.dyes.backend.domain.cart.repository.ContainProductOptionRepository;
 import com.dyes.backend.domain.cart.service.CartServiceImpl;
+import com.dyes.backend.domain.cart.service.request.ContainProductDeleteRequest;
 import com.dyes.backend.domain.cart.service.request.ContainProductModifyRequest;
 import com.dyes.backend.domain.cart.service.request.ContainProductOptionRequest;
 import com.dyes.backend.domain.product.entity.Amount;
@@ -104,5 +106,27 @@ public class CartMockingTest {
 
         mockCartService.changeProductOptionCount(requestForm);
         verify(mockContainProductOptionRepository, times(1)).save(containProductOption);
+    }
+    @Test
+    @DisplayName("cart mocking test: product delete in cart")
+    public void 사용자가_장바구니에_담긴_상품을_삭제합니다 () {
+        final String userToken = "google유저";
+        final Long optionId = 1L;
+
+        ContainProductDeleteRequestForm requestForm = new ContainProductDeleteRequestForm(userToken, optionId);
+        ContainProductDeleteRequest request = new ContainProductDeleteRequest(requestForm.getUserToken(), requestForm.getProductOptionId());
+
+        User user = new User("1", "엑세스토큰", "리프래시 토큰", Active.YES, UserType.GOOGLE);
+        when(mockAuthenticationService.findUserByUserToken(userToken)).thenReturn(user);
+
+        Cart cart = new Cart(1L, user);
+        when(mockCartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+
+        ProductOption productOption = new ProductOption(1L, "옵션이름", 2000L, 10, new Amount(), new Product(), SaleStatus.AVAILABLE);
+        ContainProductOption containProductOption = new ContainProductOption(1L, cart, productOption, 1);
+        when(mockContainProductOptionRepository.findAllByCart(cart)).thenReturn(List.of(containProductOption));
+
+        mockCartService.deleteProductOptionInCart(requestForm);
+        verify(mockContainProductOptionRepository, times(1)).delete(containProductOption);
     }
 }

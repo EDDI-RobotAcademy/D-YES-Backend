@@ -1,6 +1,7 @@
 package com.dyes.backend.domain.cart.service;
 
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
+import com.dyes.backend.domain.cart.controller.form.ContainProductDeleteRequestForm;
 import com.dyes.backend.domain.cart.controller.form.ContainProductModifyRequestForm;
 import com.dyes.backend.domain.cart.controller.form.ContainProductRequestForm;
 import com.dyes.backend.domain.cart.entity.Cart;
@@ -8,6 +9,7 @@ import com.dyes.backend.domain.cart.entity.ContainProductOption;
 import com.dyes.backend.domain.cart.repository.CartRepository;
 import com.dyes.backend.domain.cart.repository.ContainProductOptionRepository;
 import com.dyes.backend.domain.cart.service.request.CartCheckFromUserTokenRequest;
+import com.dyes.backend.domain.cart.service.request.ContainProductDeleteRequest;
 import com.dyes.backend.domain.cart.service.request.ContainProductModifyRequest;
 import com.dyes.backend.domain.cart.service.request.ContainProductOptionRequest;
 import com.dyes.backend.domain.product.entity.ProductOption;
@@ -85,6 +87,23 @@ public class CartServiceImpl implements CartService{
         containProductOption.setOptionCount(requestProductOptionCount);
         containProductOptionRepository.save(containProductOption);
         log.info("changeProductOptionCount end");
+    }
+
+    @Override
+    public void deleteProductOptionInCart(ContainProductDeleteRequestForm requestForm) {
+        log.info("deleteProductOptionInCart start");
+        ContainProductDeleteRequest deleteRequest = new ContainProductDeleteRequest(requestForm.getUserToken(), requestForm.getProductOptionId());
+
+        final String userToken = deleteRequest.getUserToken();
+        final Long requestProductOptionId = deleteRequest.getProductOptionId();
+
+        // 유저토큰으로 카트 불러오기
+        Cart cart = cartCheckFromUserToken(userToken);
+        // 카트와 옵션id로 카트에 담긴 옵션 불러오기
+        ContainProductOption containProductOption = checkProductOptionInCart(cart, requestProductOptionId);
+
+        containProductOptionRepository.delete(containProductOption);
+        log.info("deleteProductOptionInCart end");
     }
 
     // 유저 토큰으로 카트가 있나 없나 확인하기

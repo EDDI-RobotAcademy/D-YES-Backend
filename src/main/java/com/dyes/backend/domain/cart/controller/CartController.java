@@ -1,5 +1,6 @@
 package com.dyes.backend.domain.cart.controller;
 
+import com.dyes.backend.domain.cart.controller.form.ContainProductDeleteRequestForm;
 import com.dyes.backend.domain.cart.controller.form.ContainProductModifyRequestForm;
 import com.dyes.backend.domain.cart.controller.form.ContainProductRequestForm;
 import com.dyes.backend.domain.cart.service.CartService;
@@ -22,5 +23,9 @@ public class CartController {
     @PutMapping("/change")
     public void productInCartChangeCount(@RequestBody ContainProductModifyRequestForm requestForm){
         cartService.changeProductOptionCount(requestForm);
+    }
+    @DeleteMapping("/delete")
+    public void productDeleteInCart(@RequestBody ContainProductDeleteRequestForm requestForm) {
+        cartService.deleteProductOptionInCart(requestForm);
     }
 }
