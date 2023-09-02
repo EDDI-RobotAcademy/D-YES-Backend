@@ -11,6 +11,9 @@ import com.dyes.backend.domain.farm.repository.FarmRepository;
 import com.dyes.backend.domain.farm.service.request.FarmOperationRegisterRequest;
 import com.dyes.backend.domain.farm.service.request.FarmRegisterRequest;
 import com.dyes.backend.domain.farm.service.response.FarmInfoListResponse;
+import com.dyes.backend.domain.farm.service.response.FarmInfoReadResponse;
+import com.dyes.backend.domain.farm.service.response.FarmInfoResponseForm;
+import com.dyes.backend.domain.farm.service.response.FarmOperationInfoResponseForm;
 import com.dyes.backend.domain.product.entity.Product;
 import com.dyes.backend.domain.product.repository.ProductRepository;
 import com.dyes.backend.domain.user.entity.Address;
@@ -92,6 +95,7 @@ public class FarmServiceImpl implements FarmService{
         return farmInfoListResponseList;
     }
 
+    // 농가 삭제
     @Override
     public Boolean deleteFarm(FarmDeleteForm deleteForm) {
         final Admin admin = adminService.findAdminByUserToken(deleteForm.getUserToken());
@@ -120,5 +124,40 @@ public class FarmServiceImpl implements FarmService{
         farmRepository.delete(deleteFarm);
 
         return true;
+    }
+
+    // 농가 읽기
+    @Override
+    public FarmInfoReadResponse readFarmInfo(Long farmId) {
+        Optional<Farm> maybeFarm  = farmRepository.findById(farmId);
+        if(maybeFarm.isEmpty()) {
+            log.info("Farm is empty");
+            return null;
+        }
+
+        Farm farm = maybeFarm.get();
+        FarmOperation farmOperation = farmOperationRepository.findByFarm(farm);
+
+        FarmInfoResponseForm farmInfoResponseForm
+                = new FarmInfoResponseForm(
+                        farm.getId(),
+                        farm.getFarmName(),
+                        farm.getCsContactNumber(),
+                        farm.getFarmAddress(),
+                        farm.getMainImage(),
+                        farm.getIntroduction(),
+                        farm.getProduceTypes());
+
+        FarmOperationInfoResponseForm farmOperationInfoResponseForm
+                = new FarmOperationInfoResponseForm(
+                        farmOperation.getId(),
+                        farmOperation.getBusinessName(),
+                        farmOperation.getBusinessNumber(),
+                        farmOperation.getRepresentativeName(),
+                        farmOperation.getRepresentativeContactNumber());
+
+        FarmInfoReadResponse farmInfoReadResponse = new FarmInfoReadResponse(farmInfoResponseForm, farmOperationInfoResponseForm);
+
+        return farmInfoReadResponse;
     }
 }
