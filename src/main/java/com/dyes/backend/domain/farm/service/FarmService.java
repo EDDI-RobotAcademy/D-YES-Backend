@@ -11,6 +11,6 @@ public interface FarmService {
 
     Boolean farmRegister(FarmRegisterRequestForm registerRequestForm);
     List<FarmInfoListResponse> searchFarmList();
-    Boolean deleteFarm(FarmDeleteForm deleteForm);
+    Boolean deleteFarm(Long farmId, FarmDeleteForm deleteForm);
     FarmInfoReadResponse readFarmInfo(Long farmId);
 }

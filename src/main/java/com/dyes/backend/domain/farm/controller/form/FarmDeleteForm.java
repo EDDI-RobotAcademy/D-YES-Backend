@@ -9,5 +9,4 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class FarmDeleteForm {
     private String userToken;
-    private Long farmId;
 }

@@ -97,7 +97,7 @@ public class FarmServiceImpl implements FarmService{
 
     // 농가 삭제
     @Override
-    public Boolean deleteFarm(FarmDeleteForm deleteForm) {
+    public Boolean deleteFarm(Long farmId, FarmDeleteForm deleteForm) {
         final Admin admin = adminService.findAdminByUserToken(deleteForm.getUserToken());
 
         if(admin == null) {
@@ -105,7 +105,7 @@ public class FarmServiceImpl implements FarmService{
             return false;
         }
 
-        Optional<Farm> maybeFarm = farmRepository.findById(deleteForm.getFarmId());
+        Optional<Farm> maybeFarm = farmRepository.findById(farmId);
         if(maybeFarm.isEmpty()) {
             log.info("Farm is empty");
             return false;

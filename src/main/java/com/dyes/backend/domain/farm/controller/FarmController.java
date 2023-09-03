@@ -1,13 +1,10 @@
 package com.dyes.backend.domain.farm.controller;
 
 import com.dyes.backend.domain.farm.controller.form.FarmDeleteForm;
-import com.dyes.backend.domain.farm.controller.form.FarmModifyForm;
 import com.dyes.backend.domain.farm.controller.form.FarmRegisterRequestForm;
 import com.dyes.backend.domain.farm.service.FarmService;
 import com.dyes.backend.domain.farm.service.response.FarmInfoListResponse;
 import com.dyes.backend.domain.farm.service.response.FarmInfoReadResponse;
-import com.dyes.backend.domain.product.controller.form.ProductModifyForm;
-import com.dyes.backend.domain.product.service.response.admin.ProductResponseFormForAdmin;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -36,9 +33,9 @@ public class FarmController {
     }
 
     // 농가 삭제
-    @DeleteMapping("/delete")
-    public Boolean deleteFarm (@RequestBody FarmDeleteForm deleteForm) {
-        return farmService.deleteFarm(deleteForm);
+    @DeleteMapping("/delete/{farmId}")
+    public Boolean deleteFarm (@PathVariable("farmId") Long farmId, @RequestBody FarmDeleteForm deleteForm) {
+        return farmService.deleteFarm(farmId, deleteForm);
     }
 
     // 농가 읽기
