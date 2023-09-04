@@ -29,8 +29,8 @@ public class CartController {
         cartService.changeProductOptionCount(requestForm);
     }
     @DeleteMapping("/delete")
-    public void productDeleteInCart(@RequestBody ContainProductDeleteRequestForm requestForm) {
-        cartService.deleteProductOptionInCart(requestForm);
+    public void productDeleteInCart(@RequestBody List<ContainProductDeleteRequestForm> requestFormList) {
+        cartService.deleteProductOptionInCart(requestFormList);
     }
     @GetMapping("/list")
     public List<ContainProductListResponse> productListInCart(@RequestParam("userToken") String userToken ) {

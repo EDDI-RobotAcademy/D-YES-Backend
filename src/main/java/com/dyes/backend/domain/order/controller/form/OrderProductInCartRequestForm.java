@@ -9,5 +9,4 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class OrderProductInCartRequestForm {
     private String userToken;
-
 }

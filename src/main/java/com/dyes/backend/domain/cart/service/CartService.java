@@ -12,7 +12,7 @@ import java.util.List;
 public interface CartService {
     void containProductIntoCart(ContainProductRequestForm requestForm);
     void changeProductOptionCount(ContainProductModifyRequestForm requestForm);
-    void deleteProductOptionInCart(ContainProductDeleteRequestForm requestForm);
+    void deleteProductOptionInCart(List<ContainProductDeleteRequestForm> requestFormList);
     List<ContainProductListResponse> productListResponse (ContainProductListRequestForm requestForm);
     Cart cartCheckFromUserToken(String userToken);
 }

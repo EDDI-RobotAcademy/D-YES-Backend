@@ -99,19 +99,21 @@ public class CartServiceImpl implements CartService{
     }
 
     @Override
-    public void deleteProductOptionInCart(ContainProductDeleteRequestForm requestForm) {
+    public void deleteProductOptionInCart(List<ContainProductDeleteRequestForm> requestFormList) {
         log.info("deleteProductOptionInCart start");
-        ContainProductDeleteRequest deleteRequest = new ContainProductDeleteRequest(requestForm.getUserToken(), requestForm.getProductOptionId());
+        for (ContainProductDeleteRequestForm requestForm : requestFormList) {
+            ContainProductDeleteRequest deleteRequest = new ContainProductDeleteRequest(requestForm.getUserToken(), requestForm.getProductOptionId());
 
-        final String userToken = deleteRequest.getUserToken();
-        final Long requestProductOptionId = deleteRequest.getProductOptionId();
+            final String userToken = deleteRequest.getUserToken();
+            final Long requestProductOptionId = deleteRequest.getProductOptionId();
 
-        // 유저토큰으로 카트 불러오기
-        Cart cart = cartCheckFromUserToken(userToken);
-        // 카트와 옵션id로 카트에 담긴 옵션 불러오기
-        ContainProductOption containProductOption = checkProductOptionInCart(cart, requestProductOptionId);
+            // 유저토큰으로 카트 불러오기
+            Cart cart = cartCheckFromUserToken(userToken);
+            // 카트와 옵션id로 카트에 담긴 옵션 불러오기
+            ContainProductOption containProductOption = checkProductOptionInCart(cart, requestProductOptionId);
 
-        containProductOptionRepository.delete(containProductOption);
+            containProductOptionRepository.delete(containProductOption);
+        }
         log.info("deleteProductOptionInCart end");
     }
 
