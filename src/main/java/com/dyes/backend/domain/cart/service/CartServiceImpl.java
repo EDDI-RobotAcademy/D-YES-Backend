@@ -70,6 +70,11 @@ public class CartServiceImpl implements CartService{
                     .build();
             containProductOptionRepository.save(containProductOption);
             log.info("containProductIntoCart end");
+        } else {
+            ContainProductOption containProductOption = checkProductOptionInCart(cart, requestProductOptionId);
+            // 카트에 담긴 옵션 카운트를 바꾸기
+            containProductOption.setOptionCount(requestProductOptionCount);
+            containProductOptionRepository.save(containProductOption);
         }
     }
     // 장바구니에 담긴 물건 수정하기
