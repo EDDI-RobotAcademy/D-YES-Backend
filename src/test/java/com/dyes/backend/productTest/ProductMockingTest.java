@@ -4,6 +4,7 @@ import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.repository.AdminRepository;
 import com.dyes.backend.domain.admin.service.AdminService;
 import com.dyes.backend.domain.authentication.service.AuthenticationServiceImpl;
+import com.dyes.backend.domain.cart.repository.ContainProductOptionRepository;
 import com.dyes.backend.domain.farm.entity.Farm;
 import com.dyes.backend.domain.farm.entity.FarmOperation;
 import com.dyes.backend.domain.farm.repository.FarmOperationRepository;
@@ -65,6 +66,8 @@ public class ProductMockingTest {
     @Mock
     private FarmOperationRepository mockFarmOperationRepository;
     @Mock
+    private ContainProductOptionRepository mockContainProductOptionRepository;
+    @Mock
     private AdminService mockAdminService;
     @Mock
     private AuthenticationServiceImpl mockAuthenticationService;
@@ -83,6 +86,7 @@ public class ProductMockingTest {
                 mockProductDetailImagesRepository,
                 mockFarmRepository,
                 mockFarmOperationRepository,
+                mockContainProductOptionRepository,
                 mockAdminService
         );
     }
