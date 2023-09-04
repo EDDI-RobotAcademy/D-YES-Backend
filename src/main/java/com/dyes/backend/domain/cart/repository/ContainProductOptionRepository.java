@@ -12,4 +12,7 @@ import java.util.Optional;
 public interface ContainProductOptionRepository extends JpaRepository<ContainProductOption, Long> {
     @Query("select cpo FROM ContainProductOption cpo join fetch cpo.cart where cpo.cart = :cart")
     List<ContainProductOption> findAllByCart (@Param("cart") Cart cart);
+
+    @Query("select cpo FROM ContainProductOption cpo join fetch cpo.cart cart join fetch cpo.productOption po join fetch po.product where cart = :cart")
+    List<ContainProductOption> findAllByCartWithProduct(@Param("cart") Cart cart);
 }

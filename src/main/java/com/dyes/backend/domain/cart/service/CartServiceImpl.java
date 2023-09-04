@@ -2,17 +2,19 @@ package com.dyes.backend.domain.cart.service;
 
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
 import com.dyes.backend.domain.cart.controller.form.ContainProductDeleteRequestForm;
+import com.dyes.backend.domain.cart.controller.form.ContainProductListRequestForm;
 import com.dyes.backend.domain.cart.controller.form.ContainProductModifyRequestForm;
 import com.dyes.backend.domain.cart.controller.form.ContainProductRequestForm;
 import com.dyes.backend.domain.cart.entity.Cart;
 import com.dyes.backend.domain.cart.entity.ContainProductOption;
 import com.dyes.backend.domain.cart.repository.CartRepository;
 import com.dyes.backend.domain.cart.repository.ContainProductOptionRepository;
-import com.dyes.backend.domain.cart.service.request.CartCheckFromUserTokenRequest;
-import com.dyes.backend.domain.cart.service.request.ContainProductDeleteRequest;
-import com.dyes.backend.domain.cart.service.request.ContainProductModifyRequest;
-import com.dyes.backend.domain.cart.service.request.ContainProductOptionRequest;
+import com.dyes.backend.domain.cart.service.reponse.ContainProductListResponse;
+import com.dyes.backend.domain.cart.service.request.*;
+import com.dyes.backend.domain.product.entity.Product;
+import com.dyes.backend.domain.product.entity.ProductMainImage;
 import com.dyes.backend.domain.product.entity.ProductOption;
+import com.dyes.backend.domain.product.repository.ProductMainImageRepository;
 import com.dyes.backend.domain.product.repository.ProductOptionRepository;
 import com.dyes.backend.domain.user.entity.User;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,7 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,6 +34,7 @@ public class CartServiceImpl implements CartService{
     final private CartRepository cartRepository;
     final private ProductOptionRepository productOptionRepository;
     final private ContainProductOptionRepository containProductOptionRepository;
+    final private ProductMainImageRepository productMainImageRepository;
     final private AuthenticationService authenticationService;
 
     // 장바구니에 물건 담기
@@ -104,6 +108,46 @@ public class CartServiceImpl implements CartService{
 
         containProductOptionRepository.delete(containProductOption);
         log.info("deleteProductOptionInCart end");
+    }
+
+    @Override
+    public List<ContainProductListResponse> productListResponse(ContainProductListRequestForm requestForm) {
+        log.info("productListResponse start");
+        ContainProductListRequest listRequest = new ContainProductListRequest(requestForm.getUserToken());
+
+        final String userToken = listRequest.getUserToken();
+
+        // 유저토큰으로 카트 불러오기
+        Cart cart = cartCheckFromUserToken(userToken);
+
+        // 카트에 담긴 옵션들 다 불러오기
+        List<ContainProductOption> savedOptionList = containProductOptionRepository.findAllByCartWithProduct(cart);
+
+        List<ContainProductListResponse> responseList = new ArrayList<>();
+
+        for (ContainProductOption containProductOption : savedOptionList) {
+
+            final Long productOptionId = containProductOption.getProductOption().getId();
+            final ProductOption productOption = productOptionRepository.findByIdWithProduct(productOptionId).get();
+            final Product product = productOption.getProduct();
+            final ProductMainImage productMainImage = productMainImageRepository.findByProductId(product.getId()).get();
+
+            ContainProductListResponse response = ContainProductListResponse.builder()
+                    .productName(product.getProductName())
+                    .optionId(productOption.getId())
+                    .productMainImage(productMainImage.getMainImg())
+                    .optionPrice(productOption.getOptionPrice())
+                    .optionCount(containProductOption.getOptionCount())
+                    .optionStock(productOption.getStock())
+                    .unit(productOption.getAmount().getUnit())
+                    .value(productOption.getAmount().getValue())
+                    .build();
+
+            responseList.add(response);
+        }
+        log.info("productListResponse end");
+
+        return responseList;
     }
 
     // 유저 토큰으로 카트가 있나 없나 확인하기

@@ -2,6 +2,7 @@ package com.dyes.backend.cartTest;
 
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
 import com.dyes.backend.domain.cart.controller.form.ContainProductDeleteRequestForm;
+import com.dyes.backend.domain.cart.controller.form.ContainProductListRequestForm;
 import com.dyes.backend.domain.cart.controller.form.ContainProductModifyRequestForm;
 import com.dyes.backend.domain.cart.controller.form.ContainProductRequestForm;
 import com.dyes.backend.domain.cart.entity.Cart;
@@ -9,13 +10,14 @@ import com.dyes.backend.domain.cart.entity.ContainProductOption;
 import com.dyes.backend.domain.cart.repository.CartRepository;
 import com.dyes.backend.domain.cart.repository.ContainProductOptionRepository;
 import com.dyes.backend.domain.cart.service.CartServiceImpl;
+import com.dyes.backend.domain.cart.service.reponse.ContainProductListResponse;
 import com.dyes.backend.domain.cart.service.request.ContainProductDeleteRequest;
+import com.dyes.backend.domain.cart.service.request.ContainProductListRequest;
 import com.dyes.backend.domain.cart.service.request.ContainProductModifyRequest;
 import com.dyes.backend.domain.cart.service.request.ContainProductOptionRequest;
-import com.dyes.backend.domain.product.entity.Amount;
-import com.dyes.backend.domain.product.entity.Product;
-import com.dyes.backend.domain.product.entity.ProductOption;
-import com.dyes.backend.domain.product.entity.SaleStatus;
+import com.dyes.backend.domain.farm.entity.Farm;
+import com.dyes.backend.domain.product.entity.*;
+import com.dyes.backend.domain.product.repository.ProductMainImageRepository;
 import com.dyes.backend.domain.product.repository.ProductOptionRepository;
 import com.dyes.backend.domain.user.entity.Active;
 import com.dyes.backend.domain.user.entity.User;
@@ -31,6 +33,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -44,6 +47,8 @@ public class CartMockingTest {
     private ProductOptionRepository mockProductOptionRepository;
     @Mock
     private ContainProductOptionRepository mockContainProductOptionRepository;
+    @Mock
+    private ProductMainImageRepository mockProductMainImageRepository;
     @InjectMocks
     private CartServiceImpl mockCartService;
     @BeforeEach
@@ -54,6 +59,7 @@ public class CartMockingTest {
                 mockCartRepository,
                 mockProductOptionRepository,
                 mockContainProductOptionRepository,
+                mockProductMainImageRepository,
                 mockAuthenticationService
         );
     }
@@ -117,7 +123,7 @@ public class CartMockingTest {
         ContainProductDeleteRequest request = new ContainProductDeleteRequest(requestForm.getUserToken(), requestForm.getProductOptionId());
 
         User user = new User("1", "엑세스토큰", "리프래시 토큰", Active.YES, UserType.GOOGLE);
-        when(mockAuthenticationService.findUserByUserToken(userToken)).thenReturn(user);
+        when(mockAuthenticationService.findUserByUserToken(request.getUserToken())).thenReturn(user);
 
         Cart cart = new Cart(1L, user);
         when(mockCartRepository.findByUser(user)).thenReturn(Optional.of(cart));
@@ -128,5 +134,31 @@ public class CartMockingTest {
 
         mockCartService.deleteProductOptionInCart(requestForm);
         verify(mockContainProductOptionRepository, times(1)).delete(containProductOption);
+    }
+    @Test
+    @DisplayName("cart mocking test: product list in cart")
+    public void 사용자의_장바구니에_담긴_상품_리스트를_보여줍니다 () {
+        final String userToken = "google유저";
+
+        ContainProductListRequestForm requestForm = new ContainProductListRequestForm(userToken);
+        ContainProductListRequest request = new ContainProductListRequest(requestForm.getUserToken());
+
+        User user = new User("1", "엑세스토큰", "리프래시 토큰", Active.YES, UserType.GOOGLE);
+        when(mockAuthenticationService.findUserByUserToken(request.getUserToken())).thenReturn(user);
+
+        Cart cart = new Cart(1L, user);
+        when(mockCartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+
+        Product product = new Product(1L, "상품 이름", "상세 정보", CultivationMethod.ORGANIC, SaleStatus.AVAILABLE, new Farm());
+        ProductOption productOption = new ProductOption(1L, "옵션이름", 2000L, 10, new Amount(), product, product.getProductSaleStatus());
+        ContainProductOption containProductOption = new ContainProductOption(1L, cart, productOption, 1);
+        when(mockContainProductOptionRepository.findAllByCartWithProduct(cart)).thenReturn(List.of(containProductOption));
+        when(mockProductOptionRepository.findByIdWithProduct(productOption.getId())).thenReturn(Optional.of(productOption));
+        when(mockProductMainImageRepository.findByProductId(product.getId())).thenReturn(Optional.of(new ProductMainImage()));
+
+        final List<ContainProductListResponse> actual = mockCartService.productListResponse(requestForm);
+        System.out.println("actual: " + actual);
+
+        assertEquals(actual.get(0).getProductName(), productOption.getProduct().getProductName());
     }
 }
