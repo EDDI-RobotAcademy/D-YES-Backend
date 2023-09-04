@@ -30,6 +30,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,7 +38,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
-
 public class CartMockingTest {
     @Mock
     private CartRepository mockCartRepository;
@@ -120,6 +120,8 @@ public class CartMockingTest {
         final Long optionId = 1L;
 
         ContainProductDeleteRequestForm requestForm = new ContainProductDeleteRequestForm(userToken, optionId);
+        List<ContainProductDeleteRequestForm> requestFormList = new ArrayList<>();
+        requestFormList.add(requestForm);
         ContainProductDeleteRequest request = new ContainProductDeleteRequest(requestForm.getUserToken(), requestForm.getProductOptionId());
 
         User user = new User("1", "엑세스토큰", "리프래시 토큰", Active.YES, UserType.GOOGLE);
@@ -132,7 +134,7 @@ public class CartMockingTest {
         ContainProductOption containProductOption = new ContainProductOption(1L, cart, productOption, 1);
         when(mockContainProductOptionRepository.findAllByCart(cart)).thenReturn(List.of(containProductOption));
 
-        mockCartService.deleteProductOptionInCart(requestForm);
+        mockCartService.deleteProductOptionInCart(requestFormList);
         verify(mockContainProductOptionRepository, times(1)).delete(containProductOption);
     }
     @Test
