@@ -4,6 +4,7 @@ import com.dyes.backend.domain.cart.controller.form.ContainProductDeleteRequestF
 import com.dyes.backend.domain.cart.controller.form.ContainProductListRequestForm;
 import com.dyes.backend.domain.cart.controller.form.ContainProductModifyRequestForm;
 import com.dyes.backend.domain.cart.controller.form.ContainProductRequestForm;
+import com.dyes.backend.domain.cart.entity.Cart;
 import com.dyes.backend.domain.cart.service.reponse.ContainProductListResponse;
 
 import java.util.List;
@@ -13,4 +14,5 @@ public interface CartService {
     void changeProductOptionCount(ContainProductModifyRequestForm requestForm);
     void deleteProductOptionInCart(ContainProductDeleteRequestForm requestForm);
     List<ContainProductListResponse> productListResponse (ContainProductListRequestForm requestForm);
+    Cart cartCheckFromUserToken(String userToken);
 }
