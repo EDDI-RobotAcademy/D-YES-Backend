@@ -9,6 +9,7 @@ import com.dyes.backend.domain.cart.entity.Cart;
 import com.dyes.backend.domain.cart.entity.ContainProductOption;
 import com.dyes.backend.domain.cart.repository.CartRepository;
 import com.dyes.backend.domain.cart.repository.ContainProductOptionRepository;
+import com.dyes.backend.domain.cart.service.reponse.ContainProductCountChangeResponse;
 import com.dyes.backend.domain.cart.service.reponse.ContainProductListResponse;
 import com.dyes.backend.domain.cart.service.request.*;
 import com.dyes.backend.domain.product.entity.Product;
@@ -73,13 +74,14 @@ public class CartServiceImpl implements CartService{
         } else {
             ContainProductOption containProductOption = checkProductOptionInCart(cart, requestProductOptionId);
             // 카트에 담긴 옵션 카운트를 바꾸기
-            containProductOption.setOptionCount(requestProductOptionCount);
+            int changeCount = containProductOption.getOptionCount() + requestProductOptionCount;
+            containProductOption.setOptionCount(changeCount);
             containProductOptionRepository.save(containProductOption);
         }
     }
     // 장바구니에 담긴 물건 수정하기
     @Override
-    public void changeProductOptionCount(ContainProductModifyRequestForm requestForm) throws NullPointerException{
+    public ContainProductCountChangeResponse changeProductOptionCount(ContainProductModifyRequestForm requestForm) throws NullPointerException{
         log.info("changeProductOptionCount start");
 
         CartCheckFromUserTokenRequest tokenRequest = new CartCheckFromUserTokenRequest(requestForm.getUserToken());
@@ -95,23 +97,28 @@ public class CartServiceImpl implements CartService{
         // 카트에 담긴 옵션 카운트를 바꾸기
         containProductOption.setOptionCount(requestProductOptionCount);
         containProductOptionRepository.save(containProductOption);
+
+        ContainProductCountChangeResponse response = new ContainProductCountChangeResponse(requestProductOptionCount);
         log.info("changeProductOptionCount end");
+        return response;
     }
 
     @Override
-    public void deleteProductOptionInCart(ContainProductDeleteRequestForm requestForm) {
+    public void deleteProductOptionInCart(List<ContainProductDeleteRequestForm> requestFormList) {
         log.info("deleteProductOptionInCart start");
-        ContainProductDeleteRequest deleteRequest = new ContainProductDeleteRequest(requestForm.getUserToken(), requestForm.getProductOptionId());
+        for (ContainProductDeleteRequestForm requestForm : requestFormList) {
+            ContainProductDeleteRequest deleteRequest = new ContainProductDeleteRequest(requestForm.getUserToken(), requestForm.getProductOptionId());
 
-        final String userToken = deleteRequest.getUserToken();
-        final Long requestProductOptionId = deleteRequest.getProductOptionId();
+            final String userToken = deleteRequest.getUserToken();
+            final Long requestProductOptionId = deleteRequest.getProductOptionId();
 
-        // 유저토큰으로 카트 불러오기
-        Cart cart = cartCheckFromUserToken(userToken);
-        // 카트와 옵션id로 카트에 담긴 옵션 불러오기
-        ContainProductOption containProductOption = checkProductOptionInCart(cart, requestProductOptionId);
+            // 유저토큰으로 카트 불러오기
+            Cart cart = cartCheckFromUserToken(userToken);
+            // 카트와 옵션id로 카트에 담긴 옵션 불러오기
+            ContainProductOption containProductOption = checkProductOptionInCart(cart, requestProductOptionId);
 
-        containProductOptionRepository.delete(containProductOption);
+            containProductOptionRepository.delete(containProductOption);
+        }
         log.info("deleteProductOptionInCart end");
     }
 
