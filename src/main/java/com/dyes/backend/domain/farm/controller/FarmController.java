@@ -1,6 +1,7 @@
 package com.dyes.backend.domain.farm.controller;
 
 import com.dyes.backend.domain.farm.controller.form.FarmDeleteForm;
+import com.dyes.backend.domain.farm.controller.form.FarmModifyForm;
 import com.dyes.backend.domain.farm.controller.form.FarmRegisterRequestForm;
 import com.dyes.backend.domain.farm.service.FarmService;
 import com.dyes.backend.domain.farm.service.response.FarmInfoListResponse;
@@ -42,5 +43,12 @@ public class FarmController {
     @GetMapping("/read/{farmId}")
     public FarmInfoReadResponse readFarmInfo(@PathVariable("farmId") Long farmId) {
         return farmService.readFarmInfo(farmId);
+    }
+
+    // 농가 수정
+    @PutMapping("/modify/{farmId}")
+    public boolean farmModify(@PathVariable("farmId") Long farmId,
+                              @RequestBody FarmModifyForm modifyForm) {
+        return farmService.farmModify(farmId, modifyForm);
     }
 }

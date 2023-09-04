@@ -3,9 +3,11 @@ package com.dyes.backend.domain.farm.service;
 import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.service.AdminService;
 import com.dyes.backend.domain.farm.controller.form.FarmDeleteForm;
+import com.dyes.backend.domain.farm.controller.form.FarmModifyForm;
 import com.dyes.backend.domain.farm.controller.form.FarmRegisterRequestForm;
 import com.dyes.backend.domain.farm.entity.Farm;
 import com.dyes.backend.domain.farm.entity.FarmOperation;
+import com.dyes.backend.domain.farm.entity.ProduceType;
 import com.dyes.backend.domain.farm.repository.FarmOperationRepository;
 import com.dyes.backend.domain.farm.repository.FarmRepository;
 import com.dyes.backend.domain.farm.service.request.FarmOperationRegisterRequest;
@@ -159,5 +161,31 @@ public class FarmServiceImpl implements FarmService{
         FarmInfoReadResponse farmInfoReadResponse = new FarmInfoReadResponse(farmInfoResponseForm, farmOperationInfoResponseForm);
 
         return farmInfoReadResponse;
+    }
+
+    // 농가 수정
+    @Override
+    public boolean farmModify(Long farmId, FarmModifyForm modifyForm) {
+        final Admin admin = adminService.findAdminByUserToken(modifyForm.getUserToken());
+
+        if(admin == null) {
+            log.info("Can not find Admin");
+            return false;
+        }
+
+        Optional<Farm> maybeFarm  = farmRepository.findById(farmId);
+        if(maybeFarm.isEmpty()) {
+            log.info("Farm is empty");
+            return false;
+        }
+
+        Farm farm = maybeFarm.get();
+        farm.setCsContactNumber(modifyForm.getCsContactNumber());
+        farm.setMainImage(modifyForm.getMainImage());
+        farm.setIntroduction(modifyForm.getIntroduction());
+        farm.setProduceTypes(modifyForm.getProduceTypes());
+        farmRepository.save(farm);
+
+        return true;
     }
 }
