@@ -73,7 +73,8 @@ public class CartServiceImpl implements CartService{
         } else {
             ContainProductOption containProductOption = checkProductOptionInCart(cart, requestProductOptionId);
             // 카트에 담긴 옵션 카운트를 바꾸기
-            containProductOption.setOptionCount(requestProductOptionCount);
+            int changeCount = containProductOption.getOptionCount() + requestProductOptionCount;
+            containProductOption.setOptionCount(changeCount);
             containProductOptionRepository.save(containProductOption);
         }
     }
