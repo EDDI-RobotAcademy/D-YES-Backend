@@ -9,6 +9,7 @@ import com.dyes.backend.domain.cart.entity.Cart;
 import com.dyes.backend.domain.cart.entity.ContainProductOption;
 import com.dyes.backend.domain.cart.repository.CartRepository;
 import com.dyes.backend.domain.cart.repository.ContainProductOptionRepository;
+import com.dyes.backend.domain.cart.service.reponse.ContainProductCountChangeResponse;
 import com.dyes.backend.domain.cart.service.reponse.ContainProductListResponse;
 import com.dyes.backend.domain.cart.service.request.*;
 import com.dyes.backend.domain.product.entity.Product;
@@ -80,7 +81,7 @@ public class CartServiceImpl implements CartService{
     }
     // 장바구니에 담긴 물건 수정하기
     @Override
-    public void changeProductOptionCount(ContainProductModifyRequestForm requestForm) throws NullPointerException{
+    public ContainProductCountChangeResponse changeProductOptionCount(ContainProductModifyRequestForm requestForm) throws NullPointerException{
         log.info("changeProductOptionCount start");
 
         CartCheckFromUserTokenRequest tokenRequest = new CartCheckFromUserTokenRequest(requestForm.getUserToken());
@@ -96,7 +97,10 @@ public class CartServiceImpl implements CartService{
         // 카트에 담긴 옵션 카운트를 바꾸기
         containProductOption.setOptionCount(requestProductOptionCount);
         containProductOptionRepository.save(containProductOption);
+
+        ContainProductCountChangeResponse response = new ContainProductCountChangeResponse(requestProductOptionCount);
         log.info("changeProductOptionCount end");
+        return response;
     }
 
     @Override

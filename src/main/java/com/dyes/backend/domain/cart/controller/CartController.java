@@ -5,6 +5,7 @@ import com.dyes.backend.domain.cart.controller.form.ContainProductListRequestFor
 import com.dyes.backend.domain.cart.controller.form.ContainProductModifyRequestForm;
 import com.dyes.backend.domain.cart.controller.form.ContainProductRequestForm;
 import com.dyes.backend.domain.cart.service.CartService;
+import com.dyes.backend.domain.cart.service.reponse.ContainProductCountChangeResponse;
 import com.dyes.backend.domain.cart.service.reponse.ContainProductListResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
@@ -25,8 +26,8 @@ public class CartController {
         cartService.containProductIntoCart(requestForm);
     }
     @PutMapping("/change")
-    public void productInCartChangeCount(@RequestBody ContainProductModifyRequestForm requestForm){
-        cartService.changeProductOptionCount(requestForm);
+    public ContainProductCountChangeResponse productInCartChangeCount(@RequestBody ContainProductModifyRequestForm requestForm){
+        return cartService.changeProductOptionCount(requestForm);
     }
     @DeleteMapping("/delete")
     public void productDeleteInCart(@RequestBody List<ContainProductDeleteRequestForm> requestFormList) {
