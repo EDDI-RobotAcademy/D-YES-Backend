@@ -200,7 +200,7 @@ public class CartServiceImpl implements CartService{
         List<ContainProductOption> savedOptionList = containProductOptionRepository.findAllByCart(cart);
         // 카트에 담긴 옵션 중에서 받아온 옵션과 동일한 옵션이 있는지 파악하기
         Optional<ContainProductOption> result = savedOptionList.stream()
-                                                                .filter(option -> option.getId().equals(productOptionId))
+                                                                .filter(option -> option.getProductOption().getId().equals(productOptionId))
                                                                 .findFirst();
 
         if (result.isPresent()) {
