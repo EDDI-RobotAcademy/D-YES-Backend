@@ -1,13 +1,17 @@
 package com.dyes.backend.domain.cart.controller;
 
 import com.dyes.backend.domain.cart.controller.form.ContainProductDeleteRequestForm;
+import com.dyes.backend.domain.cart.controller.form.ContainProductListRequestForm;
 import com.dyes.backend.domain.cart.controller.form.ContainProductModifyRequestForm;
 import com.dyes.backend.domain.cart.controller.form.ContainProductRequestForm;
 import com.dyes.backend.domain.cart.service.CartService;
+import com.dyes.backend.domain.cart.service.reponse.ContainProductListResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Slf4j
 @ToString
@@ -27,5 +31,10 @@ public class CartController {
     @DeleteMapping("/delete")
     public void productDeleteInCart(@RequestBody ContainProductDeleteRequestForm requestForm) {
         cartService.deleteProductOptionInCart(requestForm);
+    }
+    @GetMapping("/list")
+    public List<ContainProductListResponse> productListInCart(@RequestParam("userToken") String userToken ) {
+        ContainProductListRequestForm requestForm = new ContainProductListRequestForm(userToken);
+        return cartService.productListResponse(requestForm);
     }
 }
