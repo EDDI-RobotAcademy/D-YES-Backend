@@ -90,9 +90,8 @@ public class GoogleAuthenticationServiceImpl implements GoogleAuthenticationServ
     public ResponseEntity<GoogleOauthUserInfoResponse> googleRequestUserInfoWithAccessToken(String accessToken) {
         log.info("requestUserInfoWithAccessTokenForSignIn start");
 
-        HttpHeaders headers = new HttpHeaders();
-
         try {
+            HttpHeaders headers = new HttpHeaders();
             headers.add("Authorization","Bearer "+ accessToken);
             HttpEntity<MultiValueMap<String, String>> request = new HttpEntity(headers);
             log.info("request: " + request);
@@ -104,6 +103,7 @@ public class GoogleAuthenticationServiceImpl implements GoogleAuthenticationServ
 
             return response;
         } catch (RestClientException e) {
+            HttpHeaders headers = new HttpHeaders();
             log.error("Error during requestUserInfoWithAccessTokenForSignIn: " + e.getMessage());
             Optional<User> maybeUser = userRepository.findByAccessToken(accessToken);
             User user = maybeUser.get();

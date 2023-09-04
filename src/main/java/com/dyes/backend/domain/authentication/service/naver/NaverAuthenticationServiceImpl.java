@@ -93,9 +93,8 @@ public class NaverAuthenticationServiceImpl implements NaverAuthenticationServic
     public NaverOauthUserInfoResponse naverRequestUserInfoWithAccessToken(String accessToken) {
         log.info("requestUserInfoWithAccessTokenForSignIn start");
 
-        HttpHeaders headers = new HttpHeaders();
-
         try {
+            HttpHeaders headers = new HttpHeaders();
             headers.add("Authorization","Bearer "+ accessToken);
 
             HttpEntity<MultiValueMap<String, String>> request = new HttpEntity(headers);
@@ -114,6 +113,7 @@ public class NaverAuthenticationServiceImpl implements NaverAuthenticationServic
 
             return userInfoResponse;
         } catch (RestClientException e) {
+            HttpHeaders headers = new HttpHeaders();
             log.error("Error during requestUserInfoWithAccessTokenForSignIn: " + e.getMessage());
             Optional<User> maybeUser = userRepository.findByAccessToken(accessToken);
             User user = maybeUser.get();
@@ -145,6 +145,8 @@ public class NaverAuthenticationServiceImpl implements NaverAuthenticationServic
         log.info("expiredNaverAccessTokenRequester start");
 
         String refreshToken = user.getRefreshToken();
+        log.info("기존 액세스 : " + user.getAccessToken());
+        log.info("기존 리프래쉬 : " + user.getRefreshToken());
 
         final String naverClientId = naverOauthSecretsProvider.getNAVER_AUTH_CLIENT_ID();
         final String naverClientSecret = naverOauthSecretsProvider.getNAVER_AUTH_SECRETS();
@@ -162,9 +164,14 @@ public class NaverAuthenticationServiceImpl implements NaverAuthenticationServic
         HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(body, headers);
 
         ResponseEntity<NaverOauthAccessTokenResponse> accessTokenResponse = restTemplate.postForEntity(naverRefreshTokenRequestUrl, requestEntity, NaverOauthAccessTokenResponse.class);
+        log.info("새로운 액세스 : " + accessTokenResponse.getBody().getAccessToken());
+        log.info("새로운 리프래쉬 : " + accessTokenResponse.getBody().getRefreshToken());
+
         if(accessTokenResponse.getStatusCode() == HttpStatus.OK){
             user.setAccessToken(accessTokenResponse.getBody().getAccessToken());
             userRepository.save(user);
+            log.info("DB에 변경된 액세스 : " + user.getAccessToken());
+            log.info("DB에 변경된 리프래쉬 : " + user.getRefreshToken());
             log.info("expiredNaverAccessTokenRequester end");
 
             return user.getAccessToken();

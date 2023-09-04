@@ -9,6 +9,7 @@ import com.dyes.backend.domain.farm.repository.FarmOperationRepository;
 import com.dyes.backend.domain.farm.repository.FarmRepository;
 import com.dyes.backend.domain.farm.service.FarmServiceImpl;
 import com.dyes.backend.domain.farm.service.response.FarmInfoListResponse;
+import com.dyes.backend.domain.product.repository.ProductRepository;
 import com.dyes.backend.domain.user.entity.Address;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -34,6 +35,8 @@ public class FarmMockingTest {
     @Mock
     private FarmOperationRepository mockFarmOperationRepository;
     @Mock
+    private ProductRepository mockProductRepository;
+    @Mock
     private AdminService mockAdminService;
     @InjectMocks
     private FarmServiceImpl farmService;
@@ -45,6 +48,7 @@ public class FarmMockingTest {
         farmService = new FarmServiceImpl(
                 mockFarmRepository,
                 mockFarmOperationRepository,
+                mockProductRepository,
                 mockAdminService);
     }
 

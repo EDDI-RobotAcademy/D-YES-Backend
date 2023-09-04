@@ -2,14 +2,22 @@ package com.dyes.backend.domain.farm.service;
 
 import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.service.AdminService;
+import com.dyes.backend.domain.farm.controller.form.FarmDeleteForm;
+import com.dyes.backend.domain.farm.controller.form.FarmModifyForm;
 import com.dyes.backend.domain.farm.controller.form.FarmRegisterRequestForm;
 import com.dyes.backend.domain.farm.entity.Farm;
 import com.dyes.backend.domain.farm.entity.FarmOperation;
+import com.dyes.backend.domain.farm.entity.ProduceType;
 import com.dyes.backend.domain.farm.repository.FarmOperationRepository;
 import com.dyes.backend.domain.farm.repository.FarmRepository;
 import com.dyes.backend.domain.farm.service.request.FarmOperationRegisterRequest;
 import com.dyes.backend.domain.farm.service.request.FarmRegisterRequest;
 import com.dyes.backend.domain.farm.service.response.FarmInfoListResponse;
+import com.dyes.backend.domain.farm.service.response.FarmInfoReadResponse;
+import com.dyes.backend.domain.farm.service.response.FarmInfoResponseForm;
+import com.dyes.backend.domain.farm.service.response.FarmOperationInfoResponseForm;
+import com.dyes.backend.domain.product.entity.Product;
+import com.dyes.backend.domain.product.repository.ProductRepository;
 import com.dyes.backend.domain.user.entity.Address;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
@@ -27,6 +35,7 @@ import java.util.Optional;
 public class FarmServiceImpl implements FarmService{
     final private FarmRepository farmRepository;
     final private FarmOperationRepository farmOperationRepository;
+    final private ProductRepository productRepository;
     final private AdminService adminService;
 
     // 농가 등록
@@ -86,5 +95,97 @@ public class FarmServiceImpl implements FarmService{
             farmInfoListResponseList.add(farmInfoListResponse);
         }
         return farmInfoListResponseList;
+    }
+
+    // 농가 삭제
+    @Override
+    public Boolean deleteFarm(Long farmId, FarmDeleteForm deleteForm) {
+        final Admin admin = adminService.findAdminByUserToken(deleteForm.getUserToken());
+
+        if(admin == null) {
+            log.info("Can not find Admin");
+            return false;
+        }
+
+        Optional<Farm> maybeFarm = farmRepository.findById(farmId);
+        if(maybeFarm.isEmpty()) {
+            log.info("Farm is empty");
+            return false;
+        }
+
+        Farm deleteFarm = maybeFarm.get();
+
+        List<Product> productList = productRepository.findAllByFarm(deleteFarm);
+        if(productList.size() > 0) {
+            log.info("Can not delete Farm, Product exists");
+            return false;
+        }
+
+        FarmOperation deleteFarmOperation = farmOperationRepository.findByFarm(deleteFarm);
+        farmOperationRepository.delete(deleteFarmOperation);
+        farmRepository.delete(deleteFarm);
+
+        return true;
+    }
+
+    // 농가 읽기
+    @Override
+    public FarmInfoReadResponse readFarmInfo(Long farmId) {
+        Optional<Farm> maybeFarm  = farmRepository.findById(farmId);
+        if(maybeFarm.isEmpty()) {
+            log.info("Farm is empty");
+            return null;
+        }
+
+        Farm farm = maybeFarm.get();
+        FarmOperation farmOperation = farmOperationRepository.findByFarm(farm);
+
+        FarmInfoResponseForm farmInfoResponseForm
+                = new FarmInfoResponseForm(
+                        farm.getId(),
+                        farm.getFarmName(),
+                        farm.getCsContactNumber(),
+                        farm.getFarmAddress(),
+                        farm.getMainImage(),
+                        farm.getIntroduction(),
+                        farm.getProduceTypes());
+
+        FarmOperationInfoResponseForm farmOperationInfoResponseForm
+                = new FarmOperationInfoResponseForm(
+                        farmOperation.getId(),
+                        farmOperation.getBusinessName(),
+                        farmOperation.getBusinessNumber(),
+                        farmOperation.getRepresentativeName(),
+                        farmOperation.getRepresentativeContactNumber());
+
+        FarmInfoReadResponse farmInfoReadResponse = new FarmInfoReadResponse(farmInfoResponseForm, farmOperationInfoResponseForm);
+
+        return farmInfoReadResponse;
+    }
+
+    // 농가 수정
+    @Override
+    public boolean farmModify(Long farmId, FarmModifyForm modifyForm) {
+        final Admin admin = adminService.findAdminByUserToken(modifyForm.getUserToken());
+
+        if(admin == null) {
+            log.info("Can not find Admin");
+            return false;
+        }
+
+        Optional<Farm> maybeFarm  = farmRepository.findById(farmId);
+        if(maybeFarm.isEmpty()) {
+            log.info("Farm is empty");
+            return false;
+        }
+
+        Farm farm = maybeFarm.get();
+        farm.setCsContactNumber(modifyForm.getCsContactNumber());
+        farm.setMainImage(modifyForm.getMainImage());
+        farm.setIntroduction(modifyForm.getIntroduction());
+        farm.setProduceTypes(modifyForm.getProduceTypes());
+        farmRepository.save(farm);
+
+        return true;
     }
 }

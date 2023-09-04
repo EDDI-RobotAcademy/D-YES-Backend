@@ -1,8 +1,11 @@
 package com.dyes.backend.domain.farm.controller;
 
+import com.dyes.backend.domain.farm.controller.form.FarmDeleteForm;
+import com.dyes.backend.domain.farm.controller.form.FarmModifyForm;
 import com.dyes.backend.domain.farm.controller.form.FarmRegisterRequestForm;
 import com.dyes.backend.domain.farm.service.FarmService;
 import com.dyes.backend.domain.farm.service.response.FarmInfoListResponse;
+import com.dyes.backend.domain.farm.service.response.FarmInfoReadResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -28,5 +31,24 @@ public class FarmController {
     @GetMapping("/list")
     public List<FarmInfoListResponse> searchFarmList () {
         return farmService.searchFarmList();
+    }
+
+    // 농가 삭제
+    @DeleteMapping("/delete/{farmId}")
+    public Boolean deleteFarm (@PathVariable("farmId") Long farmId, @RequestBody FarmDeleteForm deleteForm) {
+        return farmService.deleteFarm(farmId, deleteForm);
+    }
+
+    // 농가 읽기
+    @GetMapping("/read/{farmId}")
+    public FarmInfoReadResponse readFarmInfo(@PathVariable("farmId") Long farmId) {
+        return farmService.readFarmInfo(farmId);
+    }
+
+    // 농가 수정
+    @PutMapping("/modify/{farmId}")
+    public boolean farmModify(@PathVariable("farmId") Long farmId,
+                              @RequestBody FarmModifyForm modifyForm) {
+        return farmService.farmModify(farmId, modifyForm);
     }
 }
