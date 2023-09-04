@@ -33,7 +33,8 @@ public class CartController {
         cartService.deleteProductOptionInCart(requestForm);
     }
     @GetMapping("/list")
-    public List<ContainProductListResponse> productListInCart(@RequestBody ContainProductListRequestForm requestForm) {
+    public List<ContainProductListResponse> productListInCart(@RequestParam("userToken") String userToken ) {
+        ContainProductListRequestForm requestForm = new ContainProductListRequestForm(userToken);
         return cartService.productListResponse(requestForm);
     }
 }
