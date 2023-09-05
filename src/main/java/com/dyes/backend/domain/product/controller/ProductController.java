@@ -5,6 +5,7 @@ import com.dyes.backend.domain.product.controller.form.ProductListDeleteForm;
 import com.dyes.backend.domain.product.controller.form.ProductModifyForm;
 import com.dyes.backend.domain.product.controller.form.ProductRegisterForm;
 import com.dyes.backend.domain.product.service.ProductService;
+import com.dyes.backend.domain.product.service.response.UserRandomProductListResponseForm;
 import com.dyes.backend.domain.product.service.response.admin.AdminProductListResponseForm;
 import com.dyes.backend.domain.product.service.response.admin.ProductResponseFormForAdmin;
 import com.dyes.backend.domain.product.service.response.UserProductResponseForm;
@@ -78,5 +79,11 @@ public class ProductController {
     @GetMapping("/user/list")
     public List<UserProductListResponseForm> getUserProductList() {
         return productService.getUserProductList();
+    }
+
+    // 3. 랜덤 상품 4개 조회
+    @GetMapping("/user/random-list")
+    public List<UserRandomProductListResponseForm> getUserRandomProductList() {
+        return productService.getUserRandomProductList();
     }
 }

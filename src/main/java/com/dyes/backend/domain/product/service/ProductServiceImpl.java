@@ -569,6 +569,60 @@ public class ProductServiceImpl implements ProductService{
         return productSummaryResponseFormForAdmin;
     }
 
+    // 일반 사용자용 랜덤 상품 목록 조회
+    @Override
+    public List<UserRandomProductListResponseForm> getUserRandomProductList() {
+        List<UserRandomProductListResponseForm> userRandomProductListResponseFormList = new ArrayList<>();
+
+        // DB에서 상품 목록 조회
+        List<Product> productList = productRepository.findAllWithFarm();
+        Collections.shuffle(productList);
+        for(Product product: productList) {
+
+            List<Long> optionPriceList = new ArrayList<>();
+            Long minOptionPrice = 0L;
+            String productMainImage = null;
+
+            // DB에서 상품 옵션 최저가 및 재고 조회
+            List<ProductOption> productOptionList = productOptionRepository.findByProduct(product);
+            boolean soldout = false;
+            for(ProductOption productOption: productOptionList) {
+                if(productOption.getStock() <= 0) {
+                    soldout = true;
+                    break;
+                }
+            }
+
+            if (!soldout) {
+                for (ProductOption productOption : productOptionList) {
+                    optionPriceList.add(productOption.getOptionPrice());
+                    minOptionPrice = findMinValue(optionPriceList);
+                }
+
+                // DB에서 상품 메인 이미지 이름 조회
+                Optional<ProductMainImage> maybeProductMainImage = productMainImageRepository.findByProduct(product);
+                if(maybeProductMainImage.isPresent()) {
+                    productMainImage = maybeProductMainImage.get().getMainImg();
+                }
+
+                // 최종적으로 반환할 상품 목록 form
+                UserRandomProductListResponseForm userRandomProductListResponseForm
+                        = new UserRandomProductListResponseForm(
+                        product.getId(),
+                        product.getProductName(),
+                        productMainImage,
+                        minOptionPrice);
+                userRandomProductListResponseFormList.add(userRandomProductListResponseForm);
+            }
+
+            if(userRandomProductListResponseFormList.size() == 4) {
+                return userRandomProductListResponseFormList;
+            }
+        }
+
+        return userRandomProductListResponseFormList;
+    }
+
     // unit 구별 util
     public Unit unitDecision (String unit) {
         if (unit.equals("KG")) {
