@@ -538,6 +538,37 @@ public class ProductServiceImpl implements ProductService{
         return userProductListResponseFormList;
     }
 
+    // 상품 삭제 전 요약정보 확인
+    @Override
+    public ProductSummaryResponseFormForAdmin readProductSummaryForAdmin(Long productId) {
+        Optional<Product> maybeProduct = productRepository.findByIdWithFarm(productId);
+        if(maybeProduct.isEmpty()) {
+            log.info("Product is empty");
+        }
+        Product product = maybeProduct.get();
+        ProductSummaryResponseForAdmin productSummaryResponseForAdmin
+                = new ProductSummaryResponseForAdmin(product.getId(), product.getProductName(), product.getProductSaleStatus());
+        List<ProductOption> productOptionList = productOptionRepository.findByProduct(product);
+        List<ProductOptionSummaryResponseForAdmin> productOptionSummaryResponseForAdminList = new ArrayList<>();
+        for(ProductOption productOption: productOptionList) {
+            ProductOptionSummaryResponseForAdmin productOptionSummaryResponseForAdmin
+                    = new ProductOptionSummaryResponseForAdmin(
+                            productOption.getId(),
+                            productOption.getOptionName(),
+                            productOption.getOptionPrice(),
+                            productOption.getStock(),
+                            productOption.getOptionSaleStatus());
+            productOptionSummaryResponseForAdminList.add(productOptionSummaryResponseForAdmin);
+        }
+        Farm farm = product.getFarm();
+        FarmInfoSummaryResponseForAdmin farmInfoSummaryResponseForAdmin
+                = new FarmInfoSummaryResponseForAdmin(farm.getId(), farm.getFarmName());
+
+        ProductSummaryResponseFormForAdmin productSummaryResponseFormForAdmin
+                = new ProductSummaryResponseFormForAdmin(productSummaryResponseForAdmin, productOptionSummaryResponseForAdminList, farmInfoSummaryResponseForAdmin);
+        return productSummaryResponseFormForAdmin;
+    }
+
     // unit 구별 util
     public Unit unitDecision (String unit) {
         if (unit.equals("KG")) {

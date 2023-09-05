@@ -8,6 +8,7 @@ import com.dyes.backend.domain.product.service.response.admin.AdminProductListRe
 import com.dyes.backend.domain.product.service.response.admin.ProductResponseFormForAdmin;
 import com.dyes.backend.domain.product.service.response.UserProductResponseForm;
 import com.dyes.backend.domain.product.service.response.UserProductListResponseForm;
+import com.dyes.backend.domain.product.service.response.admin.ProductSummaryResponseFormForAdmin;
 
 import java.util.List;
 
@@ -20,4 +21,5 @@ public interface ProductService {
     boolean productListDelete(ProductListDeleteForm listDeleteForm);
     List<AdminProductListResponseForm> getAdminProductList(String userToken);
     List<UserProductListResponseForm> getUserProductList();
+    ProductSummaryResponseFormForAdmin readProductSummaryForAdmin(Long productId);
 }

@@ -9,6 +9,7 @@ import com.dyes.backend.domain.product.service.response.admin.AdminProductListRe
 import com.dyes.backend.domain.product.service.response.admin.ProductResponseFormForAdmin;
 import com.dyes.backend.domain.product.service.response.UserProductResponseForm;
 import com.dyes.backend.domain.product.service.response.UserProductListResponseForm;
+import com.dyes.backend.domain.product.service.response.admin.ProductSummaryResponseFormForAdmin;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -58,6 +59,12 @@ public class ProductController {
     @GetMapping("/admin/list")
     public List<AdminProductListResponseForm> getAdminProductList(@RequestParam("userToken") String userToken) {
         return productService.getAdminProductList(userToken);
+    }
+
+    // 7. 상품 삭제 전 요약정보 확인
+    @GetMapping("/admin/read-summary/{productId}")
+    public ProductSummaryResponseFormForAdmin readProductSummaryForAdmin(@PathVariable("productId") Long productId) {
+        return productService.readProductSummaryForAdmin(productId);
     }
 
     // 사용자용
