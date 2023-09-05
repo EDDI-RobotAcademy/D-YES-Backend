@@ -543,4 +543,21 @@ public class ProductMockingTest {
         ProductResponseFormForAdmin result = mockService.readProductForAdmin(product.getId());
         assertEquals(result, actual);
     }
+
+    @Test
+    @DisplayName("product mocking test: admin product read-summary")
+    public void 관리자가_상품을_삭제하기_전에_상품_요약정보를_확인할_수_있습니다 () {
+        Farm farm = new Farm(1L, "투투농가", "070-1234-5678", new Address(), "농가 메인 이미지", "한줄소개", new ArrayList<>());
+        Product product = new Product(1L, "상품 이름","상세 설명", CultivationMethod.ORGANIC, AVAILABLE, farm);
+        List<ProductOption> productOption = new ArrayList<>();
+        productOption.add(new ProductOption(1L, "옵션 이름", 1L, 1, new Amount(),  product, AVAILABLE));
+
+        when(mockProductRepository.findByIdWithFarm(product.getId())).thenReturn(Optional.of(product));
+        when(mockProductOptionRepository.findByProduct(product)).thenReturn(productOption);
+
+        ProductSummaryResponseFormForAdmin result = mockService.readProductSummaryForAdmin(product.getId());
+        assertEquals(result.getFarmInfoSummaryResponseForAdmin().getFarmName(), "투투농가");
+        assertEquals(result.getProductSummaryResponseForAdmin().getProductName(), "상품 이름");
+        assertEquals(result.getOptionSummaryResponseForAdmin().get(0).getOptionName(), "옵션 이름");
+    }
 }
