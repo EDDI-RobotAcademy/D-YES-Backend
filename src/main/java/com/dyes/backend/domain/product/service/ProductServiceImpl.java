@@ -372,10 +372,10 @@ public class ProductServiceImpl implements ProductService{
 
         List<ProductOption> deleteProductOptionList = productOptionRepository.findByProduct(deleteProduct);
         for(ProductOption productOption: deleteProductOptionList) {
-            List<ContainProductOption> containProductOptionList = containProductOptionRepository.findAllByProductOption(productOption);
+            List<ContainProductOption> containProductOptionList = containProductOptionRepository.findAllByOptionId(productOption.getId());
             if(containProductOptionList.size() > 0) {
                 for(ContainProductOption containProductOption: containProductOptionList) {
-                    containProductOption.setProductOption(null);
+                    containProductOption.setOptionId(0L);
                     containProductOptionRepository.save(containProductOption);
                     log.info("The option is included in the cart");
                 }
