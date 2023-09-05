@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ContainProductListResponse {
     private String productName;
+    private Long productId;
     private String productMainImage;
     private Long optionId;
     private String optionName;
