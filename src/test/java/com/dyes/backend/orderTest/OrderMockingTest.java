@@ -7,10 +7,12 @@ import com.dyes.backend.domain.cart.repository.CartRepository;
 import com.dyes.backend.domain.cart.repository.ContainProductOptionRepository;
 import com.dyes.backend.domain.cart.service.CartService;
 import com.dyes.backend.domain.order.controller.form.OrderProductInCartRequestForm;
+import com.dyes.backend.domain.order.controller.form.OrderProductInProductPageRequestForm;
 import com.dyes.backend.domain.order.entity.ProductOrder;
 import com.dyes.backend.domain.order.repository.OrderRepository;
 import com.dyes.backend.domain.order.service.OrderServiceImpl;
 import com.dyes.backend.domain.order.service.request.OrderProductInCartRequest;
+import com.dyes.backend.domain.order.service.request.OrderProductInProductPageRequest;
 import com.dyes.backend.domain.product.entity.Amount;
 import com.dyes.backend.domain.product.entity.Product;
 import com.dyes.backend.domain.product.entity.ProductOption;
@@ -81,6 +83,30 @@ public class OrderMockingTest {
         ProductOrder order = new ProductOrder(1L, user.getId(), cart.getId(), productOption.getId(), containProductOption.getOptionCount());
 
         boolean actual = mockOrderService.orderProductInCart(requestForm);
+        assertTrue(actual);
+    }
+    @Test
+    @DisplayName("order mocking test: order product in product page")
+    public void 사용자가_상품_페이지에서_물품을_주문합니다 () {
+        final String userToken = "google 유저";
+        final Long productOptionId = 1L;
+        final int productCount = 1;
+
+        OrderProductInProductPageRequest request = new OrderProductInProductPageRequest(productOptionId, productCount);
+        OrderProductInProductPageRequestForm requestForm = new OrderProductInProductPageRequestForm(userToken, request);
+
+        User user = new User("1", "엑세스토큰", "리프래시 토큰", Active.YES, UserType.GOOGLE);
+        when(mockAuthenticationService.findUserByUserToken(requestForm.getUserToken())).thenReturn(user);
+
+        Cart cart = new Cart(1L, user);
+        when(mockCartService.cartCheckFromUserToken(userToken)).thenReturn(cart);
+
+        ProductOption productOption = new ProductOption();
+        ContainProductOption containProductOption = new ContainProductOption();
+        when(mockContainProductOptionRepository.findAllByCart(cart)).thenReturn(List.of(containProductOption));
+        when(mockProductOptionRepository.findByIdWithProduct(containProductOption.getId())).thenReturn(Optional.of(productOption));
+
+        boolean actual = mockOrderService.orderProductInProductPage(requestForm);
         assertTrue(actual);
     }
 }
