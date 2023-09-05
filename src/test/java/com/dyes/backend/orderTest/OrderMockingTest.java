@@ -88,7 +88,7 @@ public class OrderMockingTest {
         when(mockCartRepository.findByUser(user)).thenReturn(Optional.of(cart));
 
         ProductOption productOption = new ProductOption(1L, "옵션이름", 2000L, 10, new Amount(), new Product(), SaleStatus.AVAILABLE);
-        ContainProductOption containProductOption = new ContainProductOption(1L, cart, "상품명", "메인이미지", 1L, "옵션이름", 2000L, 1);
+        ContainProductOption containProductOption = new ContainProductOption(1L, cart, "상품명", 1L, "메인이미지", 1L, "옵션이름", 2000L, 1);
         when(mockContainProductOptionRepository.findAllByCart(cart)).thenReturn(List.of(containProductOption));
 
         ProductOrder order = new ProductOrder(1L, user.getId(), cart.getId(), productOption.getId(), containProductOption.getOptionCount());
@@ -137,7 +137,7 @@ public class OrderMockingTest {
         when(mockCartRepository.findByUser(user)).thenReturn(Optional.of(cart));
         Product product = new Product(1L, "상품 이름", "상세 설명", CultivationMethod.ORGANIC, SaleStatus.AVAILABLE, new Farm());
         ProductOption productOption = new ProductOption(1L, "옵션이름", 1L, 1, new Amount(), product, SaleStatus.AVAILABLE);
-        ContainProductOption containProductOption = new ContainProductOption(1L, cart, "상품 이름", "상품 이미지", 1L, "옵션 이름", 1L, 1);
+        ContainProductOption containProductOption = new ContainProductOption(1L, cart, "상품 이름", 1L, "상품 이미지", 1L, "옵션 이름", 1L, 1);
         when(mockContainProductOptionRepository.findAllByCart(cart)).thenReturn(List.of(containProductOption));
         when(mockProductOptionRepository.findByIdWithProduct(containProductOption.getId())).thenReturn(Optional.of(productOption));
         ProductMainImage mainImage = new ProductMainImage(1L, "메인 이미지", product);
