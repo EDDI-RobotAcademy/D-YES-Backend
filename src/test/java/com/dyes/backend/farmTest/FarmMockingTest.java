@@ -3,6 +3,7 @@ package com.dyes.backend.farmTest;
 import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.service.AdminService;
 import com.dyes.backend.domain.farm.controller.form.FarmDeleteForm;
+import com.dyes.backend.domain.farm.controller.form.FarmModifyForm;
 import com.dyes.backend.domain.farm.controller.form.FarmRegisterRequestForm;
 import com.dyes.backend.domain.farm.entity.Farm;
 import com.dyes.backend.domain.farm.entity.FarmOperation;
@@ -135,5 +136,32 @@ public class FarmMockingTest {
         assertEquals(result.getFarmInfoResponseForm().getCsContactNumber(), "070-1234-5678");
         assertEquals(result.getFarmOperationInfoResponseForm().getBusinessName(), "(주)투투농가");
         assertEquals(result.getFarmOperationInfoResponseForm().getBusinessNumber(), "123-45-67890");
+    }
+
+    @Test
+    @DisplayName("farm mocking test: farmModify")
+    public void 관리자가_농가정보를_수정합니다 () {
+        final Long farmId = 1L;
+        final String userToken = "mainadmin";
+        Farm farm = Farm.builder()
+                        .farmName("투투농가")
+                        .csContactNumber("070-1234-5678")
+                        .farmAddress(new Address())
+                        .mainImage("메인이미지")
+                        .introduction("한줄소개")
+                        .produceTypes(new ArrayList<>())
+                        .build();
+
+        when(mockAdminService.findAdminByUserToken(userToken)).thenReturn(new Admin());
+        when(mockFarmRepository.findById(farmId)).thenReturn(Optional.of(farm));
+
+        FarmModifyForm modifyForm = new FarmModifyForm(userToken, "070-1111-1111", "수정된메인이미지", "수정된한줄소개", new ArrayList<>());
+        Boolean result = farmService.farmModify(farmId, modifyForm);
+
+        assertTrue(result);
+        verify(mockFarmRepository, times(1)).save(any());
+        assertEquals("070-1111-1111", farm.getCsContactNumber());
+        assertEquals("수정된메인이미지", farm.getMainImage());
+        assertEquals("수정된한줄소개", farm.getIntroduction());
     }
 }
