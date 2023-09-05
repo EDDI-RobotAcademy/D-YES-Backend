@@ -82,9 +82,9 @@ public class CartMockingTest {
                 .build();
 
         ProductOption productOption = new ProductOption(1L, "옵션이름", 2000L, 10, new Amount(), new Product(), SaleStatus.AVAILABLE);
-
         when(mockProductOptionRepository.findByIdWithProductAndFarm(request.getProductOptionId())).thenReturn(Optional.of(productOption));
         when(mockContainProductOptionRepository.findAllByCart(cart)).thenReturn(anyList());
+        when(mockProductMainImageRepository.findByProduct(new Product())).thenReturn(Optional.of(new ProductMainImage()));
 
         mockCartService.containProductIntoCart(requestForm);
         verify(mockCartRepository, times(1)).save(any());

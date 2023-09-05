@@ -59,9 +59,12 @@ public class CartServiceImpl implements CartService{
         // 받아온 옵션이 DB에 있는 옵션인지 확인
         ProductOption productOption = isReallyExistProductOption(requestProductOptionId);
         Product product = productOption.getProduct();
-        Optional<ProductMainImage> maybeProductMainImage = productMainImageRepository.findByProduct(product);
         final String productName = product.getProductName();
-        final String productMainImage = maybeProductMainImage.get().getMainImg();
+        Optional<ProductMainImage> maybeProductMainImage = productMainImageRepository.findByProduct(product);
+        String productMainImage = "";
+        if(maybeProductMainImage.isPresent()) {
+            productMainImage = maybeProductMainImage.get().getMainImg();
+        }
 
         // 받아온 옵션이 카트에 담긴 옵션인지 확인
         ContainProductOption checkProductOptionInCart = checkProductOptionInCart(cart, requestProductOptionId);
