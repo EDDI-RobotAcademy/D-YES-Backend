@@ -207,7 +207,7 @@ public class OrderServiceImpl implements OrderService{
             // 장바구니에 담긴 물건을 모조리 불러오기
             List<OrderConfirmProductResponse> productResponseList = new ArrayList<>();
             for (ContainProductOption containProductOption : productOptionList) {
-                ProductOption productOption = productOptionRepository.findByIdWithProduct(containProductOption.getId()).get();
+                ProductOption productOption = productOptionRepository.findByIdWithProduct(containProductOption.getOptionId()).get();
                 log.info("productOption: " + productOption.getOptionName());
 
                 ProductMainImage mainImage = productMainImageRepository.findByProductId(productOption.getProduct().getId()).get();
