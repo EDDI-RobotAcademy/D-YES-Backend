@@ -11,6 +11,7 @@ import com.dyes.backend.domain.farm.repository.FarmOperationRepository;
 import com.dyes.backend.domain.farm.repository.FarmRepository;
 import com.dyes.backend.domain.farm.service.FarmServiceImpl;
 import com.dyes.backend.domain.farm.service.response.FarmInfoListResponse;
+import com.dyes.backend.domain.farm.service.response.FarmInfoReadResponse;
 import com.dyes.backend.domain.product.entity.Product;
 import com.dyes.backend.domain.product.repository.ProductRepository;
 import com.dyes.backend.domain.user.entity.Address;
@@ -111,5 +112,28 @@ public class FarmMockingTest {
 
         verify(mockFarmRepository, times(1)).delete(any());
         verify(mockFarmOperationRepository, times(1)).delete(any());
+    }
+
+    @Test
+    @DisplayName("farm mocking test: readFarmInfo")
+    public void 관리자가_농가정보를_확인합니다 () {
+        final Long farmId = 1L;
+        Farm farm = Farm.builder()
+                        .farmName("투투농가")
+                        .csContactNumber("070-1234-5678")
+                        .build();
+
+        FarmOperation farmOperation = FarmOperation.builder()
+                                                    .businessName("(주)투투농가")
+                                                    .businessNumber("123-45-67890")
+                                                    .build();
+        when(mockFarmRepository.findById(farmId)).thenReturn(Optional.of(farm));
+        when(mockFarmOperationRepository.findByFarm(farm)).thenReturn(farmOperation);
+
+        FarmInfoReadResponse result = farmService.readFarmInfo(farmId);
+        assertEquals(result.getFarmInfoResponseForm().getFarmName(), "투투농가");
+        assertEquals(result.getFarmInfoResponseForm().getCsContactNumber(), "070-1234-5678");
+        assertEquals(result.getFarmOperationInfoResponseForm().getBusinessName(), "(주)투투농가");
+        assertEquals(result.getFarmOperationInfoResponseForm().getBusinessNumber(), "123-45-67890");
     }
 }
