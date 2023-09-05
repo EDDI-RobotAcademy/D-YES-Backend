@@ -21,18 +21,26 @@ import java.util.List;
 @RequestMapping("/cart")
 public class CartController {
     final private CartService cartService;
+
+    // 장바구니 상품 담기
     @PostMapping("/contain")
     public void productContainIntoCart(@RequestBody ContainProductRequestForm requestForm) {
         cartService.containProductIntoCart(requestForm);
     }
+
+    // 장바구니 상품 수량 변경
     @PutMapping("/change")
     public ContainProductCountChangeResponse productInCartChangeCount(@RequestBody ContainProductModifyRequestForm requestForm){
         return cartService.changeProductOptionCount(requestForm);
     }
+
+    // 장바구니 상품 삭제
     @DeleteMapping("/delete")
     public void productDeleteInCart(@RequestBody List<ContainProductDeleteRequestForm> requestFormList) {
         cartService.deleteProductOptionInCart(requestFormList);
     }
+
+    // 장바구니 목록 조회
     @GetMapping("/list")
     public List<ContainProductListResponse> productListInCart(@RequestParam("userToken") String userToken ) {
         ContainProductListRequestForm requestForm = new ContainProductListRequestForm(userToken);

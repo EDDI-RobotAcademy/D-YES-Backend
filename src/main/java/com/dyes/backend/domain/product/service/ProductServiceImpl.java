@@ -2,6 +2,8 @@ package com.dyes.backend.domain.product.service;
 
 import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.service.AdminService;
+import com.dyes.backend.domain.cart.entity.ContainProductOption;
+import com.dyes.backend.domain.cart.repository.ContainProductOptionRepository;
 import com.dyes.backend.domain.farm.entity.Farm;
 import com.dyes.backend.domain.farm.entity.FarmOperation;
 import com.dyes.backend.domain.farm.repository.FarmOperationRepository;
@@ -37,6 +39,7 @@ public class ProductServiceImpl implements ProductService{
     final private ProductDetailImagesRepository productDetailImagesRepository;
     final private FarmRepository farmRepository;
     final private FarmOperationRepository farmOperationRepository;
+    final private ContainProductOptionRepository containProductOptionRepository;
     final private AdminService adminService;
 
     // 상품 등록
@@ -367,6 +370,19 @@ public class ProductServiceImpl implements ProductService{
         }
         Product deleteProduct = maybeProduct.get();
 
+        List<ProductOption> deleteProductOptionList = productOptionRepository.findByProduct(deleteProduct);
+        for(ProductOption productOption: deleteProductOptionList) {
+            List<ContainProductOption> containProductOptionList = containProductOptionRepository.findAllByOptionId(productOption.getId());
+            if(containProductOptionList.size() > 0) {
+                for(ContainProductOption containProductOption: containProductOptionList) {
+                    containProductOption.setOptionId(0L);
+                    containProductOptionRepository.save(containProductOption);
+                    log.info("The option is included in the cart");
+                }
+            }
+            productOptionRepository.delete(productOption);
+        }
+
         Optional<ProductMainImage> maybeProductMainImage = productMainImageRepository.findByProduct(deleteProduct);
         if(maybeProductMainImage.isEmpty()) {
             log.info("ProductMainImage is empty");
@@ -378,11 +394,6 @@ public class ProductServiceImpl implements ProductService{
         List<ProductDetailImages> deleteProductDetailImagesList = productDetailImagesRepository.findByProduct(deleteProduct);
         for(ProductDetailImages productDetailImages: deleteProductDetailImagesList) {
             productDetailImagesRepository.delete(productDetailImages);
-        }
-
-        List<ProductOption> deleteProductOptionList = productOptionRepository.findByProduct(deleteProduct);
-        for(ProductOption productOption: deleteProductOptionList) {
-            productOptionRepository.delete(productOption);
         }
 
         productRepository.delete(deleteProduct);

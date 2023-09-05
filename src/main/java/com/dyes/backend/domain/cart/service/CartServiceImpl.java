@@ -38,7 +38,7 @@ public class CartServiceImpl implements CartService{
     final private ProductMainImageRepository productMainImageRepository;
     final private AuthenticationService authenticationService;
 
-    // 장바구니에 물건 담기
+    // 장바구니 상품 담기
     @Override
     public void containProductIntoCart(ContainProductRequestForm requestForm) throws NullPointerException {
         log.info("containProductIntoCart start");
@@ -50,6 +50,7 @@ public class CartServiceImpl implements CartService{
         final String userToken = tokenRequest.getUserToken();
         final Long requestProductOptionId = request.getProductOptionId();
         final int requestProductOptionCount = request.getOptionCount();
+
         // 유저토큰으로 장바구니 불러오기
         Cart cart = cartCheckFromUserToken(userToken);
 
@@ -57,6 +58,10 @@ public class CartServiceImpl implements CartService{
 
         // 받아온 옵션이 DB에 있는 옵션인지 확인
         ProductOption productOption = isReallyExistProductOption(requestProductOptionId);
+        Product product = productOption.getProduct();
+        Optional<ProductMainImage> maybeProductMainImage = productMainImageRepository.findByProduct(product);
+        final String productName = product.getProductName();
+        final String productMainImage = maybeProductMainImage.get().getMainImg();
 
         // 받아온 옵션이 카트에 담긴 옵션인지 확인
         ContainProductOption checkProductOptionInCart = checkProductOptionInCart(cart, requestProductOptionId);
@@ -65,8 +70,12 @@ public class CartServiceImpl implements CartService{
         if (checkProductOptionInCart == null) {
             log.info("savedOptionList isEmpty");
             ContainProductOption containProductOption = ContainProductOption.builder()
-                    .productOption(productOption)
                     .cart(cart)
+                    .productName(productName)
+                    .productMainImage(productMainImage)
+                    .optionId(productOption.getId())
+                    .optionName(productOption.getOptionName())
+                    .optionPrice(productOption.getOptionPrice())
                     .optionCount(requestProductOptionCount)
                     .build();
             containProductOptionRepository.save(containProductOption);
@@ -79,21 +88,25 @@ public class CartServiceImpl implements CartService{
             containProductOptionRepository.save(containProductOption);
         }
     }
-    // 장바구니에 담긴 물건 수정하기
+
+    // 장바구니 상품 수량 변경
     @Override
     public ContainProductCountChangeResponse changeProductOptionCount(ContainProductModifyRequestForm requestForm) throws NullPointerException{
         log.info("changeProductOptionCount start");
 
         CartCheckFromUserTokenRequest tokenRequest = new CartCheckFromUserTokenRequest(requestForm.getUserToken());
         ContainProductModifyRequest modifyRequest = new ContainProductModifyRequest(requestForm.getRequest().getProductOptionId(), requestForm.getRequest().getOptionCount());
-        //
+
         final String userToken = tokenRequest.getUserToken();
         final Long requestProductOptionId = modifyRequest.getProductOptionId();
         final int requestProductOptionCount = modifyRequest.getOptionCount();
+
         // 유저토큰으로 카트 불러오기
         Cart cart = cartCheckFromUserToken(userToken);
-        // 카트와 옵션id로 카트에 담긴 옵션 불러오기
+
+        // 카트와 옵션 id로 카트에 담긴 옵션 불러오기
         ContainProductOption containProductOption = checkProductOptionInCart(cart, requestProductOptionId);
+
         // 카트에 담긴 옵션 카운트를 바꾸기
         containProductOption.setOptionCount(requestProductOptionCount);
         containProductOptionRepository.save(containProductOption);
@@ -103,6 +116,7 @@ public class CartServiceImpl implements CartService{
         return response;
     }
 
+    // 장바구니 상품 삭제
     @Override
     public void deleteProductOptionInCart(List<ContainProductDeleteRequestForm> requestFormList) {
         log.info("deleteProductOptionInCart start");
@@ -114,7 +128,8 @@ public class CartServiceImpl implements CartService{
 
             // 유저토큰으로 카트 불러오기
             Cart cart = cartCheckFromUserToken(userToken);
-            // 카트와 옵션id로 카트에 담긴 옵션 불러오기
+
+            // 카트와 옵션 id로 카트에 담긴 옵션 불러오기
             ContainProductOption containProductOption = checkProductOptionInCart(cart, requestProductOptionId);
 
             containProductOptionRepository.delete(containProductOption);
@@ -122,6 +137,7 @@ public class CartServiceImpl implements CartService{
         log.info("deleteProductOptionInCart end");
     }
 
+    // 장바구니 목록 조회
     @Override
     public List<ContainProductListResponse> productListResponse(ContainProductListRequestForm requestForm) {
         log.info("productListResponse start");
@@ -133,36 +149,45 @@ public class CartServiceImpl implements CartService{
         Cart cart = cartCheckFromUserToken(userToken);
 
         // 카트에 담긴 옵션들 다 불러오기
-        List<ContainProductOption> savedOptionList = containProductOptionRepository.findAllByCartWithProduct(cart);
+        List<ContainProductOption> savedOptionList = containProductOptionRepository.findAllByCart(cart);
 
         List<ContainProductListResponse> responseList = new ArrayList<>();
 
         for (ContainProductOption containProductOption : savedOptionList) {
 
-            final Long productOptionId = containProductOption.getProductOption().getId();
-            final ProductOption productOption = productOptionRepository.findByIdWithProduct(productOptionId).get();
-            final Product product = productOption.getProduct();
-            final ProductMainImage productMainImage = productMainImageRepository.findByProductId(product.getId()).get();
+            if(containProductOption.getOptionId() == 0) {
+                responseList.add(new ContainProductListResponse(
+                        containProductOption.getProductName(),
+                        containProductOption.getProductMainImage(),
+                        containProductOption.getOptionId(),
+                        containProductOption.getOptionName(),
+                        containProductOption.getOptionPrice(),
+                        containProductOption.getOptionCount()));
+            }
+            if(containProductOption.getOptionId() != 0) {
+                final Long productOptionId = containProductOption.getOptionId();
+                final ProductOption productOption = productOptionRepository.findByIdWithProduct(productOptionId).get();
+                final Product product = productOption.getProduct();
+                final ProductMainImage productMainImage = productMainImageRepository.findByProductId(product.getId()).get();
 
-            ContainProductListResponse response = ContainProductListResponse.builder()
-                    .productName(product.getProductName())
-                    .optionId(productOption.getId())
-                    .productMainImage(productMainImage.getMainImg())
-                    .optionPrice(productOption.getOptionPrice())
-                    .optionCount(containProductOption.getOptionCount())
-                    .optionStock(productOption.getStock())
-                    .unit(productOption.getAmount().getUnit())
-                    .value(productOption.getAmount().getValue())
-                    .build();
+                ContainProductListResponse response = ContainProductListResponse.builder()
+                        .productName(product.getProductName())
+                        .productMainImage(productMainImage.getMainImg())
+                        .optionId(productOption.getId())
+                        .optionName(productOption.getOptionName())
+                        .optionPrice(productOption.getOptionPrice())
+                        .optionCount(containProductOption.getOptionCount())
+                        .build();
 
-            responseList.add(response);
+                responseList.add(response);
+            }
         }
         log.info("productListResponse end");
 
         return responseList;
     }
 
-    // 유저 토큰으로 카트가 있나 없나 확인하기
+    // 유저 토큰으로 사용자의 카트 유무 확인
     public Cart cartCheckFromUserToken(String userToken) {
         User user = authenticationService.findUserByUserToken(userToken);
         log.info("user: " + user);
@@ -184,7 +209,8 @@ public class CartServiceImpl implements CartService{
             return cart;
         }
     }
-    // 옵션이 DB에 있는 진짜 옵션인지 파악하기
+
+    // 장바구니에 담은 옵션이 상품 옵션 DB에 존재하는지 확인
     public ProductOption isReallyExistProductOption(Long productOptionId) {
         log.info("isReallyExistProductOption start");
 
@@ -201,14 +227,17 @@ public class CartServiceImpl implements CartService{
         log.info("isReallyExistProductOption end");
         return productOption;
     }
-    // 카트에서 동일한 아이디가 있는지 확인하기
+
+    // 사용자 카트에 동일한 옵션이 담겨있는지 확인
     public ContainProductOption checkProductOptionInCart(Cart cart, Long productOptionId) {
         // 카트에 담긴 옵션들 다 불러오기
         List<ContainProductOption> savedOptionList = containProductOptionRepository.findAllByCart(cart);
+
         // 카트에 담긴 옵션 중에서 받아온 옵션과 동일한 옵션이 있는지 파악하기
-        Optional<ContainProductOption> result = savedOptionList.stream()
-                                                                .filter(option -> option.getProductOption().getId().equals(productOptionId))
-                                                                .findFirst();
+        Optional<ContainProductOption> result
+                = savedOptionList.stream()
+                                .filter(option -> option.getOptionId().equals(productOptionId))
+                                .findFirst();
 
         if (result.isPresent()) {
             return result.get();
