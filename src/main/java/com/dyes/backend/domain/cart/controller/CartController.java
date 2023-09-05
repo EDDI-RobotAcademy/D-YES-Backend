@@ -42,7 +42,7 @@ public class CartController {
 
     // 장바구니 목록 조회
     @GetMapping("/list")
-    public List<ContainProductListResponse> productListInCart(@RequestParam("userToken") String userToken ) {
+    public List<ContainProductListResponse> productListInCart(@RequestParam("userToken") String userToken) {
         ContainProductListRequestForm requestForm = new ContainProductListRequestForm(userToken);
         return cartService.productListResponse(requestForm);
     }
