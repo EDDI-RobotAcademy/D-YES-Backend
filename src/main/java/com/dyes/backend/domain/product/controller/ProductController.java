@@ -5,10 +5,12 @@ import com.dyes.backend.domain.product.controller.form.ProductListDeleteForm;
 import com.dyes.backend.domain.product.controller.form.ProductModifyForm;
 import com.dyes.backend.domain.product.controller.form.ProductRegisterForm;
 import com.dyes.backend.domain.product.service.ProductService;
+import com.dyes.backend.domain.product.service.response.UserRandomProductListResponseForm;
 import com.dyes.backend.domain.product.service.response.admin.AdminProductListResponseForm;
 import com.dyes.backend.domain.product.service.response.admin.ProductResponseFormForAdmin;
 import com.dyes.backend.domain.product.service.response.UserProductResponseForm;
 import com.dyes.backend.domain.product.service.response.UserProductListResponseForm;
+import com.dyes.backend.domain.product.service.response.admin.ProductSummaryResponseFormForAdmin;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -60,6 +62,12 @@ public class ProductController {
         return productService.getAdminProductList(userToken);
     }
 
+    // 7. 상품 삭제 전 요약정보 확인
+    @GetMapping("/admin/read-summary/{productId}")
+    public ProductSummaryResponseFormForAdmin readProductSummaryForAdmin(@PathVariable("productId") Long productId) {
+        return productService.readProductSummaryForAdmin(productId);
+    }
+
     // 사용자용
     // 1. 상품 읽기
     @GetMapping("/user/read/{productId}")
@@ -71,5 +79,11 @@ public class ProductController {
     @GetMapping("/user/list")
     public List<UserProductListResponseForm> getUserProductList() {
         return productService.getUserProductList();
+    }
+
+    // 3. 랜덤 상품 4개 조회
+    @GetMapping("/user/random-list")
+    public List<UserRandomProductListResponseForm> getUserRandomProductList() {
+        return productService.getUserRandomProductList();
     }
 }
