@@ -26,6 +26,8 @@ public class OrderServiceImpl implements OrderService{
     final private ProductOptionRepository productOptionRepository;
     final private ContainProductOptionRepository containProductOptionRepository;
     final private CartService cartService;
+
+    // 장바구니에서 상품 주문
     @Override
     public boolean orderProductInCart(OrderProductInCartRequestForm requestForm) {
         log.info("orderProductInCart start");
@@ -35,13 +37,14 @@ public class OrderServiceImpl implements OrderService{
 
             // 유저 토큰으로 장바구니 찾기
             Cart cart = cartService.cartCheckFromUserToken(userToken);
+
             // 장바구니에 담긴 상품 리스트 불러오기
-            List<ContainProductOption> productOptionList = containProductOptionRepository.findAllByCartWithProduct(cart);
+            List<ContainProductOption> productOptionList = containProductOptionRepository.findAllByCart(cart);
 
             for(ContainProductOption containProductOption : productOptionList) {
 
                 // 주문된 상품의 재고를 확인하기
-                ProductOption productOption = productOptionRepository.findByIdWithProduct(containProductOption.getProductOption().getId()).get();
+                ProductOption productOption = productOptionRepository.findByIdWithProduct(containProductOption.getOptionId()).get();
 
                 int stock = productOption.getStock();
                 int stockCount = stock - containProductOption.getOptionCount();
@@ -54,7 +57,7 @@ public class OrderServiceImpl implements OrderService{
                 ProductOrder order = ProductOrder.builder()
                         .userId(cart.getUser().getId())
                         .cartId(cart.getId())
-                        .productOptionId(containProductOption.getProductOption().getId())
+                        .productOptionId(containProductOption.getOptionId())
                         .productOptionCount(containProductOption.getOptionCount())
                         .build();
                 orderRepository.save(order);

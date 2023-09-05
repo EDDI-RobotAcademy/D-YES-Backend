@@ -1,6 +1,5 @@
 package com.dyes.backend.domain.cart.entity;
 
-import com.dyes.backend.domain.product.entity.ProductOption;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,8 +18,10 @@ public class ContainProductOption {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "cart_id")
     private Cart cart;
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "option_id")
-    private ProductOption productOption;
+    private String productName;
+    private String productMainImage;
+    private Long optionId;
+    private String optionName;
+    private Long optionPrice;
     private int optionCount;
 }

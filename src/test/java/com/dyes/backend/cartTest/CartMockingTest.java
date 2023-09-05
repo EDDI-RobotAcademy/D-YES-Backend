@@ -83,7 +83,7 @@ public class CartMockingTest {
 
         ProductOption productOption = new ProductOption(1L, "옵션이름", 2000L, 10, new Amount(), new Product(), SaleStatus.AVAILABLE);
 
-        when(mockProductOptionRepository.findById(request.getProductOptionId())).thenReturn(Optional.of(productOption));
+        when(mockProductOptionRepository.findByIdWithProductAndFarm(request.getProductOptionId())).thenReturn(Optional.of(productOption));
         when(mockContainProductOptionRepository.findAllByCart(cart)).thenReturn(anyList());
 
         mockCartService.containProductIntoCart(requestForm);
@@ -106,8 +106,7 @@ public class CartMockingTest {
         Cart cart = new Cart(1L, user);
         when(mockCartRepository.findByUser(user)).thenReturn(Optional.of(cart));
 
-        ProductOption productOption = new ProductOption(1L, "옵션이름", 2000L, 10, new Amount(), new Product(), SaleStatus.AVAILABLE);
-        ContainProductOption containProductOption = new ContainProductOption(1L, cart, productOption, 1);
+        ContainProductOption containProductOption = new ContainProductOption(1L, cart, "상품명", "메인이미지", 1L, "옵션이름", 2000L, 1);
         when(mockContainProductOptionRepository.findAllByCart(cart)).thenReturn(List.of(containProductOption));
 
         mockCartService.changeProductOptionCount(requestForm);
@@ -131,7 +130,7 @@ public class CartMockingTest {
         when(mockCartRepository.findByUser(user)).thenReturn(Optional.of(cart));
 
         ProductOption productOption = new ProductOption(1L, "옵션이름", 2000L, 10, new Amount(), new Product(), SaleStatus.AVAILABLE);
-        ContainProductOption containProductOption = new ContainProductOption(1L, cart, productOption, 1);
+        ContainProductOption containProductOption = new ContainProductOption(1L, cart, "상품명", "메인이미지", 1L, "옵션이름", 2000L, 1);
         when(mockContainProductOptionRepository.findAllByCart(cart)).thenReturn(List.of(containProductOption));
 
         mockCartService.deleteProductOptionInCart(requestFormList);
@@ -153,8 +152,8 @@ public class CartMockingTest {
 
         Product product = new Product(1L, "상품 이름", "상세 정보", CultivationMethod.ORGANIC, SaleStatus.AVAILABLE, new Farm());
         ProductOption productOption = new ProductOption(1L, "옵션이름", 2000L, 10, new Amount(), product, product.getProductSaleStatus());
-        ContainProductOption containProductOption = new ContainProductOption(1L, cart, productOption, 1);
-        when(mockContainProductOptionRepository.findAllByCartWithProduct(cart)).thenReturn(List.of(containProductOption));
+        ContainProductOption containProductOption = new ContainProductOption(1L, cart, "상품명", "메인이미지", 1L, "옵션이름", 2000L, 1);
+        when(mockContainProductOptionRepository.findAllByCart(cart)).thenReturn(List.of(containProductOption));
         when(mockProductOptionRepository.findByIdWithProduct(productOption.getId())).thenReturn(Optional.of(productOption));
         when(mockProductMainImageRepository.findByProductId(product.getId())).thenReturn(Optional.of(new ProductMainImage()));
 

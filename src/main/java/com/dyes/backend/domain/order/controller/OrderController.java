@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/order")
 public class OrderController {
     final private OrderService orderService;
+
+    // 장바구니에서 상품 주문
     @PostMapping("/in-cart")
     public boolean orderProductInCart(@RequestBody OrderProductInCartRequestForm requestForm) {
         return orderService.orderProductInCart(requestForm);
