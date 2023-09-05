@@ -60,6 +60,7 @@ public class CartServiceImpl implements CartService{
         ProductOption productOption = isReallyExistProductOption(requestProductOptionId);
         Product product = productOption.getProduct();
         final String productName = product.getProductName();
+        final Long productId = product.getId();
         Optional<ProductMainImage> maybeProductMainImage = productMainImageRepository.findByProduct(product);
         String productMainImage = "";
         if(maybeProductMainImage.isPresent()) {
@@ -75,6 +76,7 @@ public class CartServiceImpl implements CartService{
             ContainProductOption containProductOption = ContainProductOption.builder()
                     .cart(cart)
                     .productName(productName)
+                    .productId(productId)
                     .productMainImage(productMainImage)
                     .optionId(productOption.getId())
                     .optionName(productOption.getOptionName())
@@ -161,6 +163,7 @@ public class CartServiceImpl implements CartService{
             if(containProductOption.getOptionId() == 0) {
                 responseList.add(new ContainProductListResponse(
                         containProductOption.getProductName(),
+                        containProductOption.getProductId(),
                         containProductOption.getProductMainImage(),
                         containProductOption.getOptionId(),
                         containProductOption.getOptionName(),
@@ -175,6 +178,7 @@ public class CartServiceImpl implements CartService{
 
                 ContainProductListResponse response = ContainProductListResponse.builder()
                         .productName(product.getProductName())
+                        .productId(product.getId())
                         .productMainImage(productMainImage.getMainImg())
                         .optionId(productOption.getId())
                         .optionName(productOption.getOptionName())

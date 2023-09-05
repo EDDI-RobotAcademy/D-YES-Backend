@@ -19,6 +19,7 @@ public class ContainProductOption {
     @JoinColumn(name = "cart_id")
     private Cart cart;
     private String productName;
+    private Long productId;
     private String productMainImage;
     private Long optionId;
     private String optionName;
