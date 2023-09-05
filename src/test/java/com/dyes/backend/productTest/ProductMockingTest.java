@@ -20,7 +20,8 @@ import com.dyes.backend.domain.product.repository.ProductOptionRepository;
 import com.dyes.backend.domain.product.repository.ProductRepository;
 import com.dyes.backend.domain.product.service.ProductServiceImpl;
 import com.dyes.backend.domain.product.service.response.*;
-import com.dyes.backend.domain.product.service.response.admin.AdminProductListResponseForm;
+import com.dyes.backend.domain.product.service.response.admin.*;
+import com.dyes.backend.domain.user.entity.Address;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.repository.UserRepository;
 import com.dyes.backend.utility.redis.RedisServiceImpl;
@@ -91,7 +92,7 @@ public class ProductMockingTest {
         );
     }
     @Test
-    @DisplayName("product mocking test: product register")
+    @DisplayName("product mocking test: admin product register")
     public void 관리자가_상품_등록을_합니다 () {
         final String productName = "상품이름";
         final String productDescription = "상세설명";
@@ -137,7 +138,7 @@ public class ProductMockingTest {
     }
 
     @Test
-    @DisplayName("product mocking test: product read")
+    @DisplayName("product mocking test: user product read")
     public void 사용자가_상품을_볼_수_있습니다 () {
         final Long productId = 1L;
 
@@ -175,7 +176,7 @@ public class ProductMockingTest {
     }
 
     @Test
-    @DisplayName("product mocking test: product modify")
+    @DisplayName("product mocking test: admin product modify")
     public void 관리자가_상품_수정을_합니다 () {
         final Long modifyProductId = 1L;
         final String modifyProductName = "수정된 상품명";
@@ -315,7 +316,7 @@ public class ProductMockingTest {
     }
 
     @Test
-    @DisplayName("product mocking test: product delete")
+    @DisplayName("product mocking test: admin product delete")
     public void 관리자가_상품을_삭제합니다 () {
         final String userToken = "mainadmin-dskef3rkewj-welkjw";
         Product product = Product.builder()
@@ -503,5 +504,43 @@ public class ProductMockingTest {
         assertEquals(result.get(0).getFarmName(), "투투농장");
         assertEquals(result.get(0).getMainImage(), "mainImage");
         assertEquals(result.get(0).getRepresentativeName(), "정다운");
+    }
+
+    @Test
+    @DisplayName("product mocking test: admin product read")
+    public void 관리자가_상품을_수정하기_전에_상품을_확인할_수_있습니다 () {
+        Farm farm = new Farm(1L, "투투농가", "070-1234-5678", new Address(), "농가 메인 이미지", "한줄소개", new ArrayList<>());
+        Product product = new Product(1L, "상품 이름","상세 설명", CultivationMethod.ORGANIC, AVAILABLE, farm);
+        List<ProductOption> productOption = new ArrayList<>();
+        productOption.add(new ProductOption(1L, "옵션 이름", 10000L, 100, new Amount(),  product, AVAILABLE));
+        ProductMainImage productMainImage = new ProductMainImage(product.getId(), "메인 이미지", product);
+        List<ProductDetailImages> productDetailImages = new ArrayList<>();
+        productDetailImages.add(new ProductDetailImages(1L, "디테일 이미지", product));
+        FarmOperation farmOperation = new FarmOperation(1L, "(주)투투농가", "123-45-67890", "투투쓰", "010-1111-1111", farm);
+
+        when(mockProductRepository.findByIdWithFarm(product.getId())).thenReturn(Optional.of(product));
+        when(mockProductOptionRepository.findByProduct(product)).thenReturn(productOption);
+        when(mockProductMainImageRepository.findByProduct(product)).thenReturn(Optional.of(productMainImage));
+        when(mockProductDetailImagesRepository.findByProduct(product)).thenReturn(productDetailImages);
+        when(mockFarmOperationRepository.findByFarm(farm)).thenReturn(farmOperation);
+
+        ProductResponseForAdmin productResponseForAdmin = new ProductResponseForAdmin().productResponseForAdmin(product);
+        List<ProductOptionResponseForAdmin> productOptionResponseForAdmin = new ProductOptionResponseForAdmin().productOptionResponseForAdmin(productOption);
+        ProductMainImageResponseForAdmin productMainImageResponseForAdmin = new ProductMainImageResponseForAdmin().productMainImageResponseForAdmin(productMainImage);
+        List<ProductDetailImagesResponseForAdmin> productDetailImagesResponsesForAdmin = new ProductDetailImagesResponseForAdmin().productDetailImagesResponseForAdminList(productDetailImages);
+        FarmInfoResponseForAdmin farmInfoResponseForAdmin = new FarmInfoResponseForAdmin().farmInfoResponseForAdmin(farm);
+        FarmOperationInfoResponseForAdmin farmOperationInfoResponseForAdmin = new FarmOperationInfoResponseForAdmin().farmOperationInfoResponseForAdmin(farmOperation);
+
+        ProductResponseFormForAdmin actual
+                = new ProductResponseFormForAdmin(
+                productResponseForAdmin,
+                productOptionResponseForAdmin,
+                productMainImageResponseForAdmin,
+                productDetailImagesResponsesForAdmin,
+                farmInfoResponseForAdmin,
+                farmOperationInfoResponseForAdmin);
+
+        ProductResponseFormForAdmin result = mockService.readProductForAdmin(product.getId());
+        assertEquals(result, actual);
     }
 }
