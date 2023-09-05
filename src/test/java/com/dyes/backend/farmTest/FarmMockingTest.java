@@ -2,13 +2,18 @@ package com.dyes.backend.farmTest;
 
 import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.service.AdminService;
+import com.dyes.backend.domain.farm.controller.form.FarmDeleteForm;
+import com.dyes.backend.domain.farm.controller.form.FarmModifyForm;
 import com.dyes.backend.domain.farm.controller.form.FarmRegisterRequestForm;
 import com.dyes.backend.domain.farm.entity.Farm;
+import com.dyes.backend.domain.farm.entity.FarmOperation;
 import com.dyes.backend.domain.farm.entity.ProduceType;
 import com.dyes.backend.domain.farm.repository.FarmOperationRepository;
 import com.dyes.backend.domain.farm.repository.FarmRepository;
 import com.dyes.backend.domain.farm.service.FarmServiceImpl;
 import com.dyes.backend.domain.farm.service.response.FarmInfoListResponse;
+import com.dyes.backend.domain.farm.service.response.FarmInfoReadResponse;
+import com.dyes.backend.domain.product.entity.Product;
 import com.dyes.backend.domain.product.repository.ProductRepository;
 import com.dyes.backend.domain.user.entity.Address;
 import org.junit.jupiter.api.BeforeEach;
@@ -90,5 +95,73 @@ public class FarmMockingTest {
         List<FarmInfoListResponse> result = farmService.searchFarmList();
         assertEquals(result.get(0).getFarmName(), "투투농원1");
         assertEquals(result.get(1).getFarmName(), "투투농원2");
+    }
+
+    @Test
+    @DisplayName("farm mocking test: deleteFarm")
+    public void 관리자가_농가를_삭제합니다 () {
+        final Long farmId = 1L;
+        final String userToken = "mainadmin";
+        final FarmDeleteForm deleteForm = new FarmDeleteForm(userToken);
+        final List<Product> productList = new ArrayList<>();
+        when(mockAdminService.findAdminByUserToken(userToken)).thenReturn(new Admin());
+        when(mockFarmRepository.findById(farmId)).thenReturn(Optional.of(new Farm()));
+        when(mockProductRepository.findAllByFarm(new Farm())).thenReturn(productList);
+        when(mockFarmOperationRepository.findByFarm(new Farm())).thenReturn(new FarmOperation());
+
+        farmService.deleteFarm(farmId, deleteForm);
+
+        verify(mockFarmRepository, times(1)).delete(any());
+        verify(mockFarmOperationRepository, times(1)).delete(any());
+    }
+
+    @Test
+    @DisplayName("farm mocking test: readFarmInfo")
+    public void 관리자가_농가정보를_확인합니다 () {
+        final Long farmId = 1L;
+        Farm farm = Farm.builder()
+                        .farmName("투투농가")
+                        .csContactNumber("070-1234-5678")
+                        .build();
+
+        FarmOperation farmOperation = FarmOperation.builder()
+                                                    .businessName("(주)투투농가")
+                                                    .businessNumber("123-45-67890")
+                                                    .build();
+        when(mockFarmRepository.findById(farmId)).thenReturn(Optional.of(farm));
+        when(mockFarmOperationRepository.findByFarm(farm)).thenReturn(farmOperation);
+
+        FarmInfoReadResponse result = farmService.readFarmInfo(farmId);
+        assertEquals(result.getFarmInfoResponseForm().getFarmName(), "투투농가");
+        assertEquals(result.getFarmInfoResponseForm().getCsContactNumber(), "070-1234-5678");
+        assertEquals(result.getFarmOperationInfoResponseForm().getBusinessName(), "(주)투투농가");
+        assertEquals(result.getFarmOperationInfoResponseForm().getBusinessNumber(), "123-45-67890");
+    }
+
+    @Test
+    @DisplayName("farm mocking test: farmModify")
+    public void 관리자가_농가정보를_수정합니다 () {
+        final Long farmId = 1L;
+        final String userToken = "mainadmin";
+        Farm farm = Farm.builder()
+                        .farmName("투투농가")
+                        .csContactNumber("070-1234-5678")
+                        .farmAddress(new Address())
+                        .mainImage("메인이미지")
+                        .introduction("한줄소개")
+                        .produceTypes(new ArrayList<>())
+                        .build();
+
+        when(mockAdminService.findAdminByUserToken(userToken)).thenReturn(new Admin());
+        when(mockFarmRepository.findById(farmId)).thenReturn(Optional.of(farm));
+
+        FarmModifyForm modifyForm = new FarmModifyForm(userToken, "070-1111-1111", "수정된메인이미지", "수정된한줄소개", new ArrayList<>());
+        Boolean result = farmService.farmModify(farmId, modifyForm);
+
+        assertTrue(result);
+        verify(mockFarmRepository, times(1)).save(any());
+        assertEquals("070-1111-1111", farm.getCsContactNumber());
+        assertEquals("수정된메인이미지", farm.getMainImage());
+        assertEquals("수정된한줄소개", farm.getIntroduction());
     }
 }
