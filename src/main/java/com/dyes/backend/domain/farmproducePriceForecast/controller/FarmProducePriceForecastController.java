@@ -30,4 +30,11 @@ public class FarmProducePriceForecastController {
         log.info("Save " + farmProducePriceRequestForm.getFarmProduceName() + " price");
         farmProducePriceService.saveCarrotPrice(farmProducePriceRequestForm);
     }
+
+    // 오이 예측 가격 받기
+    @PostMapping("/save-cucumber-price")
+    public void saveCucumberPrice (@RequestBody FarmProducePriceRequestForm farmProducePriceRequestForm) {
+        log.info("Save " + farmProducePriceRequestForm.getFarmProduceName() + " price");
+        farmProducePriceService.saveCucumberPrice(farmProducePriceRequestForm);
+    }
 }

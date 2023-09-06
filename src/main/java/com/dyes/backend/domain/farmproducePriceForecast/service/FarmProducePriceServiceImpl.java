@@ -3,8 +3,10 @@ package com.dyes.backend.domain.farmproducePriceForecast.service;
 import com.dyes.backend.domain.farmproducePriceForecast.controller.form.FarmProducePriceRequestForm;
 import com.dyes.backend.domain.farmproducePriceForecast.entity.CabbagePrice;
 import com.dyes.backend.domain.farmproducePriceForecast.entity.CarrotPrice;
+import com.dyes.backend.domain.farmproducePriceForecast.entity.CucumberPrice;
 import com.dyes.backend.domain.farmproducePriceForecast.repository.CabbagePriceRepository;
 import com.dyes.backend.domain.farmproducePriceForecast.repository.CarrotPriceRepository;
+import com.dyes.backend.domain.farmproducePriceForecast.repository.CucumberPriceRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,7 @@ import java.util.Optional;
 public class FarmProducePriceServiceImpl implements FarmProducePriceService {
     final private CabbagePriceRepository cabbagePriceRepository;
     final private CarrotPriceRepository carrotPriceRepository;
+    final private CucumberPriceRepository cucumberPriceRepository;
 
     // 양배추 예측 가격 받기
     @Override
@@ -99,6 +102,45 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
             }
         } else {
             log.info("It's not carrot");
+        }
+    }
+
+    // 오이 예측 가격 받기
+    @Override
+    public void saveCucumberPrice(FarmProducePriceRequestForm farmProducePriceRequestForm) {
+        final String farmProduceName = farmProducePriceRequestForm.getFarmProduceName();
+        if(farmProduceName.equals("cucumber")) {
+            final LocalDate startDate = farmProducePriceRequestForm.getDate();
+            final List<Integer> priceList = farmProducePriceRequestForm.getFarmProducePrice();
+
+            List<LocalDate> dateList = new ArrayList<>();
+            for(int i = 0; i < priceList.size(); i++) {
+                dateList.add(startDate.plusDays(i));
+            }
+
+            for (int i = 0; i < dateList.size(); i++) {
+                LocalDate saveDate = dateList.get(i);
+                Integer price = priceList.get(i);
+
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                String formattedDate = saveDate.format(formatter);
+
+                Optional<CucumberPrice> maybeCucumberPrice = cucumberPriceRepository.findByDate(formattedDate);
+
+                CucumberPrice cucumberPrice;
+                if(maybeCucumberPrice.isPresent()) {
+                    cucumberPrice = maybeCucumberPrice.get();
+                    cucumberPrice.setPrice(price);
+                } else {
+                    cucumberPrice = CucumberPrice.builder()
+                            .date(formattedDate)
+                            .price(price)
+                            .build();
+                }
+                cucumberPriceRepository.save(cucumberPrice);
+            }
+        } else {
+            log.info("It's not cucumber");
         }
     }
 }
