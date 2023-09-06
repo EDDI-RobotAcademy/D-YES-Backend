@@ -1,6 +1,10 @@
 package com.dyes.backend.domain.farmproducePriceForecast.service;
 
 import com.dyes.backend.domain.farmproducePriceForecast.controller.form.FarmProducePriceRequestForm;
+import com.dyes.backend.domain.farmproducePriceForecast.service.response.FarmProducePriceForecastResponseForm;
+
+import java.time.LocalDate;
+import java.util.List;
 
 public interface FarmProducePriceService {
     void saveCabbagePrice(FarmProducePriceRequestForm farmProducePriceRequestForm);
@@ -11,4 +15,5 @@ public interface FarmProducePriceService {
     void savePotatoPrice(FarmProducePriceRequestForm farmProducePriceRequestForm);
     void saveWelshOnionPrice(FarmProducePriceRequestForm farmProducePriceRequestForm);
     void saveYoungPumpkinPrice(FarmProducePriceRequestForm farmProducePriceRequestForm);
+    List<FarmProducePriceForecastResponseForm> getPrice(LocalDate currentDate);
 }

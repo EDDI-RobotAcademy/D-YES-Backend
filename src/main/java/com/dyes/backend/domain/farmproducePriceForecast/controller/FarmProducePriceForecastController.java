@@ -2,12 +2,13 @@ package com.dyes.backend.domain.farmproducePriceForecast.controller;
 
 import com.dyes.backend.domain.farmproducePriceForecast.controller.form.FarmProducePriceRequestForm;
 import com.dyes.backend.domain.farmproducePriceForecast.service.FarmProducePriceService;
+import com.dyes.backend.domain.farmproducePriceForecast.service.response.FarmProducePriceForecastResponseForm;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @Slf4j
 @ToString
@@ -71,5 +72,12 @@ public class FarmProducePriceForecastController {
     public void saveYoungPumpkinPrice (@RequestBody FarmProducePriceRequestForm farmProducePriceRequestForm) {
         log.info("Save " + farmProducePriceRequestForm.getFarmProduceName() + " price");
         farmProducePriceService.saveYoungPumpkinPrice(farmProducePriceRequestForm);
+    }
+
+    // 예측된 농산물 가격 확인
+    @GetMapping("/get-price")
+    public List<FarmProducePriceForecastResponseForm> getPrice (@RequestParam("currentDate") LocalDate currentDate) {
+
+        return farmProducePriceService.getPrice(currentDate);
     }
 }
