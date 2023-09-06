@@ -1,14 +1,8 @@
 package com.dyes.backend.domain.farmproducePriceForecast.service;
 
 import com.dyes.backend.domain.farmproducePriceForecast.controller.form.FarmProducePriceRequestForm;
-import com.dyes.backend.domain.farmproducePriceForecast.entity.CabbagePrice;
-import com.dyes.backend.domain.farmproducePriceForecast.entity.CarrotPrice;
-import com.dyes.backend.domain.farmproducePriceForecast.entity.CucumberPrice;
-import com.dyes.backend.domain.farmproducePriceForecast.entity.KimchiCabbagePrice;
-import com.dyes.backend.domain.farmproducePriceForecast.repository.CabbagePriceRepository;
-import com.dyes.backend.domain.farmproducePriceForecast.repository.CarrotPriceRepository;
-import com.dyes.backend.domain.farmproducePriceForecast.repository.CucumberPriceRepository;
-import com.dyes.backend.domain.farmproducePriceForecast.repository.KimchiCabbagePriceRepository;
+import com.dyes.backend.domain.farmproducePriceForecast.entity.*;
+import com.dyes.backend.domain.farmproducePriceForecast.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +23,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
     final private CarrotPriceRepository carrotPriceRepository;
     final private CucumberPriceRepository cucumberPriceRepository;
     final private KimchiCabbagePriceRepository kimchiCabbagePriceRepository;
+    final private OnionPriceRepository onionPriceRepository;
 
     // 양배추 예측 가격 받기
     @Override
@@ -183,6 +178,45 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
             }
         } else {
             log.info("It's not kimchiCabbage");
+        }
+    }
+
+    // 양파 예측 가격 받기
+    @Override
+    public void saveOnionPrice(FarmProducePriceRequestForm farmProducePriceRequestForm) {
+        final String farmProduceName = farmProducePriceRequestForm.getFarmProduceName();
+        if(farmProduceName.equals("onion")) {
+            final LocalDate startDate = farmProducePriceRequestForm.getDate();
+            final List<Integer> priceList = farmProducePriceRequestForm.getFarmProducePrice();
+
+            List<LocalDate> dateList = new ArrayList<>();
+            for(int i = 0; i < priceList.size(); i++) {
+                dateList.add(startDate.plusDays(i));
+            }
+
+            for (int i = 0; i < dateList.size(); i++) {
+                LocalDate saveDate = dateList.get(i);
+                Integer price = priceList.get(i);
+
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                String formattedDate = saveDate.format(formatter);
+
+                Optional<OnionPrice> maybeOnionPrice = onionPriceRepository.findByDate(formattedDate);
+
+                OnionPrice onionPrice;
+                if(maybeOnionPrice.isPresent()) {
+                    onionPrice = maybeOnionPrice.get();
+                    onionPrice.setPrice(price);
+                } else {
+                    onionPrice = OnionPrice.builder()
+                            .date(formattedDate)
+                            .price(price)
+                            .build();
+                }
+                onionPriceRepository.save(onionPrice);
+            }
+        } else {
+            log.info("It's not onion");
         }
     }
 }
