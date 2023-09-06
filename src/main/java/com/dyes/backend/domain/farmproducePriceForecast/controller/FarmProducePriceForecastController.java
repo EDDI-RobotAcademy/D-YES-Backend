@@ -58,4 +58,11 @@ public class FarmProducePriceForecastController {
         log.info("Save " + farmProducePriceRequestForm.getFarmProduceName() + " price");
         farmProducePriceService.savePotatoPrice(farmProducePriceRequestForm);
     }
+
+    // 대파 예측 가격 받기
+    @PostMapping("/save-welsh-onion-price")
+    public void saveWelshOnionPrice (@RequestBody FarmProducePriceRequestForm farmProducePriceRequestForm) {
+        log.info("Save " + farmProducePriceRequestForm.getFarmProduceName() + " price");
+        farmProducePriceService.saveWelshOnionPrice(farmProducePriceRequestForm);
+    }
 }

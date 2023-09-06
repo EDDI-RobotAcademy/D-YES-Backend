@@ -25,6 +25,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
     final private KimchiCabbagePriceRepository kimchiCabbagePriceRepository;
     final private OnionPriceRepository onionPriceRepository;
     final private PotatoPriceRepository potatoPriceRepository;
+    final private WelshOnionPriceRepository welshOnionPriceRepository;
 
     // 양배추 예측 가격 받기
     @Override
@@ -257,6 +258,45 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
             }
         } else {
             log.info("It's not potato");
+        }
+    }
+
+    // 대파 예측 가격 받기
+    @Override
+    public void saveWelshOnionPrice(FarmProducePriceRequestForm farmProducePriceRequestForm) {
+        final String farmProduceName = farmProducePriceRequestForm.getFarmProduceName();
+        if(farmProduceName.equals("welshOnion")) {
+            final LocalDate startDate = farmProducePriceRequestForm.getDate();
+            final List<Integer> priceList = farmProducePriceRequestForm.getFarmProducePrice();
+
+            List<LocalDate> dateList = new ArrayList<>();
+            for(int i = 0; i < priceList.size(); i++) {
+                dateList.add(startDate.plusDays(i));
+            }
+
+            for (int i = 0; i < dateList.size(); i++) {
+                LocalDate saveDate = dateList.get(i);
+                Integer price = priceList.get(i);
+
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                String formattedDate = saveDate.format(formatter);
+
+                Optional<WelshOnionPrice> maybeWelshOnionPrice = welshOnionPriceRepository.findByDate(formattedDate);
+
+                WelshOnionPrice welshOnionPrice;
+                if(maybeWelshOnionPrice.isPresent()) {
+                    welshOnionPrice = maybeWelshOnionPrice.get();
+                    welshOnionPrice.setPrice(price);
+                } else {
+                    welshOnionPrice = WelshOnionPrice.builder()
+                            .date(formattedDate)
+                            .price(price)
+                            .build();
+                }
+                welshOnionPriceRepository.save(welshOnionPrice);
+            }
+        } else {
+            log.info("It's not welshOnion");
         }
     }
 }
