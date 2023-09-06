@@ -26,6 +26,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
     final private OnionPriceRepository onionPriceRepository;
     final private PotatoPriceRepository potatoPriceRepository;
     final private WelshOnionPriceRepository welshOnionPriceRepository;
+    final private YoungPumpkinPriceRepository youngPumpkinPriceRepository;
 
     // 양배추 예측 가격 받기
     @Override
@@ -297,6 +298,45 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
             }
         } else {
             log.info("It's not welshOnion");
+        }
+    }
+
+    // 애호박 예측 가격 받기
+    @Override
+    public void saveYoungPumpkinPrice(FarmProducePriceRequestForm farmProducePriceRequestForm) {
+        final String farmProduceName = farmProducePriceRequestForm.getFarmProduceName();
+        if(farmProduceName.equals("youngPumpkin")) {
+            final LocalDate startDate = farmProducePriceRequestForm.getDate();
+            final List<Integer> priceList = farmProducePriceRequestForm.getFarmProducePrice();
+
+            List<LocalDate> dateList = new ArrayList<>();
+            for(int i = 0; i < priceList.size(); i++) {
+                dateList.add(startDate.plusDays(i));
+            }
+
+            for (int i = 0; i < dateList.size(); i++) {
+                LocalDate saveDate = dateList.get(i);
+                Integer price = priceList.get(i);
+
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                String formattedDate = saveDate.format(formatter);
+
+                Optional<YoungPumpkinPrice> maybeYoungPumpkinPrice = youngPumpkinPriceRepository.findByDate(formattedDate);
+
+                YoungPumpkinPrice youngPumpkinPrice;
+                if(maybeYoungPumpkinPrice.isPresent()) {
+                    youngPumpkinPrice = maybeYoungPumpkinPrice.get();
+                    youngPumpkinPrice.setPrice(price);
+                } else {
+                    youngPumpkinPrice = YoungPumpkinPrice.builder()
+                            .date(formattedDate)
+                            .price(price)
+                            .build();
+                }
+                youngPumpkinPriceRepository.save(youngPumpkinPrice);
+            }
+        } else {
+            log.info("It's not youngPumpkin");
         }
     }
 }

@@ -10,4 +10,5 @@ public interface FarmProducePriceService {
     void saveOnionPrice(FarmProducePriceRequestForm farmProducePriceRequestForm);
     void savePotatoPrice(FarmProducePriceRequestForm farmProducePriceRequestForm);
     void saveWelshOnionPrice(FarmProducePriceRequestForm farmProducePriceRequestForm);
+    void saveYoungPumpkinPrice(FarmProducePriceRequestForm farmProducePriceRequestForm);
 }

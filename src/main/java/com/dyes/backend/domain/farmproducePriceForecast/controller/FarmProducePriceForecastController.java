@@ -65,4 +65,11 @@ public class FarmProducePriceForecastController {
         log.info("Save " + farmProducePriceRequestForm.getFarmProduceName() + " price");
         farmProducePriceService.saveWelshOnionPrice(farmProducePriceRequestForm);
     }
+
+    // 애호박 예측 가격 받기
+    @PostMapping("/save-young-pumpkin-price")
+    public void saveYoungPumpkinPrice (@RequestBody FarmProducePriceRequestForm farmProducePriceRequestForm) {
+        log.info("Save " + farmProducePriceRequestForm.getFarmProduceName() + " price");
+        farmProducePriceService.saveYoungPumpkinPrice(farmProducePriceRequestForm);
+    }
 }
