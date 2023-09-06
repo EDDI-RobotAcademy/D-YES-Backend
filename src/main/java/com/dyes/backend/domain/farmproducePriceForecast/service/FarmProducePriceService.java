@@ -4,4 +4,5 @@ import com.dyes.backend.domain.farmproducePriceForecast.controller.form.FarmProd
 
 public interface FarmProducePriceService {
     void saveCabbagePrice(FarmProducePriceRequestForm farmProducePriceRequestForm);
+    void saveCarrotPrice(FarmProducePriceRequestForm farmProducePriceRequestForm);
 }
