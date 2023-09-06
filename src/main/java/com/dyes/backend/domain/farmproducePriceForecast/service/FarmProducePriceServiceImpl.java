@@ -24,6 +24,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
     final private CucumberPriceRepository cucumberPriceRepository;
     final private KimchiCabbagePriceRepository kimchiCabbagePriceRepository;
     final private OnionPriceRepository onionPriceRepository;
+    final private PotatoPriceRepository potatoPriceRepository;
 
     // 양배추 예측 가격 받기
     @Override
@@ -217,6 +218,45 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
             }
         } else {
             log.info("It's not onion");
+        }
+    }
+
+    // 감자 예측 가격 받기
+    @Override
+    public void savePotatoPrice(FarmProducePriceRequestForm farmProducePriceRequestForm) {
+        final String farmProduceName = farmProducePriceRequestForm.getFarmProduceName();
+        if(farmProduceName.equals("potato")) {
+            final LocalDate startDate = farmProducePriceRequestForm.getDate();
+            final List<Integer> priceList = farmProducePriceRequestForm.getFarmProducePrice();
+
+            List<LocalDate> dateList = new ArrayList<>();
+            for(int i = 0; i < priceList.size(); i++) {
+                dateList.add(startDate.plusDays(i));
+            }
+
+            for (int i = 0; i < dateList.size(); i++) {
+                LocalDate saveDate = dateList.get(i);
+                Integer price = priceList.get(i);
+
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                String formattedDate = saveDate.format(formatter);
+
+                Optional<PotatoPrice> maybePotatoPrice = potatoPriceRepository.findByDate(formattedDate);
+
+                PotatoPrice potatoPrice;
+                if(maybePotatoPrice.isPresent()) {
+                    potatoPrice = maybePotatoPrice.get();
+                    potatoPrice.setPrice(price);
+                } else {
+                    potatoPrice = PotatoPrice.builder()
+                            .date(formattedDate)
+                            .price(price)
+                            .build();
+                }
+                potatoPriceRepository.save(potatoPrice);
+            }
+        } else {
+            log.info("It's not potato");
         }
     }
 }
