@@ -3,6 +3,7 @@ package com.dyes.backend.domain.user.service;
 import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.entity.RoleType;
 import com.dyes.backend.domain.admin.repository.AdminRepository;
+import com.dyes.backend.domain.admin.service.AdminService;
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
 import com.dyes.backend.domain.authentication.service.google.GoogleAuthenticationService;
 import com.dyes.backend.domain.authentication.service.kakao.service.KakaoAuthenticationService;
@@ -28,6 +29,8 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -49,6 +52,7 @@ public class UserServiceImpl implements UserService {
     final private UserProfileRepository userProfileRepository;
     final private AdminRepository adminRepository;
     final private RedisService redisService;
+    final private AdminService adminService;
 
     // 닉네임 중복 확인
     @Override
@@ -457,6 +461,35 @@ public class UserServiceImpl implements UserService {
         } else {
             return false;
         }
+    }
+
+    // 관리자의 회원 목록 조회
+    @Override
+    public List<UserInfoResponseForm> getUserList(String userToken) {
+        final Admin admin = adminService.findAdminByUserToken(userToken);
+
+        if(admin == null) {
+            log.info("Can not find Admin");
+            return null;
+        }
+
+        List<UserInfoResponseForm> userInfoResponseFormList = new ArrayList<>();
+        List<User> userList = userRepository.findAll();
+        for(User user: userList) {
+            Optional<Admin> maybeAdmin = adminRepository.findByUser(user);
+            UserInfoResponseForm userInfoResponseForm;
+
+            if(maybeAdmin.isPresent()) {
+                Admin isAdmin = maybeAdmin.get();
+                userInfoResponseForm
+                        = new UserInfoResponseForm(user.getId(), user.getUserType(), user.getActive(), isAdmin.getRoleType());
+            } else {
+                userInfoResponseForm
+                        = new UserInfoResponseForm(user.getId(), user.getUserType(), user.getActive());
+            }
+            userInfoResponseFormList.add(userInfoResponseForm);
+        }
+        return userInfoResponseFormList;
     }
 
     // 회원 비활성화 및 프로필 삭제

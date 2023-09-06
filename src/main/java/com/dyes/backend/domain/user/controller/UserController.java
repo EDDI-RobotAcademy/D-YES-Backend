@@ -2,11 +2,14 @@ package com.dyes.backend.domain.user.controller;
 
 import com.dyes.backend.domain.user.controller.form.UserProfileModifyRequestForm;
 import com.dyes.backend.domain.user.service.UserService;
+import com.dyes.backend.domain.user.service.response.UserInfoResponseForm;
 import com.dyes.backend.domain.user.service.response.UserProfileResponseForm;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Slf4j
 @ToString
@@ -56,5 +59,12 @@ public class UserController {
     public Boolean userWithdrawal(@RequestParam("userToken") String userToken) {
 
         return userService.userWithdrawal(userToken);
+    }
+
+    // 관리자의 회원 목록 조회
+    @GetMapping("/list")
+    public List<UserInfoResponseForm> getUserList(@RequestParam("userToken") String userToken) {
+
+        return userService.getUserList(userToken);
     }
 }
