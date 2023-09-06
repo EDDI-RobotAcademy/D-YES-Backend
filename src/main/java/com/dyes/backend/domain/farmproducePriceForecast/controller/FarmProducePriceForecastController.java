@@ -37,4 +37,11 @@ public class FarmProducePriceForecastController {
         log.info("Save " + farmProducePriceRequestForm.getFarmProduceName() + " price");
         farmProducePriceService.saveCucumberPrice(farmProducePriceRequestForm);
     }
+
+    // 배추 예측 가격 받기
+    @PostMapping("/save-kimchi-cabbage-price")
+    public void saveKimchiCabbagePrice (@RequestBody FarmProducePriceRequestForm farmProducePriceRequestForm) {
+        log.info("Save " + farmProducePriceRequestForm.getFarmProduceName() + " price");
+        farmProducePriceService.saveKimchiCabbagePrice(farmProducePriceRequestForm);
+    }
 }

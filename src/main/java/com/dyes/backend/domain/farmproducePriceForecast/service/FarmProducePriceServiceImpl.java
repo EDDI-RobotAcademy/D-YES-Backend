@@ -4,9 +4,11 @@ import com.dyes.backend.domain.farmproducePriceForecast.controller.form.FarmProd
 import com.dyes.backend.domain.farmproducePriceForecast.entity.CabbagePrice;
 import com.dyes.backend.domain.farmproducePriceForecast.entity.CarrotPrice;
 import com.dyes.backend.domain.farmproducePriceForecast.entity.CucumberPrice;
+import com.dyes.backend.domain.farmproducePriceForecast.entity.KimchiCabbagePrice;
 import com.dyes.backend.domain.farmproducePriceForecast.repository.CabbagePriceRepository;
 import com.dyes.backend.domain.farmproducePriceForecast.repository.CarrotPriceRepository;
 import com.dyes.backend.domain.farmproducePriceForecast.repository.CucumberPriceRepository;
+import com.dyes.backend.domain.farmproducePriceForecast.repository.KimchiCabbagePriceRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +28,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
     final private CabbagePriceRepository cabbagePriceRepository;
     final private CarrotPriceRepository carrotPriceRepository;
     final private CucumberPriceRepository cucumberPriceRepository;
+    final private KimchiCabbagePriceRepository kimchiCabbagePriceRepository;
 
     // 양배추 예측 가격 받기
     @Override
@@ -141,6 +144,45 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
             }
         } else {
             log.info("It's not cucumber");
+        }
+    }
+
+    // 배추 예측 가격 받기
+    @Override
+    public void saveKimchiCabbagePrice(FarmProducePriceRequestForm farmProducePriceRequestForm) {
+        final String farmProduceName = farmProducePriceRequestForm.getFarmProduceName();
+        if(farmProduceName.equals("kimchiCabbage")) {
+            final LocalDate startDate = farmProducePriceRequestForm.getDate();
+            final List<Integer> priceList = farmProducePriceRequestForm.getFarmProducePrice();
+
+            List<LocalDate> dateList = new ArrayList<>();
+            for(int i = 0; i < priceList.size(); i++) {
+                dateList.add(startDate.plusDays(i));
+            }
+
+            for (int i = 0; i < dateList.size(); i++) {
+                LocalDate saveDate = dateList.get(i);
+                Integer price = priceList.get(i);
+
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                String formattedDate = saveDate.format(formatter);
+
+                Optional<KimchiCabbagePrice> maybeKimchiCabbagePrice = kimchiCabbagePriceRepository.findByDate(formattedDate);
+
+                KimchiCabbagePrice kimchiCabbagePrice;
+                if(maybeKimchiCabbagePrice.isPresent()) {
+                    kimchiCabbagePrice = maybeKimchiCabbagePrice.get();
+                    kimchiCabbagePrice.setPrice(price);
+                } else {
+                    kimchiCabbagePrice = KimchiCabbagePrice.builder()
+                            .date(formattedDate)
+                            .price(price)
+                            .build();
+                }
+                kimchiCabbagePriceRepository.save(kimchiCabbagePrice);
+            }
+        } else {
+            log.info("It's not kimchiCabbage");
         }
     }
 }
