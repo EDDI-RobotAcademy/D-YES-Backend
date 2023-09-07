@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderProductInProductPageRequest {
+public class OrderedProductOptionRequest {
     private Long productOptionId;
-    private int optionCount;
+    private int productOptionCount;
 }

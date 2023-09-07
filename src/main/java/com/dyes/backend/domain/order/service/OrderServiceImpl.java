@@ -1,22 +1,25 @@
 package com.dyes.backend.domain.order.service;
 
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
-import com.dyes.backend.domain.cart.controller.form.ContainProductRequestForm;
 import com.dyes.backend.domain.cart.entity.Cart;
 import com.dyes.backend.domain.cart.entity.ContainProductOption;
 import com.dyes.backend.domain.cart.repository.CartRepository;
 import com.dyes.backend.domain.cart.repository.ContainProductOptionRepository;
 import com.dyes.backend.domain.cart.service.CartService;
-import com.dyes.backend.domain.cart.service.request.ContainProductOptionRequest;
 import com.dyes.backend.domain.order.controller.form.OrderConfirmRequestForm;
 import com.dyes.backend.domain.order.controller.form.OrderConfirmResponseForm;
 import com.dyes.backend.domain.order.controller.form.OrderProductInCartRequestForm;
 import com.dyes.backend.domain.order.controller.form.OrderProductInProductPageRequestForm;
+import com.dyes.backend.domain.order.entity.OrderedProduct;
+import com.dyes.backend.domain.order.entity.OrderedPurchaserProfile;
+import com.dyes.backend.domain.order.entity.OrderedPurchaserProfileAddress;
 import com.dyes.backend.domain.order.entity.ProductOrder;
 import com.dyes.backend.domain.order.repository.OrderRepository;
+import com.dyes.backend.domain.order.repository.OrderedProductRepository;
+import com.dyes.backend.domain.order.repository.OrderedPurchaserProfileRepository;
 import com.dyes.backend.domain.order.service.request.OrderConfirmRequest;
-import com.dyes.backend.domain.order.service.request.OrderProductInCartRequest;
-import com.dyes.backend.domain.order.service.request.OrderProductInProductPageRequest;
+import com.dyes.backend.domain.order.service.request.OrderedProductOptionRequest;
+import com.dyes.backend.domain.order.service.request.OrderedPurchaserProfileRequest;
 import com.dyes.backend.domain.order.service.response.OrderConfirmProductResponse;
 import com.dyes.backend.domain.order.service.response.OrderConfirmUserResponse;
 import com.dyes.backend.domain.product.entity.ProductMainImage;
@@ -30,8 +33,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -43,6 +49,8 @@ public class OrderServiceImpl implements OrderService{
     final private ContainProductOptionRepository containProductOptionRepository;
     final private UserProfileRepository userProfileRepository;
     final private ProductMainImageRepository productMainImageRepository;
+    final private OrderedProductRepository orderedProductRepository;
+    final private OrderedPurchaserProfileRepository orderedPurchaserProfileRepository;
     final private CartService cartService;
     final private AuthenticationService authenticationService;
 
@@ -51,8 +59,24 @@ public class OrderServiceImpl implements OrderService{
     public boolean orderProductInCart(OrderProductInCartRequestForm requestForm) {
         log.info("orderProductInCart start");
         try {
-            OrderProductInCartRequest request = new OrderProductInCartRequest(requestForm.getUserToken());
-            final String userToken = request.getUserToken();
+
+            OrderedPurchaserProfileRequest profileRequest = OrderedPurchaserProfileRequest.builder()
+                    .orderedPurchaserName(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserName())
+                    .orderedPurchaserContactNumber(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserContactNumber())
+                    .orderedPurchaserEmail(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserEmail())
+                    .orderedPurchaserAddress(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserAddress())
+                    .orderedPurchaserZipCode(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserZipCode())
+                    .orderedPurchaserAddressDetail(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserAddressDetail())
+                    .build();
+            final String paymentNumber = "랜덤한 결제 정보" + UUID.randomUUID();
+            final String userToken = requestForm.getUserToken();
+            final int totalAmount = requestForm.getTotalAmount();
+            User user = authenticationService.findUserByUserToken(userToken);
+            List<OrderedProductOptionRequest> orderedProductOptionRequestList= requestForm.getOrderedProductOptionRequestList();
+
+            saveOrderedData(profileRequest, paymentNumber, totalAmount, user, orderedProductOptionRequestList);
+
+            // 주문한 상품이 장바구니에 있으면 장바구니에서 목록 제거
 
             // 유저 토큰으로 장바구니 찾기
             Cart cart = cartService.cartCheckFromUserToken(userToken);
@@ -61,34 +85,11 @@ public class OrderServiceImpl implements OrderService{
             List<ContainProductOption> productOptionList = containProductOptionRepository.findAllByCart(cart);
 
             for(ContainProductOption containProductOption : productOptionList) {
-
-                // 주문된 상품의 재고를 확인하기
-                ProductOption productOption = productOptionRepository.findByIdWithProduct(containProductOption.getOptionId()).get();
-
-                int stock = productOption.getStock();
-                int stockCount = stock - containProductOption.getOptionCount();
-                // 재고보다 주문수량이 많으면 exception
-                if (stockCount < 0) {
-                    throw new IllegalArgumentException("No stock the product option: " + productOption.getId());
-                }
-
-                // 불러온 상품 리스트를 주문으로 옮겨 담기
-                ProductOrder order = ProductOrder.builder()
-                        .userId(cart.getUser().getId())
-                        .cartId(cart.getId())
-                        .productOptionId(containProductOption.getOptionId())
-                        .productOptionCount(containProductOption.getOptionCount())
-                        .build();
-                orderRepository.save(order);
-                // 옮긴 상품은 장바구니에서 삭제하기
-                containProductOptionRepository.delete(containProductOption);
-
-                productOption.setStock(stockCount);
-                productOptionRepository.save(productOption);
+                for (OrderedProductOptionRequest orderedProductOptionRequest : orderedProductOptionRequestList)
+                    if (Objects.equals(containProductOption.getOptionId(), orderedProductOptionRequest.getProductOptionId())) {
+                        containProductOptionRepository.delete(containProductOption);
+                    }
             }
-            // 주문 끝난 장바구니를 삭제하기
-            cartRepository.delete(cart);
-            log.info("orderProductInCart end");
             return true;
         } catch (Exception e) {
             log.error("Error occurred while ordering products in cart", e);
@@ -100,64 +101,25 @@ public class OrderServiceImpl implements OrderService{
     @Override
     public boolean orderProductInProductPage(OrderProductInProductPageRequestForm requestForm) {
         log.info("orderProductInProductPage start");
-        final String userToken = requestForm.getUserToken();
-        OrderProductInProductPageRequest request = new OrderProductInProductPageRequest(requestForm.getRequest().getProductOptionId(), requestForm.getRequest().getOptionCount());
-        log.info("getProductOptionId: " + requestForm.getRequest().getProductOptionId());
-        log.info("getProductCount: " + requestForm.getRequest().getOptionCount());
 
         try {
-            // 상품을 카트에 넣기
-            ContainProductOptionRequest containProductOptionRequest = new ContainProductOptionRequest(request.getProductOptionId(), request.getOptionCount());
-            ContainProductRequestForm containProductRequestForm = new ContainProductRequestForm(userToken, containProductOptionRequest);
-            cartService.containProductIntoCart(containProductRequestForm);
 
-            // 유저 토큰으로 장바구니 찾기
-            Cart cart = cartService.cartCheckFromUserToken(userToken);
-            log.info("cart: " + cart.getId());
+            OrderedPurchaserProfileRequest profileRequest = OrderedPurchaserProfileRequest.builder()
+                    .orderedPurchaserName(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserName())
+                    .orderedPurchaserContactNumber(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserContactNumber())
+                    .orderedPurchaserEmail(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserEmail())
+                    .orderedPurchaserAddress(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserAddress())
+                    .orderedPurchaserZipCode(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserZipCode())
+                    .orderedPurchaserAddressDetail(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserAddressDetail())
+                    .build();
+            final String paymentNumber = "랜덤한 결제 정보" + UUID.randomUUID();
+            final String userToken = requestForm.getUserToken();
+            final int totalAmount = requestForm.getTotalAmount();
+            User user = authenticationService.findUserByUserToken(userToken);
+            List<OrderedProductOptionRequest> orderedProductOptionRequestList= requestForm.getOrderedProductOptionRequestList();
 
-            // 장바구니에 담긴 상품 리스트 불러오기
-            List<ContainProductOption> productOptionList = containProductOptionRepository.findAllByCart(cart);
-            log.info("productOptionList: " + productOptionList.get(0).getProductName());
+            saveOrderedData(profileRequest, paymentNumber, totalAmount, user, orderedProductOptionRequestList);
 
-
-            for(ContainProductOption containProductOption : productOptionList) {
-                // 주문된 상품의 재고를 확인하기
-                ProductOption productOption = productOptionRepository.findByIdWithProduct(containProductOption.getId()).get();
-                log.info("containProductOption: " + containProductOption.getId());
-
-                log.info("productOption: " + productOption.getOptionName());
-
-                int stock = productOption.getStock();
-                log.info("stock: " + stock);
-                int stockCount = stock - containProductOption.getOptionCount();
-                log.info("getOptionCount: " + containProductOption.getOptionCount());
-                log.info("stockCount: " + stockCount);
-
-                // 재고보다 주문수량이 많으면 exception
-                if (stockCount < 0) {
-                    throw new IllegalArgumentException("No stock the product option: " + productOption.getId());
-                }
-
-                // 불러온 상품 리스트를 주문으로 옮겨 담기
-                ProductOrder order = ProductOrder.builder()
-                        .userId(cart.getUser().getId())
-                        .cartId(cart.getId())
-                        .productOptionId(containProductOption.getId())
-                        .productOptionCount(containProductOption.getOptionCount())
-                        .build();
-                orderRepository.save(order);
-                log.info("save order");
-                // 옮긴 상품은 장바구니에서 삭제하기
-                containProductOptionRepository.delete(containProductOption);
-                log.info("delete ordered product option");
-
-                productOption.setStock(stockCount);
-                productOptionRepository.save(productOption);
-                log.info("save changed product option");
-            }
-            // 주문 끝난 장바구니를 삭제하기
-            log.info("delete cart");
-            cartRepository.delete(cart);
             log.info("orderProductInProductPage end");
             return true;
         } catch (Exception e) {
@@ -233,5 +195,48 @@ public class OrderServiceImpl implements OrderService{
             log.error("Error occurred while confirm products in cart", e);
             return null;
         }
+    }
+
+    public void saveOrderedData (OrderedPurchaserProfileRequest profileRequest, String paymentNumber,
+                                 int totalAmount, User user, List<OrderedProductOptionRequest> orderedProductOptionRequestList) {
+
+        final String purchaserName = profileRequest.getOrderedPurchaserName();
+        final String purchaserContactNumber = profileRequest.getOrderedPurchaserContactNumber();
+        final String purchaserEmail = profileRequest.getOrderedPurchaserEmail();
+        final String purchaserAddress = profileRequest.getOrderedPurchaserAddress();
+        final String purchaserZipCode = profileRequest.getOrderedPurchaserZipCode();
+        final String purchaserAddressDetail = profileRequest.getOrderedPurchaserAddressDetail();
+
+        // 주문 저장
+        ProductOrder order = ProductOrder.builder()
+                .id(paymentNumber)
+                .user(user)
+                .totalAmount(totalAmount)
+                .orderedTime(LocalDate.now())
+                .build();
+
+        orderRepository.save(order);
+
+        // 주문 상품 저장
+        OrderedProduct orderedProduct;
+        for(OrderedProductOptionRequest optionRequest : orderedProductOptionRequestList) {
+            orderedProduct = OrderedProduct.builder()
+                    .productOrder(order)
+                    .productOptionId(optionRequest.getProductOptionId())
+                    .productOptionCount(optionRequest.getProductOptionCount())
+                    .build();
+
+            orderedProductRepository.save(orderedProduct);
+        }
+        // 구매자 정보 저장
+        OrderedPurchaserProfile purchaserProfile = OrderedPurchaserProfile.builder()
+                .productOrder(order)
+                .orderedPurchaseName(purchaserName)
+                .orderedPurchaseContactNumber(purchaserContactNumber)
+                .orderedPurchaseEmail(purchaserEmail)
+                .orderedPurchaseProfileAddress(new OrderedPurchaserProfileAddress(purchaserAddress, purchaserZipCode, purchaserAddressDetail))
+                .build();
+
+        orderedPurchaserProfileRepository.save(purchaserProfile);
     }
 }
