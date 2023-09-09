@@ -146,7 +146,7 @@ public class KakaoAuthenticationServiceImpl implements KakaoAuthenticationServic
         user.setAccessToken(renewAccessToken);
 
         // refreshToken의 유효 기간이 1개월 미만인 경우 새로운 refreshToken을 받아오므로 새롭게 저장
-        if(renewAccessToken.equals(null)) {
+        if(renewAccessToken != null) {
             log.info("RefreshToken successfully renewed");
             user.setRefreshToken(renewRefreshToken);
         }
