@@ -4,6 +4,7 @@ import com.dyes.backend.domain.product.controller.form.ProductDeleteForm;
 import com.dyes.backend.domain.product.controller.form.ProductListDeleteForm;
 import com.dyes.backend.domain.product.controller.form.ProductModifyForm;
 import com.dyes.backend.domain.product.controller.form.ProductRegisterForm;
+import com.dyes.backend.domain.product.entity.CultivationMethod;
 import com.dyes.backend.domain.product.service.ProductService;
 import com.dyes.backend.domain.product.service.response.UserRandomProductListResponseForm;
 import com.dyes.backend.domain.product.service.response.admin.AdminProductListResponseForm;
@@ -76,7 +77,7 @@ public class ProductController {
     }
 
     // 2. 상품 목록 조회
-    @GetMapping("/user/list")
+    @GetMapping("/user/list/all")
     public List<UserProductListResponseForm> getUserProductList() {
         return productService.getUserProductList();
     }
@@ -85,5 +86,19 @@ public class ProductController {
     @GetMapping("/user/random-list")
     public List<UserRandomProductListResponseForm> getUserRandomProductList() {
         return productService.getUserRandomProductList();
+    }
+
+    // 4. 카테고리별 상품 목록 조회
+    @GetMapping("/user/list/category/{categoryName}")
+    public List<UserProductListResponseForm> getUserProductListByCategory(
+            @PathVariable("categoryName") String categoryName) {
+        return productService.getUserProductListByCategory(categoryName);
+    }
+
+    // 5. 농가 지역별 상품 목록 조회
+    @GetMapping("/user/list/region/{region}")
+    public List<UserProductListResponseForm> getUserProductListByRegion(
+            @PathVariable("region") String region) {
+        return productService.getUserProductListByRegion(region);
     }
 }
