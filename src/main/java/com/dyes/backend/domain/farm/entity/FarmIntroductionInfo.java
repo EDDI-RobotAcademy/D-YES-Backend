@@ -4,20 +4,19 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Entity
 @Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
-public class FarmOperation {
+public class FarmIntroductionInfo {
     @Id
     private Long id;
-    private String businessName;
-    private String businessNumber;
-    private String representativeName;
-    private String representativeContactNumber;
+    private String mainImage;
+    private String introduction;
+    private List<ProduceType> produceTypes;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "farm_id")
     private Farm farm;

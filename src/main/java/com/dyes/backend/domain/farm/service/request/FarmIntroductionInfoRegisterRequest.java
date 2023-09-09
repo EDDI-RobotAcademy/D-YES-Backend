@@ -1,4 +1,4 @@
-package com.dyes.backend.domain.farm.controller.form;
+package com.dyes.backend.domain.farm.service.request;
 
 import com.dyes.backend.domain.farm.entity.ProduceType;
 import lombok.AllArgsConstructor;
@@ -10,9 +10,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class FarmModifyForm {
-    private String userToken;
-    private String csContactNumber;
+public class FarmIntroductionInfoRegisterRequest {
     private String mainImage;
     private String introduction;
     private List<ProduceType> produceTypes;

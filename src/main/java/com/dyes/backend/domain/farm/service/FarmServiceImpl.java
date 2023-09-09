@@ -2,23 +2,20 @@ package com.dyes.backend.domain.farm.service;
 
 import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.service.AdminService;
-import com.dyes.backend.domain.farm.controller.form.FarmDeleteForm;
-import com.dyes.backend.domain.farm.controller.form.FarmModifyForm;
+import com.dyes.backend.domain.farm.controller.form.FarmDeleteRequestForm;
+import com.dyes.backend.domain.farm.controller.form.FarmModifyRequestForm;
 import com.dyes.backend.domain.farm.controller.form.FarmRegisterRequestForm;
-import com.dyes.backend.domain.farm.entity.Farm;
-import com.dyes.backend.domain.farm.entity.FarmOperation;
-import com.dyes.backend.domain.farm.entity.ProduceType;
-import com.dyes.backend.domain.farm.repository.FarmOperationRepository;
-import com.dyes.backend.domain.farm.repository.FarmRepository;
-import com.dyes.backend.domain.farm.service.request.FarmOperationRegisterRequest;
-import com.dyes.backend.domain.farm.service.request.FarmRegisterRequest;
+import com.dyes.backend.domain.farm.entity.*;
+import com.dyes.backend.domain.farm.repository.*;
+import com.dyes.backend.domain.farm.service.request.*;
 import com.dyes.backend.domain.farm.service.response.FarmInfoListResponse;
 import com.dyes.backend.domain.farm.service.response.FarmInfoReadResponse;
-import com.dyes.backend.domain.farm.service.response.FarmInfoResponseForm;
-import com.dyes.backend.domain.farm.service.response.FarmOperationInfoResponseForm;
+import com.dyes.backend.domain.farm.service.response.form.FarmInfoResponseForm;
+import com.dyes.backend.domain.farm.service.response.form.FarmOperationInfoResponseForm;
 import com.dyes.backend.domain.product.entity.Product;
 import com.dyes.backend.domain.product.repository.ProductRepository;
 import com.dyes.backend.domain.user.entity.Address;
+import com.dyes.backend.domain.user.service.request.UserAuthenticationRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -32,19 +29,23 @@ import java.util.Optional;
 @Slf4j
 @ToString
 @RequiredArgsConstructor
-public class FarmServiceImpl implements FarmService{
+public class FarmServiceImpl implements FarmService {
     final private FarmRepository farmRepository;
-    final private FarmOperationRepository farmOperationRepository;
+    final private FarmBusinessInfoRepository farmBusinessInfoRepository;
+    final private FarmCustomerServiceInfoRepository farmCustomerServiceInfoRepository;
+    final private FarmIntroductionInfoRepository farmIntroductionInfoRepository;
+    final private FarmRepresentativeInfoRepository farmRepresentativeInfoRepository;
     final private ProductRepository productRepository;
     final private AdminService adminService;
 
     // 농가 등록
     @Override
-    public Boolean farmRegister(FarmRegisterRequestForm registerRequestForm) {
-        final String userToken = registerRequestForm.getUserToken();
+    public Boolean registerFarm(FarmRegisterRequestForm registerRequestForm) {
+        final UserAuthenticationRequest userAuthenticationRequest = registerRequestForm.toUserAuthenticationRequest();
+        final String userToken = userAuthenticationRequest.getUserToken();
         final Admin admin = adminService.findAdminByUserToken(userToken);
 
-        if(admin == null) {
+        if (admin == null) {
             log.info("Can not find Admin");
             return false;
         }
@@ -52,46 +53,81 @@ public class FarmServiceImpl implements FarmService{
         final FarmRegisterRequest registerRequest = registerRequestForm.toFarmRegisterRequest();
 
         Optional<Farm> maybeFarm = farmRepository.findByFarmName(registerRequest.getFarmName());
-        if(maybeFarm.isPresent()) {
+        if (maybeFarm.isPresent()) {
             log.info("Can not Register Farm: Farm name '{}' already exists", registerRequest.getFarmName());
             return false;
         }
 
-        final FarmOperationRegisterRequest operationRegisterRequest = registerRequestForm.toFarmOperationRegisterRequest();
+        final FarmBusinessInfoRegisterRequest businessInfoRegisterRequest = registerRequestForm.toFarmBusinessInfoRegisterRequest();
+        final FarmCustomerServiceInfoRegisterRequest customerServiceInfoRegisterRequest = registerRequestForm.toFarmCustomerServiceInfoRegisterRequest();
+        final FarmIntroductionInfoRegisterRequest introductionInfoRegisterRequest = registerRequestForm.toFarmIntroductionInfoRegisterRequest();
+        final FarmRepresentativeInfoRegisterRequest representativeInfoRegisterRequest = registerRequestForm.toFarmRepresentativeInfoRegisterRequest();
 
-        Address address = new Address(registerRequest.getAddress(), registerRequest.getZipCode(), registerRequest.getAddressDetail());
+        Address address = new Address(
+                customerServiceInfoRegisterRequest.getAddress(),
+                customerServiceInfoRegisterRequest.getZipCode(),
+                customerServiceInfoRegisterRequest.getAddressDetail());
+
         Farm farm = Farm.builder()
                 .farmName(registerRequest.getFarmName())
-                .csContactNumber(registerRequest.getCsContactNumber())
-                .farmAddress(address)
-                .mainImage(registerRequest.getMainImage())
-                .introduction(registerRequest.getIntroduction())
-                .produceTypes(registerRequest.getProduceTypes())
                 .build();
+
         farmRepository.save(farm);
 
-        FarmOperation farmOperation = FarmOperation.builder()
+        FarmCustomerServiceInfo farmCustomerServiceInfo = FarmCustomerServiceInfo.builder()
                 .id(farm.getId())
-                .businessName(operationRegisterRequest.getBusinessName())
-                .businessNumber(operationRegisterRequest.getBusinessNumber())
-                .representativeName(operationRegisterRequest.getRepresentativeName())
-                .representativeContactNumber(operationRegisterRequest.getRepresentativeContactNumber())
+                .csContactNumber(customerServiceInfoRegisterRequest.getCsContactNumber())
+                .farmAddress(address)
                 .farm(farm)
                 .build();
-        farmOperationRepository.save(farmOperation);
+
+        farmCustomerServiceInfoRepository.save(farmCustomerServiceInfo);
+
+        FarmIntroductionInfo farmIntroductionInfo = FarmIntroductionInfo.builder()
+                .id(farm.getId())
+                .mainImage(introductionInfoRegisterRequest.getMainImage())
+                .introduction(introductionInfoRegisterRequest.getIntroduction())
+                .produceTypes(introductionInfoRegisterRequest.getProduceTypes())
+                .farm(farm)
+                .build();
+
+        farmIntroductionInfoRepository.save(farmIntroductionInfo);
+
+        FarmBusinessInfo farmBusinessInfo = FarmBusinessInfo.builder()
+                .id(farm.getId())
+                .businessName(businessInfoRegisterRequest.getBusinessName())
+                .businessNumber(businessInfoRegisterRequest.getBusinessNumber())
+                .farm(farm)
+                .build();
+
+        farmBusinessInfoRepository.save(farmBusinessInfo);
+
+        FarmRepresentativeInfo farmRepresentativeInfo = FarmRepresentativeInfo.builder()
+                .id(farm.getId())
+                .representativeName(representativeInfoRegisterRequest.getRepresentativeName())
+                .representativeContactNumber(representativeInfoRegisterRequest.getRepresentativeContactNumber())
+                .farm(farm)
+                .build();
+
+        farmRepresentativeInfoRepository.save(farmRepresentativeInfo);
 
         return true;
     }
 
     // 농가 목록 조회
     @Override
-    public List<FarmInfoListResponse> searchFarmList() {
+    public List<FarmInfoListResponse> getFarmList() {
 
         List<FarmInfoListResponse> farmInfoListResponseList = new ArrayList<>();
 
         List<Farm> farmList = farmRepository.findAll();
-        for(Farm farm: farmList) {
-            FarmInfoListResponse farmInfoListResponse = new FarmInfoListResponse(farm.getId(), farm.getFarmName(), farm.getFarmAddress());
+        for (Farm farm : farmList) {
+            FarmCustomerServiceInfo farmCustomerServiceInfo = farmCustomerServiceInfoRepository.findByFarm(farm);
+            FarmInfoListResponse farmInfoListResponse
+                    = new FarmInfoListResponse(
+                    farm.getId(),
+                    farm.getFarmName(),
+                    farmCustomerServiceInfo.getFarmAddress());
             farmInfoListResponseList.add(farmInfoListResponse);
         }
         return farmInfoListResponseList;
@@ -99,16 +135,18 @@ public class FarmServiceImpl implements FarmService{
 
     // 농가 삭제
     @Override
-    public Boolean deleteFarm(Long farmId, FarmDeleteForm deleteForm) {
-        final Admin admin = adminService.findAdminByUserToken(deleteForm.getUserToken());
+    public Boolean deleteFarm(Long farmId, FarmDeleteRequestForm deleteRequestForm) {
+        final UserAuthenticationRequest userAuthenticationRequest = deleteRequestForm.toUserAuthenticationRequest();
+        final String userToken = userAuthenticationRequest.getUserToken();
+        final Admin admin = adminService.findAdminByUserToken(userToken);
 
-        if(admin == null) {
+        if (admin == null) {
             log.info("Can not find Admin");
             return false;
         }
 
         Optional<Farm> maybeFarm = farmRepository.findById(farmId);
-        if(maybeFarm.isEmpty()) {
+        if (maybeFarm.isEmpty()) {
             log.info("Farm is empty");
             return false;
         }
@@ -116,13 +154,20 @@ public class FarmServiceImpl implements FarmService{
         Farm deleteFarm = maybeFarm.get();
 
         List<Product> productList = productRepository.findAllByFarm(deleteFarm);
-        if(productList.size() > 0) {
+        if (productList.size() > 0) {
             log.info("Can not delete Farm, Product exists");
             return false;
         }
 
-        FarmOperation deleteFarmOperation = farmOperationRepository.findByFarm(deleteFarm);
-        farmOperationRepository.delete(deleteFarmOperation);
+        FarmBusinessInfo deleteFarmBusinessInfo = farmBusinessInfoRepository.findByFarm(deleteFarm);
+        FarmCustomerServiceInfo farmCustomerServiceInfo = farmCustomerServiceInfoRepository.findByFarm(deleteFarm);
+        FarmIntroductionInfo farmIntroductionInfo = farmIntroductionInfoRepository.findByFarm(deleteFarm);
+        FarmRepresentativeInfo farmRepresentativeInfo = farmRepresentativeInfoRepository.findByFarm(deleteFarm);
+
+        farmBusinessInfoRepository.delete(deleteFarmBusinessInfo);
+        farmCustomerServiceInfoRepository.delete(farmCustomerServiceInfo);
+        farmIntroductionInfoRepository.delete(farmIntroductionInfo);
+        farmRepresentativeInfoRepository.delete(farmRepresentativeInfo);
         farmRepository.delete(deleteFarm);
 
         return true;
@@ -130,33 +175,36 @@ public class FarmServiceImpl implements FarmService{
 
     // 농가 읽기
     @Override
-    public FarmInfoReadResponse readFarmInfo(Long farmId) {
-        Optional<Farm> maybeFarm  = farmRepository.findById(farmId);
-        if(maybeFarm.isEmpty()) {
+    public FarmInfoReadResponse readFarm(Long farmId) {
+        Optional<Farm> maybeFarm = farmRepository.findById(farmId);
+        if (maybeFarm.isEmpty()) {
             log.info("Farm is empty");
             return null;
         }
 
         Farm farm = maybeFarm.get();
-        FarmOperation farmOperation = farmOperationRepository.findByFarm(farm);
+        FarmBusinessInfo farmBusinessInfo = farmBusinessInfoRepository.findByFarm(farm);
+        FarmCustomerServiceInfo farmCustomerServiceInfo = farmCustomerServiceInfoRepository.findByFarm(farm);
+        FarmIntroductionInfo farmIntroductionInfo = farmIntroductionInfoRepository.findByFarm(farm);
+        FarmRepresentativeInfo farmRepresentativeInfo = farmRepresentativeInfoRepository.findByFarm(farm);
 
         FarmInfoResponseForm farmInfoResponseForm
                 = new FarmInfoResponseForm(
-                        farm.getId(),
-                        farm.getFarmName(),
-                        farm.getCsContactNumber(),
-                        farm.getFarmAddress(),
-                        farm.getMainImage(),
-                        farm.getIntroduction(),
-                        farm.getProduceTypes());
+                farm.getId(),
+                farm.getFarmName(),
+                farmCustomerServiceInfo.getCsContactNumber(),
+                farmCustomerServiceInfo.getFarmAddress(),
+                farmIntroductionInfo.getMainImage(),
+                farmIntroductionInfo.getIntroduction(),
+                farmIntroductionInfo.getProduceTypes());
 
         FarmOperationInfoResponseForm farmOperationInfoResponseForm
                 = new FarmOperationInfoResponseForm(
-                        farmOperation.getId(),
-                        farmOperation.getBusinessName(),
-                        farmOperation.getBusinessNumber(),
-                        farmOperation.getRepresentativeName(),
-                        farmOperation.getRepresentativeContactNumber());
+                farmBusinessInfo.getId(),
+                farmBusinessInfo.getBusinessName(),
+                farmBusinessInfo.getBusinessNumber(),
+                farmRepresentativeInfo.getRepresentativeName(),
+                farmRepresentativeInfo.getRepresentativeContactNumber());
 
         FarmInfoReadResponse farmInfoReadResponse = new FarmInfoReadResponse(farmInfoResponseForm, farmOperationInfoResponseForm);
 
@@ -165,26 +213,39 @@ public class FarmServiceImpl implements FarmService{
 
     // 농가 수정
     @Override
-    public boolean farmModify(Long farmId, FarmModifyForm modifyForm) {
-        final Admin admin = adminService.findAdminByUserToken(modifyForm.getUserToken());
+    public boolean modifyFarm(Long farmId, FarmModifyRequestForm modifyRequestForm) {
+        final UserAuthenticationRequest userAuthenticationRequest = modifyRequestForm.toUserAuthenticationRequest();
+        final String userToken = userAuthenticationRequest.getUserToken();
+        final Admin admin = adminService.findAdminByUserToken(userToken);
 
-        if(admin == null) {
+        final FarmCustomerServiceInfoModifyRequest farmCustomerServiceInfoModifyRequest
+                = modifyRequestForm.toFarmCustomerServiceInfoModifyRequest();
+        final FarmIntroductionInfoModifyRequest farmIntroductionInfoModifyRequest
+                = modifyRequestForm.toFarmIntroductionInfoModifyRequest();
+
+        if (admin == null) {
             log.info("Can not find Admin");
             return false;
         }
 
-        Optional<Farm> maybeFarm  = farmRepository.findById(farmId);
-        if(maybeFarm.isEmpty()) {
+        Optional<Farm> maybeFarm = farmRepository.findById(farmId);
+        if (maybeFarm.isEmpty()) {
             log.info("Farm is empty");
             return false;
         }
 
         Farm farm = maybeFarm.get();
-        farm.setCsContactNumber(modifyForm.getCsContactNumber());
-        farm.setMainImage(modifyForm.getMainImage());
-        farm.setIntroduction(modifyForm.getIntroduction());
-        farm.setProduceTypes(modifyForm.getProduceTypes());
-        farmRepository.save(farm);
+
+        FarmCustomerServiceInfo farmCustomerServiceInfo = farmCustomerServiceInfoRepository.findByFarm(farm);
+        FarmIntroductionInfo farmIntroductionInfo = farmIntroductionInfoRepository.findByFarm(farm);
+
+        farmCustomerServiceInfo.setCsContactNumber(farmCustomerServiceInfoModifyRequest.getCsContactNumber());
+        farmIntroductionInfo.setMainImage(farmIntroductionInfoModifyRequest.getMainImage());
+        farmIntroductionInfo.setIntroduction(farmIntroductionInfoModifyRequest.getIntroduction());
+        farmIntroductionInfo.setProduceTypes(farmIntroductionInfoModifyRequest.getProduceTypes());
+
+        farmCustomerServiceInfoRepository.save(farmCustomerServiceInfo);
+        farmIntroductionInfoRepository.save(farmIntroductionInfo);
 
         return true;
     }

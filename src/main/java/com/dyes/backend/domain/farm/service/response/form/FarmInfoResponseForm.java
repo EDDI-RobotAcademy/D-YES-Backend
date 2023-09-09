@@ -1,4 +1,4 @@
-package com.dyes.backend.domain.farm.service.response;
+package com.dyes.backend.domain.farm.service.response.form;
 
 import com.dyes.backend.domain.farm.entity.ProduceType;
 import com.dyes.backend.domain.user.entity.Address;

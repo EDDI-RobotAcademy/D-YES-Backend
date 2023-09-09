@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class FarmRegisterRequest {
-    private String farmName;
+public class FarmRepresentativeInfoRegisterRequest {
+    private String representativeName;
+    private String representativeContactNumber;
 }

@@ -1,8 +1,8 @@
 package com.dyes.backend.domain.farm.controller.form;
 
 import com.dyes.backend.domain.farm.entity.ProduceType;
-import com.dyes.backend.domain.farm.service.request.FarmOperationRegisterRequest;
-import com.dyes.backend.domain.farm.service.request.FarmRegisterRequest;
+import com.dyes.backend.domain.farm.service.request.*;
+import com.dyes.backend.domain.user.service.request.UserAuthenticationRequest;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -33,11 +33,27 @@ public class FarmRegisterRequestForm {
     private String representativeName;
     private String representativeContactNumber;
 
-    public FarmRegisterRequest toFarmRegisterRequest () {
-        return new FarmRegisterRequest(farmName, csContactNumber, address, zipCode, addressDetail, mainImage, introduction, produceTypes);
+    public UserAuthenticationRequest toUserAuthenticationRequest() {
+        return new UserAuthenticationRequest(userToken);
     }
 
-    public FarmOperationRegisterRequest toFarmOperationRegisterRequest () {
-        return new FarmOperationRegisterRequest(businessName, businessNumber, representativeName, representativeContactNumber);
+    public FarmRegisterRequest toFarmRegisterRequest() {
+        return new FarmRegisterRequest(farmName);
+    }
+
+    public FarmCustomerServiceInfoRegisterRequest toFarmCustomerServiceInfoRegisterRequest() {
+        return new FarmCustomerServiceInfoRegisterRequest(csContactNumber, address, zipCode, addressDetail);
+    }
+
+    public FarmIntroductionInfoRegisterRequest toFarmIntroductionInfoRegisterRequest() {
+        return new FarmIntroductionInfoRegisterRequest(mainImage, introduction, produceTypes);
+    }
+
+    public FarmBusinessInfoRegisterRequest toFarmBusinessInfoRegisterRequest() {
+        return new FarmBusinessInfoRegisterRequest(businessName, businessNumber);
+    }
+
+    public FarmRepresentativeInfoRegisterRequest toFarmRepresentativeInfoRegisterRequest() {
+        return new FarmRepresentativeInfoRegisterRequest(representativeName, representativeContactNumber);
     }
 }
