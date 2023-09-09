@@ -681,6 +681,65 @@ public class ProductServiceImpl implements ProductService{
         return userProductListResponseFormList;
     }
 
+    // 농가 지역별 상품 목록 조회
+    @Override
+    public List<UserProductListResponseForm> getUserProductListByRegion(String region) {
+        List<UserProductListResponseForm> userProductListResponseFormList = new ArrayList<>();
+        List<Farm> farmListByLocation = farmRepository.findByFarmAddressAddressContaining(region);
+
+        // DB에서 상품 목록 조회
+        for(Farm farmByRegion: farmListByLocation) {
+            List<Product> productList = productRepository.findAllByFarm(farmByRegion);
+            for(Product product: productList) {
+
+                List<Long> optionPriceList = new ArrayList<>();
+                Long minOptionPrice = 0L;
+                int totalOptionStock = 0;
+                Boolean isSoldOut = false;
+                String productMainImage = null;
+
+                // DB에서 상품 옵션 최저가 및 재고 조회
+                List<ProductOption> productOptionList = productOptionRepository.findByProduct(product);
+                for(ProductOption productOption: productOptionList) {
+
+                    optionPriceList.add(productOption.getOptionPrice());
+                    minOptionPrice = findMinValue(optionPriceList);
+
+                    totalOptionStock = totalOptionStock + productOption.getStock();
+                }
+                if(totalOptionStock == 0) {
+                    isSoldOut = true;
+                }
+
+                // DB에서 상품 메인 이미지 이름 조회
+                Optional<ProductMainImage> maybeProductMainImage = productMainImageRepository.findByProduct(product);
+                if(maybeProductMainImage.isPresent()) {
+                    productMainImage = maybeProductMainImage.get().getMainImg();
+                }
+
+                // DB에서 해당 상품의 공급자(농가) 조회
+                Farm farm = product.getFarm();
+                FarmOperation farmOperation = farmOperationRepository.findByFarm(farm);
+
+                // 최종적으로 반환할 상품 목록 form
+                UserProductListResponseForm userProductListResponseForm
+                        = new UserProductListResponseForm(
+                        product.getId(),
+                        product.getProductName(),
+                        product.getCultivationMethod(),
+                        productMainImage,
+                        minOptionPrice,
+                        isSoldOut,
+                        farm.getFarmName(),
+                        farm.getMainImage(),
+                        farmOperation.getRepresentativeName());
+                userProductListResponseFormList.add(userProductListResponseForm);
+            }
+        }
+
+        return userProductListResponseFormList;
+    }
+
     // unit 구별 util
     public Unit unitDecision (String unit) {
         if (unit.equals("KG")) {

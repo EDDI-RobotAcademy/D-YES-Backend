@@ -26,4 +26,5 @@ public interface ProductService {
     ProductSummaryResponseFormForAdmin readProductSummaryForAdmin(Long productId);
     List<UserRandomProductListResponseForm> getUserRandomProductList();
     List<UserProductListResponseForm> getUserProductListByCategory(String categoryName);
+    List<UserProductListResponseForm> getUserProductListByRegion(String region);
 }

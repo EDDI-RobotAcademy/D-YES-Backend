@@ -89,10 +89,16 @@ public class ProductController {
     }
 
     // 4. 카테고리별 상품 목록 조회
-    @GetMapping("/user/list/{categoryName}")
+    @GetMapping("/user/list/category/{categoryName}")
     public List<UserProductListResponseForm> getUserProductListByCategory(
             @PathVariable("categoryName") String categoryName) {
         return productService.getUserProductListByCategory(categoryName);
     }
-    
+
+    // 5. 농가 지역별 상품 목록 조회
+    @GetMapping("/user/list/region/{region}")
+    public List<UserProductListResponseForm> getUserProductListByRegion(
+            @PathVariable("region") String region) {
+        return productService.getUserProductListByRegion(region);
+    }
 }
