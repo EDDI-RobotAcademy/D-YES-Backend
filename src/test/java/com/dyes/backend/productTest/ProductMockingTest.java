@@ -642,4 +642,94 @@ public class ProductMockingTest {
         assertEquals(result.get(0).getMainImage(), "mainImage");
         assertEquals(result.get(0).getRepresentativeName(), "정다운");
     }
+
+    @Test
+    @DisplayName("product mocking test: user product list by region")
+    public void 사용자가_농가_지역별_상품목록을_조회합니다 () {
+        final String region = "경기도";
+        List<Product> productList = new ArrayList<>();
+        List<Farm> farmList = new ArrayList<>();
+        List<ProductOption> productOptionList = new ArrayList<>();
+
+        Address address = new Address("경기도", null, null);
+        Farm farm = Farm.builder()
+                .farmName("투투농장")
+                .mainImage("mainImage")
+                .farmAddress(address)
+                .build();
+
+        FarmOperation farmOperation = FarmOperation.builder()
+                .id(farm.getId())
+                .representativeName("정다운")
+                .farm(farm)
+                .build();
+
+        farmList.add(farm);
+
+        Product product1 = Product.builder()
+                .id(1L)
+                .productName("상품명1")
+                .productDescription("상품 설명1")
+                .cultivationMethod(ORGANIC)
+                .productSaleStatus(AVAILABLE)
+                .farm(farm)
+                .build();
+
+        Product product2 = Product.builder()
+                .id(2L)
+                .productName("상품명2")
+                .productDescription("상품 설명2")
+                .cultivationMethod(ORGANIC)
+                .productSaleStatus(UNAVAILABLE)
+                .farm(farm)
+                .build();
+
+        productList.add(product1);
+        productList.add(product2);
+
+        ProductOption productOption1 = ProductOption.builder()
+                .optionName("상품옵션1")
+                .optionPrice(13000L)
+                .stock(20)
+                .amount(new Amount())
+                .product(product1)
+                .optionSaleStatus(AVAILABLE)
+                .build();
+
+        ProductOption productOption2 = ProductOption.builder()
+                .optionName("상품옵션2")
+                .optionPrice(15000L)
+                .stock(70)
+                .amount(new Amount())
+                .product(product2)
+                .optionSaleStatus(AVAILABLE)
+                .build();
+
+        productOptionList.add(productOption1);
+        productOptionList.add(productOption2);
+
+        when(mockFarmRepository.findByFarmAddressAddressContaining(region)).thenReturn(farmList);
+        when(mockProductRepository.findAllByFarm(farm)).thenReturn(productList);
+        when(mockProductOptionRepository.findByProduct(productList.get(0))).thenReturn(productOptionList);
+        when(mockProductOptionRepository.findByProduct(productList.get(1))).thenReturn(productOptionList);
+        when(mockFarmOperationRepository.findByFarm(farm)).thenReturn(farmOperation);
+
+        List<UserProductListResponseForm> result = mockService.getUserProductListByRegion(region);
+
+        assertEquals(result.get(0).getProductName(), "상품명1");
+        assertEquals(result.get(0).getProductId(), 1L);
+        assertEquals(result.get(0).getIsSoldOut(), false);
+        assertEquals(result.get(0).getMinOptionPrice(), 13000L);
+        assertEquals(result.get(0).getFarmName(), "투투농장");
+        assertEquals(result.get(0).getMainImage(), "mainImage");
+        assertEquals(result.get(0).getRepresentativeName(), "정다운");
+
+        assertEquals(result.get(1).getProductName(), "상품명2");
+        assertEquals(result.get(1).getProductId(), 2L);
+        assertEquals(result.get(1).getIsSoldOut(), false);
+        assertEquals(result.get(1).getMinOptionPrice(), 13000L);
+        assertEquals(result.get(0).getFarmName(), "투투농장");
+        assertEquals(result.get(0).getMainImage(), "mainImage");
+        assertEquals(result.get(0).getRepresentativeName(), "정다운");
+    }
 }
