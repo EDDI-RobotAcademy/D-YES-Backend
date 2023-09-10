@@ -8,8 +8,8 @@ import com.dyes.backend.domain.farm.controller.form.FarmRegisterRequestForm;
 import com.dyes.backend.domain.farm.entity.*;
 import com.dyes.backend.domain.farm.repository.*;
 import com.dyes.backend.domain.farm.service.FarmServiceImpl;
-import com.dyes.backend.domain.farm.service.response.FarmInfoListResponse;
-import com.dyes.backend.domain.farm.service.response.FarmInfoReadResponse;
+import com.dyes.backend.domain.farm.service.response.form.FarmInfoListResponseForm;
+import com.dyes.backend.domain.farm.service.response.form.FarmInfoReadResponseForm;
 import com.dyes.backend.domain.product.entity.Product;
 import com.dyes.backend.domain.product.repository.ProductRepository;
 import com.dyes.backend.domain.user.entity.Address;
@@ -106,7 +106,7 @@ public class FarmMockingTest {
         when(mockFarmCustomerServiceInfoRepository.findByFarm(farm1)).thenReturn(farmCustomerServiceInfo1);
         when(mockFarmCustomerServiceInfoRepository.findByFarm(farm2)).thenReturn(farmCustomerServiceInfo2);
 
-        List<FarmInfoListResponse> result = farmService.getFarmList();
+        List<FarmInfoListResponseForm> result = farmService.getFarmList();
         assertEquals(result.get(0).getFarmName(), "투투농원1");
         assertEquals(result.get(1).getFarmName(), "투투농원2");
     }
@@ -162,7 +162,7 @@ public class FarmMockingTest {
         when(mockFarmIntroductionInfoRepository.findByFarm(farm)).thenReturn(farmIntroductionInfo);
         when(mockFarmRepresentativeInfoRepository.findByFarm(farm)).thenReturn(farmRepresentativeInfo);
 
-        FarmInfoReadResponse result = farmService.readFarm(farmId);
+        FarmInfoReadResponseForm result = farmService.readFarm(farmId);
         assertEquals(result.getFarmInfoResponseForm().getFarmName(), "투투농가");
         assertEquals(result.getFarmOperationInfoResponseForm().getBusinessName(), "(주)투투농가");
         assertEquals(result.getFarmOperationInfoResponseForm().getBusinessNumber(), "123-45-67890");

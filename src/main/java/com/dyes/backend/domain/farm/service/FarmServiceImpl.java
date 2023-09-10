@@ -8,10 +8,10 @@ import com.dyes.backend.domain.farm.controller.form.FarmRegisterRequestForm;
 import com.dyes.backend.domain.farm.entity.*;
 import com.dyes.backend.domain.farm.repository.*;
 import com.dyes.backend.domain.farm.service.request.*;
-import com.dyes.backend.domain.farm.service.response.FarmInfoListResponse;
-import com.dyes.backend.domain.farm.service.response.FarmInfoReadResponse;
-import com.dyes.backend.domain.farm.service.response.form.FarmInfoResponseForm;
-import com.dyes.backend.domain.farm.service.response.form.FarmOperationInfoResponseForm;
+import com.dyes.backend.domain.farm.service.response.FarmInfoResponseForAdmin;
+import com.dyes.backend.domain.farm.service.response.FarmOperationInfoResponseForAdmin;
+import com.dyes.backend.domain.farm.service.response.form.FarmInfoListResponseForm;
+import com.dyes.backend.domain.farm.service.response.form.FarmInfoReadResponseForm;
 import com.dyes.backend.domain.product.entity.Product;
 import com.dyes.backend.domain.product.repository.ProductRepository;
 import com.dyes.backend.domain.user.entity.Address;
@@ -116,21 +116,21 @@ public class FarmServiceImpl implements FarmService {
 
     // 농가 목록 조회
     @Override
-    public List<FarmInfoListResponse> getFarmList() {
+    public List<FarmInfoListResponseForm> getFarmList() {
 
-        List<FarmInfoListResponse> farmInfoListResponseList = new ArrayList<>();
+        List<FarmInfoListResponseForm> farmInfoListResponseListForm = new ArrayList<>();
 
         List<Farm> farmList = farmRepository.findAll();
         for (Farm farm : farmList) {
             FarmCustomerServiceInfo farmCustomerServiceInfo = farmCustomerServiceInfoRepository.findByFarm(farm);
-            FarmInfoListResponse farmInfoListResponse
-                    = new FarmInfoListResponse(
+            FarmInfoListResponseForm farmInfoListResponseForm
+                    = new FarmInfoListResponseForm(
                     farm.getId(),
                     farm.getFarmName(),
                     farmCustomerServiceInfo.getFarmAddress());
-            farmInfoListResponseList.add(farmInfoListResponse);
+            farmInfoListResponseListForm.add(farmInfoListResponseForm);
         }
-        return farmInfoListResponseList;
+        return farmInfoListResponseListForm;
     }
 
     // 농가 삭제
@@ -175,7 +175,7 @@ public class FarmServiceImpl implements FarmService {
 
     // 농가 읽기
     @Override
-    public FarmInfoReadResponse readFarm(Long farmId) {
+    public FarmInfoReadResponseForm readFarm(Long farmId) {
         Optional<Farm> maybeFarm = farmRepository.findById(farmId);
         if (maybeFarm.isEmpty()) {
             log.info("Farm is empty");
@@ -188,27 +188,15 @@ public class FarmServiceImpl implements FarmService {
         FarmIntroductionInfo farmIntroductionInfo = farmIntroductionInfoRepository.findByFarm(farm);
         FarmRepresentativeInfo farmRepresentativeInfo = farmRepresentativeInfoRepository.findByFarm(farm);
 
-        FarmInfoResponseForm farmInfoResponseForm
-                = new FarmInfoResponseForm(
-                farm.getId(),
-                farm.getFarmName(),
-                farmCustomerServiceInfo.getCsContactNumber(),
-                farmCustomerServiceInfo.getFarmAddress(),
-                farmIntroductionInfo.getMainImage(),
-                farmIntroductionInfo.getIntroduction(),
-                farmIntroductionInfo.getProduceTypes());
+        FarmInfoResponseForAdmin farmInfoResponseForAdmin
+                = new FarmInfoResponseForAdmin().farmInfoResponseForAdmin(farm, farmCustomerServiceInfo, farmIntroductionInfo);
 
-        FarmOperationInfoResponseForm farmOperationInfoResponseForm
-                = new FarmOperationInfoResponseForm(
-                farmBusinessInfo.getId(),
-                farmBusinessInfo.getBusinessName(),
-                farmBusinessInfo.getBusinessNumber(),
-                farmRepresentativeInfo.getRepresentativeName(),
-                farmRepresentativeInfo.getRepresentativeContactNumber());
+        FarmOperationInfoResponseForAdmin farmOperationInfoResponseForm
+                = new FarmOperationInfoResponseForAdmin().farmOperationInfoResponseForAdmin(farmBusinessInfo, farmRepresentativeInfo);
 
-        FarmInfoReadResponse farmInfoReadResponse = new FarmInfoReadResponse(farmInfoResponseForm, farmOperationInfoResponseForm);
+        FarmInfoReadResponseForm farmInfoReadResponseForm = new FarmInfoReadResponseForm(farmInfoResponseForAdmin, farmOperationInfoResponseForm);
 
-        return farmInfoReadResponse;
+        return farmInfoReadResponseForm;
     }
 
     // 농가 수정
