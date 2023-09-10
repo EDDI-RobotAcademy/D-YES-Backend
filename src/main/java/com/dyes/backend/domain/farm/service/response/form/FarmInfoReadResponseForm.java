@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FarmInfoReadResponseForm {
-    private FarmInfoResponseForAdmin farmInfoResponseForm;
-    private FarmOperationInfoResponseForAdmin farmOperationInfoResponseForm;
+    private FarmInfoResponseForAdmin farmInfoResponseForAdmin;
+    private FarmOperationInfoResponseForAdmin farmOperationInfoResponseForAdmin;
 }
