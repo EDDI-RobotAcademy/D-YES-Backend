@@ -204,7 +204,7 @@ public class AdminProductServiceImpl implements AdminProductService {
             productMainImageRepository.save(modifyProductMainImage);
 
             // DB에 저장된 상품 상세 이미지 가져오기
-            List<ProductDetailImages> productDetailImagesList = productDetailImagesRepository.findByProduct(modifyProduct);
+            List<ProductDetailImages> productDetailImagesList = productDetailImagesRepository.findByProductWithProduct(modifyProduct);
             List<Long> savedProductDetailImagesList = new ArrayList<>();
             for (ProductDetailImages savedProductDetailImages : productDetailImagesList) {
                 savedProductDetailImagesList.add(savedProductDetailImages.getId());
@@ -246,7 +246,7 @@ public class AdminProductServiceImpl implements AdminProductService {
             }
 
             // DB에 저장된 상품 옵션 리스트 가져오기
-            List<ProductOption> productOptionList = productOptionRepository.findByProduct(modifyProduct);
+            List<ProductOption> productOptionList = productOptionRepository.findByProductWithProduct(modifyProduct);
             List<Long> savedOptionList = new ArrayList<>();
             for (ProductOption savedProductOption : productOptionList) {
                 savedOptionList.add(savedProductOption.getId());
@@ -334,7 +334,7 @@ public class AdminProductServiceImpl implements AdminProductService {
 
         // 상품 삭제 진행
         try {
-            List<ProductOption> deleteProductOptionList = productOptionRepository.findByProduct(deleteProduct);
+            List<ProductOption> deleteProductOptionList = productOptionRepository.findByProductWithProduct(deleteProduct);
             for (ProductOption productOption : deleteProductOptionList) {
                 List<ContainProductOption> containProductOptionList = containProductOptionRepository.findAllByOptionId(productOption.getId());
                 if (containProductOptionList.size() > 0) {
@@ -348,7 +348,7 @@ public class AdminProductServiceImpl implements AdminProductService {
                 log.info("Option with ID '{}' has been deleted.", productOption.getId());
             }
 
-            Optional<ProductMainImage> maybeProductMainImage = productMainImageRepository.findByProduct(deleteProduct);
+            Optional<ProductMainImage> maybeProductMainImage = productMainImageRepository.findByProductWithProduct(deleteProduct);
             if (maybeProductMainImage.isEmpty()) {
                 log.info("ProductMainImage for product with ID '{}' is empty", deleteProduct.getId());
                 return false;
@@ -356,7 +356,7 @@ public class AdminProductServiceImpl implements AdminProductService {
             ProductMainImage deleteProductMainImage = maybeProductMainImage.get();
             productMainImageRepository.delete(deleteProductMainImage);
 
-            List<ProductDetailImages> deleteProductDetailImagesList = productDetailImagesRepository.findByProduct(deleteProduct);
+            List<ProductDetailImages> deleteProductDetailImagesList = productDetailImagesRepository.findByProductWithProduct(deleteProduct);
             for (ProductDetailImages productDetailImages : deleteProductDetailImagesList) {
                 productDetailImagesRepository.delete(productDetailImages);
             }
@@ -393,7 +393,7 @@ public class AdminProductServiceImpl implements AdminProductService {
         try {
             List<Product> productList = productRepository.findAllByIdWithFarm(productListDeleteRequest.getProductIdList());
             for (Product deleteProduct : productList) {
-                Optional<ProductMainImage> maybeProductMainImage = productMainImageRepository.findByProduct(deleteProduct);
+                Optional<ProductMainImage> maybeProductMainImage = productMainImageRepository.findByProductWithProduct(deleteProduct);
                 if (maybeProductMainImage.isEmpty()) {
                     log.info("ProductMainImage for product with ID '{}' is empty", deleteProduct.getId());
                     return false;
@@ -401,12 +401,12 @@ public class AdminProductServiceImpl implements AdminProductService {
                 ProductMainImage deleteProductMainImage = maybeProductMainImage.get();
                 productMainImageRepository.delete(deleteProductMainImage);
 
-                List<ProductDetailImages> deleteProductDetailImagesList = productDetailImagesRepository.findByProduct(deleteProduct);
+                List<ProductDetailImages> deleteProductDetailImagesList = productDetailImagesRepository.findByProductWithProduct(deleteProduct);
                 for (ProductDetailImages productDetailImages : deleteProductDetailImagesList) {
                     productDetailImagesRepository.delete(productDetailImages);
                 }
 
-                List<ProductOption> deleteProductOptionList = productOptionRepository.findByProduct(deleteProduct);
+                List<ProductOption> deleteProductOptionList = productOptionRepository.findByProductWithProduct(deleteProduct);
                 for (ProductOption productOption : deleteProductOptionList) {
                     productOptionRepository.delete(productOption);
                 }

@@ -11,6 +11,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
+
+    List<Product> findAllByFarm(Farm farm);
+
     @Query("select p FROM Product p join fetch p.farm where p.id = :productId")
     Optional<Product> findByIdWithFarm(Long productId);
 
@@ -21,7 +24,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findAllWithFarm();
 
     @Query("select p FROM Product p join fetch p.farm where p.farm = :farm")
-    List<Product> findAllByFarm(Farm farm);
+    List<Product> findAllByFarmWithFarm(Farm farm);
 
     @Query("select p FROM Product p join fetch p.farm where p.cultivationMethod = :categoryName")
     List<Product> findAllWithFarmByCategory(@Param("categoryName") CultivationMethod categoryName);

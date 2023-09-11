@@ -407,7 +407,7 @@ public class UserProductMockingTest {
                 .build();
 
         when(mockFarmCustomerServiceInfoRepository.findByFarmAddressAddressContaining(region)).thenReturn(farmList);
-        when(mockProductRepository.findAllByFarm(farm)).thenReturn(productList);
+        when(mockProductRepository.findAllByFarmWithFarm(farm)).thenReturn(productList);
         when(mockProductOptionRepository.findByProduct(productList.get(0))).thenReturn(productOptionList);
         when(mockProductOptionRepository.findByProduct(productList.get(1))).thenReturn(productOptionList);
         when(mockProductMainImageRepository.findByProduct(productList.get(0))).thenReturn(Optional.of(productMainImage1));

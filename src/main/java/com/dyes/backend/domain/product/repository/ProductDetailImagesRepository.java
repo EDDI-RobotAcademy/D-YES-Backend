@@ -8,6 +8,9 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 
 public interface ProductDetailImagesRepository extends JpaRepository<ProductDetailImages, Long> {
-    @Query("select pd FROM ProductDetailImages pd join fetch pd.product p where p = :product")
+
     List<ProductDetailImages> findByProduct(Product product);
+
+    @Query("select pd FROM ProductDetailImages pd join fetch pd.product p where p = :product")
+    List<ProductDetailImages> findByProductWithProduct(Product product);
 }
