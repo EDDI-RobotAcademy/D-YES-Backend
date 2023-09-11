@@ -9,6 +9,7 @@ import com.dyes.backend.domain.cart.service.CartService;
 import com.dyes.backend.domain.order.controller.form.OrderConfirmRequestForm;
 import com.dyes.backend.domain.order.controller.form.OrderProductInCartRequestForm;
 import com.dyes.backend.domain.order.controller.form.OrderProductInProductPageRequestForm;
+import com.dyes.backend.domain.order.entity.DeliveryStatus;
 import com.dyes.backend.domain.order.entity.OrderedProduct;
 import com.dyes.backend.domain.order.entity.OrderedPurchaserProfile;
 import com.dyes.backend.domain.order.entity.ProductOrder;
@@ -36,6 +37,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.*;
+
+import static com.dyes.backend.domain.order.entity.DeliveryStatus.PREPARING;
 
 @Service
 @Slf4j
@@ -284,6 +287,7 @@ public class OrderServiceImpl implements OrderService {
                 .user(user)
                 .totalAmount(totalAmount)
                 .orderedTime(LocalDate.now())
+                .deliveryStatus(PREPARING)
                 .build();
 
         orderRepository.save(order);

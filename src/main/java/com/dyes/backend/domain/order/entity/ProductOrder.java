@@ -23,4 +23,5 @@ public class ProductOrder {
     private User user;
     private int totalAmount;
     private LocalDate orderedTime;
+    private DeliveryStatus deliveryStatus;
 }
