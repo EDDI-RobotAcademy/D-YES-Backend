@@ -2,16 +2,14 @@ package com.dyes.backend.domain.product.entity;
 
 import com.dyes.backend.domain.farm.entity.Farm;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(exclude = "farm")
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
