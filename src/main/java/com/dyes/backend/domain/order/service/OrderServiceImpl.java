@@ -16,12 +16,16 @@ import com.dyes.backend.domain.order.entity.ProductOrder;
 import com.dyes.backend.domain.order.repository.OrderRepository;
 import com.dyes.backend.domain.order.repository.OrderedProductRepository;
 import com.dyes.backend.domain.order.repository.OrderedPurchaserProfileRepository;
-import com.dyes.backend.domain.order.service.request.OrderConfirmRequest;
-import com.dyes.backend.domain.order.service.request.OrderedProductOptionRequest;
-import com.dyes.backend.domain.order.service.request.OrderedPurchaserProfileRequest;
-import com.dyes.backend.domain.order.service.response.*;
-import com.dyes.backend.domain.order.service.response.form.OrderConfirmResponseFormForUser;
-import com.dyes.backend.domain.order.service.response.form.OrderListResponseFormForAdmin;
+import com.dyes.backend.domain.order.service.admin.response.OrderDetailInfoResponse;
+import com.dyes.backend.domain.order.service.admin.response.OrderProductListResponse;
+import com.dyes.backend.domain.order.service.admin.response.OrderUserInfoResponse;
+import com.dyes.backend.domain.order.service.user.response.form.OrderListResponseFormForUser;
+import com.dyes.backend.domain.order.service.user.request.OrderConfirmRequest;
+import com.dyes.backend.domain.order.service.user.request.OrderedProductOptionRequest;
+import com.dyes.backend.domain.order.service.user.request.OrderedPurchaserProfileRequest;
+import com.dyes.backend.domain.order.service.user.response.*;
+import com.dyes.backend.domain.order.service.user.response.form.OrderConfirmResponseFormForUser;
+import com.dyes.backend.domain.order.service.admin.response.form.OrderListResponseFormForAdmin;
 import com.dyes.backend.domain.product.entity.Product;
 import com.dyes.backend.domain.product.entity.ProductMainImage;
 import com.dyes.backend.domain.product.entity.ProductOption;
@@ -272,6 +276,68 @@ public class OrderServiceImpl implements OrderService {
             orderListResponseFormForAdmins.add(orderListResponseFormForAdmin);
         }
         return orderListResponseFormForAdmins;
+    }
+
+    // 사용자의 주문 내역 확인
+    @Override
+    public List<OrderListResponseFormForUser> getMyOrderListForUser(String userToken) {
+
+        User user = authenticationService.findUserByUserToken(userToken);
+
+        // 모든 주문 내역 가져오기
+        List<ProductOrder> orderList = orderRepository.findAllByUserWithUser(user);
+
+        List<OrderListResponseFormForUser> orderListResponseFormForUsers = new ArrayList<>();
+
+        for (ProductOrder order : orderList) {
+
+            // 주문한 상품 및 옵션 정보 가져오기
+            Long totalPrice = 0L;
+            String productOrderId = order.getId();
+            DeliveryStatus deliveryStatus = order.getDeliveryStatus();
+            LocalDate orderedTime = order.getOrderedTime();
+            List<OrderProductListResponse> orderProductList = new ArrayList<>();
+
+            List<OrderedProduct> orderedProducts = orderedProductRepository.findAllByProductOrder(order);
+            for (OrderedProduct orderedProduct : orderedProducts) {
+                List<OrderOptionListResponse> orderOptionList = new ArrayList<>();
+                Long productOptionId = orderedProduct.getProductOptionId();
+                int productOptionCount = orderedProduct.getProductOptionCount();
+
+                Optional<ProductOption> maybeProductOption = productOptionRepository.findByIdWithProduct(productOptionId);
+                if (maybeProductOption.isEmpty()) {
+                    log.info("ProductOption with product option ID '{}' not found", productOptionId);
+                    return null;
+                }
+
+                // 상품 정보 확인을 위해 가져옴
+                ProductOption productOption = maybeProductOption.get();
+                Product product = productOption.getProduct();
+
+                String optionName = productOption.getOptionName();
+                Long optionPrice = productOption.getOptionPrice();
+                Long totalOptionPrice = optionPrice * productOptionCount;
+                Long productId = product.getId();
+                String productName = product.getProductName();
+
+                totalPrice = totalPrice + totalOptionPrice;
+
+                OrderOptionListResponse orderOptionListResponse
+                        = new OrderOptionListResponse(productOptionId, optionName, productOptionCount);
+                orderOptionList.add(orderOptionListResponse);
+
+                OrderProductListResponse orderProductListResponse
+                        = new OrderProductListResponse(productId, productName, orderOptionList);
+                orderProductList.add(orderProductListResponse);
+            }
+
+            OrderDetailInfoResponse orderDetailInfoResponse
+                    = new OrderDetailInfoResponse(productOrderId, totalPrice, orderedTime, deliveryStatus);
+            OrderListResponseFormForUser orderListResponseFormForUser
+                    = new OrderListResponseFormForUser(orderProductList, orderDetailInfoResponse);
+            orderListResponseFormForUsers.add(orderListResponseFormForUser);
+        }
+        return orderListResponseFormForUsers;
     }
 
     // 주문 진행

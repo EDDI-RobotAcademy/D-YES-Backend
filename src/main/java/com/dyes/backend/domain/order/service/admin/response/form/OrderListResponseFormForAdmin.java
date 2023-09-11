@@ -1,8 +1,8 @@
-package com.dyes.backend.domain.order.service.response.form;
+package com.dyes.backend.domain.order.service.admin.response.form;
 
-import com.dyes.backend.domain.order.service.response.OrderDetailInfoResponse;
-import com.dyes.backend.domain.order.service.response.OrderProductListResponse;
-import com.dyes.backend.domain.order.service.response.OrderUserInfoResponse;
+import com.dyes.backend.domain.order.service.admin.response.OrderDetailInfoResponse;
+import com.dyes.backend.domain.order.service.admin.response.OrderProductListResponse;
+import com.dyes.backend.domain.order.service.admin.response.OrderUserInfoResponse;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

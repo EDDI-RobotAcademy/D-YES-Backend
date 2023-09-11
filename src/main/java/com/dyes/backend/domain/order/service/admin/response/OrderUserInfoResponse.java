@@ -1,4 +1,4 @@
-package com.dyes.backend.domain.order.service.response;
+package com.dyes.backend.domain.order.service.admin.response;
 
 import com.dyes.backend.domain.user.entity.Address;
 import lombok.AllArgsConstructor;

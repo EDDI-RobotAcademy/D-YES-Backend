@@ -1,11 +1,12 @@
 package com.dyes.backend.domain.order.controller;
 
 import com.dyes.backend.domain.order.controller.form.OrderConfirmRequestForm;
-import com.dyes.backend.domain.order.service.response.form.OrderConfirmResponseFormForUser;
+import com.dyes.backend.domain.order.service.user.response.form.OrderListResponseFormForUser;
+import com.dyes.backend.domain.order.service.user.response.form.OrderConfirmResponseFormForUser;
 import com.dyes.backend.domain.order.controller.form.OrderProductInCartRequestForm;
 import com.dyes.backend.domain.order.controller.form.OrderProductInProductPageRequestForm;
 import com.dyes.backend.domain.order.service.OrderService;
-import com.dyes.backend.domain.order.service.response.form.OrderListResponseFormForAdmin;
+import com.dyes.backend.domain.order.service.admin.response.form.OrderListResponseFormForAdmin;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -42,5 +43,11 @@ public class OrderController {
     @GetMapping("/admin/list")
     public List<OrderListResponseFormForAdmin> getAllOrderListForAdmin() {
         return orderService.getOrderListForAdmin();
+    }
+
+    // 사용자의 주문 내역 확인
+    @GetMapping("/my-list")
+    public List<OrderListResponseFormForUser> getMyOrderListForUser(@RequestParam("userToken") String userToken) {
+        return orderService.getMyOrderListForUser(userToken);
     }
 }
