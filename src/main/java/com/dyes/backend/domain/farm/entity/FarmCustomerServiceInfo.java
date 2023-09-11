@@ -2,16 +2,14 @@ package com.dyes.backend.domain.farm.entity;
 
 import com.dyes.backend.domain.user.entity.Address;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString(exclude = "farm")
 public class FarmCustomerServiceInfo {
     @Id
     private Long id;
