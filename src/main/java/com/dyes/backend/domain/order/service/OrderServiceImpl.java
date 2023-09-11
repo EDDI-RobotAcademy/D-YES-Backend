@@ -7,12 +7,10 @@ import com.dyes.backend.domain.cart.repository.CartRepository;
 import com.dyes.backend.domain.cart.repository.ContainProductOptionRepository;
 import com.dyes.backend.domain.cart.service.CartService;
 import com.dyes.backend.domain.order.controller.form.OrderConfirmRequestForm;
-import com.dyes.backend.domain.order.controller.form.OrderConfirmResponseForm;
 import com.dyes.backend.domain.order.controller.form.OrderProductInCartRequestForm;
 import com.dyes.backend.domain.order.controller.form.OrderProductInProductPageRequestForm;
 import com.dyes.backend.domain.order.entity.OrderedProduct;
 import com.dyes.backend.domain.order.entity.OrderedPurchaserProfile;
-import com.dyes.backend.domain.order.entity.OrderedPurchaserProfileAddress;
 import com.dyes.backend.domain.order.entity.ProductOrder;
 import com.dyes.backend.domain.order.repository.OrderRepository;
 import com.dyes.backend.domain.order.repository.OrderedProductRepository;
@@ -20,12 +18,15 @@ import com.dyes.backend.domain.order.repository.OrderedPurchaserProfileRepositor
 import com.dyes.backend.domain.order.service.request.OrderConfirmRequest;
 import com.dyes.backend.domain.order.service.request.OrderedProductOptionRequest;
 import com.dyes.backend.domain.order.service.request.OrderedPurchaserProfileRequest;
-import com.dyes.backend.domain.order.service.response.OrderConfirmProductResponse;
-import com.dyes.backend.domain.order.service.response.OrderConfirmUserResponse;
+import com.dyes.backend.domain.order.service.response.*;
+import com.dyes.backend.domain.order.service.response.form.OrderConfirmResponseFormForUser;
+import com.dyes.backend.domain.order.service.response.form.OrderListResponseFormForAdmin;
+import com.dyes.backend.domain.product.entity.Product;
 import com.dyes.backend.domain.product.entity.ProductMainImage;
 import com.dyes.backend.domain.product.entity.ProductOption;
 import com.dyes.backend.domain.product.repository.ProductMainImageRepository;
 import com.dyes.backend.domain.product.repository.ProductOptionRepository;
+import com.dyes.backend.domain.user.entity.Address;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserProfile;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
@@ -34,15 +35,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class OrderServiceImpl implements OrderService{
+public class OrderServiceImpl implements OrderService {
     final private OrderRepository orderRepository;
     final private CartRepository cartRepository;
     final private ProductOptionRepository productOptionRepository;
@@ -72,7 +70,7 @@ public class OrderServiceImpl implements OrderService{
             final String userToken = requestForm.getUserToken();
             final int totalAmount = requestForm.getTotalAmount();
             User user = authenticationService.findUserByUserToken(userToken);
-            List<OrderedProductOptionRequest> orderedProductOptionRequestList= requestForm.getOrderedProductOptionRequestList();
+            List<OrderedProductOptionRequest> orderedProductOptionRequestList = requestForm.getOrderedProductOptionRequestList();
 
             saveOrderedData(profileRequest, paymentNumber, totalAmount, user, orderedProductOptionRequestList);
 
@@ -84,7 +82,7 @@ public class OrderServiceImpl implements OrderService{
             // 장바구니에 담긴 상품 리스트 불러오기
             List<ContainProductOption> productOptionList = containProductOptionRepository.findAllByCart(cart);
 
-            for(ContainProductOption containProductOption : productOptionList) {
+            for (ContainProductOption containProductOption : productOptionList) {
                 for (OrderedProductOptionRequest orderedProductOptionRequest : orderedProductOptionRequestList)
                     if (Objects.equals(containProductOption.getOptionId(), orderedProductOptionRequest.getProductOptionId())) {
                         containProductOptionRepository.delete(containProductOption);
@@ -116,7 +114,7 @@ public class OrderServiceImpl implements OrderService{
             final String userToken = requestForm.getUserToken();
             final int totalAmount = requestForm.getTotalAmount();
             User user = authenticationService.findUserByUserToken(userToken);
-            List<OrderedProductOptionRequest> orderedProductOptionRequestList= requestForm.getOrderedProductOptionRequestList();
+            List<OrderedProductOptionRequest> orderedProductOptionRequestList = requestForm.getOrderedProductOptionRequestList();
 
             saveOrderedData(profileRequest, paymentNumber, totalAmount, user, orderedProductOptionRequestList);
 
@@ -130,7 +128,7 @@ public class OrderServiceImpl implements OrderService{
 
     // 상품을 주문하기 전에 확인하기
     @Override
-    public OrderConfirmResponseForm orderConfirm(OrderConfirmRequestForm requestForm) {
+    public OrderConfirmResponseFormForUser orderConfirm(OrderConfirmRequestForm requestForm) {
         try {
             OrderConfirmRequest request = new OrderConfirmRequest(requestForm.getUserToken());
 
@@ -187,7 +185,7 @@ public class OrderServiceImpl implements OrderService{
                         .build();
                 productResponseList.add(productResponse);
             }
-            OrderConfirmResponseForm responseForm = new OrderConfirmResponseForm(userResponse, productResponseList);
+            OrderConfirmResponseFormForUser responseForm = new OrderConfirmResponseFormForUser(userResponse, productResponseList);
 
             return responseForm;
         } catch (Exception e) {
@@ -197,8 +195,81 @@ public class OrderServiceImpl implements OrderService{
         }
     }
 
-    public void saveOrderedData (OrderedPurchaserProfileRequest profileRequest, String paymentNumber,
-                                 int totalAmount, User user, List<OrderedProductOptionRequest> orderedProductOptionRequestList) {
+    // 관리자의 주문 내역 확인
+    @Override
+    public List<OrderListResponseFormForAdmin> getOrderListForAdmin() {
+
+        // 모든 주문 내역 가져오기
+        List<ProductOrder> orderList = orderRepository.findAllWithUser();
+
+        List<OrderListResponseFormForAdmin> orderListResponseFormForAdmins = new ArrayList<>();
+
+        for (ProductOrder order : orderList) {
+
+            // 주문자 정보 가져오기
+            User user = order.getUser();
+            String userId = user.getId();
+
+            Optional<OrderedPurchaserProfile> maybeOrderedPurchaserProfile = orderedPurchaserProfileRepository.findByProductOrder(order);
+            if (maybeOrderedPurchaserProfile.isEmpty()) {
+                log.info("Profile with order ID '{}' not found", order.getId());
+                return null;
+            }
+
+            OrderedPurchaserProfile purchaserProfile = maybeOrderedPurchaserProfile.get();
+            String contactNumber = purchaserProfile.getOrderedPurchaseContactNumber();
+            Address address = purchaserProfile.getOrderedPurchaseProfileAddress();
+
+            OrderUserInfoResponse orderUserInfoResponse = new OrderUserInfoResponse(userId, contactNumber, address);
+
+            // 주문한 상품 및 옵션 정보 가져오기
+            Long totalPrice = 0L;
+            String productOrderId = order.getId();
+            List<OrderProductListResponse> orderProductList = new ArrayList<>();
+
+            List<OrderedProduct> orderedProducts = orderedProductRepository.findAllByProductOrder(order);
+            for (OrderedProduct orderedProduct : orderedProducts) {
+                List<OrderOptionListResponse> orderOptionList = new ArrayList<>();
+                Long productOptionId = orderedProduct.getProductOptionId();
+                int productOptionCount = orderedProduct.getProductOptionCount();
+
+                Optional<ProductOption> maybeProductOption = productOptionRepository.findByIdWithProduct(productOptionId);
+                if (maybeProductOption.isEmpty()) {
+                    log.info("ProductOption with product option ID '{}' not found", productOptionId);
+                    return null;
+                }
+
+                // 상품 정보 확인을 위해 가져옴
+                ProductOption productOption = maybeProductOption.get();
+                Product product = productOption.getProduct();
+
+                String optionName = productOption.getOptionName();
+                Long optionPrice = productOption.getOptionPrice();
+                Long totalOptionPrice = optionPrice * productOptionCount;
+                Long productId = product.getId();
+                String productName = product.getProductName();
+
+                totalPrice = totalPrice + totalOptionPrice;
+
+                OrderOptionListResponse orderOptionListResponse
+                        = new OrderOptionListResponse(productOptionId, optionName, productOptionCount);
+                orderOptionList.add(orderOptionListResponse);
+
+                OrderProductListResponse orderProductListResponse
+                        = new OrderProductListResponse(productId, productName, orderOptionList);
+                orderProductList.add(orderProductListResponse);
+            }
+
+            OrderListResponseFormForAdmin orderListResponseFormForAdmin
+                    = new OrderListResponseFormForAdmin(productOrderId, orderUserInfoResponse, orderProductList, totalPrice);
+            orderListResponseFormForAdmins.add(orderListResponseFormForAdmin);
+        }
+        return orderListResponseFormForAdmins;
+    }
+
+    // 주문 진행
+    public void saveOrderedData(OrderedPurchaserProfileRequest profileRequest, String paymentNumber,
+                                int totalAmount, User user, List<OrderedProductOptionRequest> orderedProductOptionRequestList) {
 
         final String purchaserName = profileRequest.getOrderedPurchaserName();
         final String purchaserContactNumber = profileRequest.getOrderedPurchaserContactNumber();
@@ -218,15 +289,22 @@ public class OrderServiceImpl implements OrderService{
         orderRepository.save(order);
 
         // 주문 상품 저장
-        OrderedProduct orderedProduct;
-        for(OrderedProductOptionRequest optionRequest : orderedProductOptionRequestList) {
-            orderedProduct = OrderedProduct.builder()
-                    .productOrder(order)
-                    .productOptionId(optionRequest.getProductOptionId())
-                    .productOptionCount(optionRequest.getProductOptionCount())
-                    .build();
+        for (OrderedProductOptionRequest optionRequest : orderedProductOptionRequestList) {
+            Optional<ProductOption> maybeProductOption = productOptionRepository.findById(optionRequest.getProductOptionId());
+            if (maybeProductOption.isEmpty()) {
+                log.info("Can not find ProductOption");
+            } else if (maybeProductOption.isPresent()) {
+                ProductOption productOption = maybeProductOption.get();
+                productOption.setStock(productOption.getStock() - optionRequest.getProductOptionCount());
+                productOptionRepository.save(productOption);
+                OrderedProduct orderedProduct = OrderedProduct.builder()
+                        .productOrder(order)
+                        .productOptionId(optionRequest.getProductOptionId())
+                        .productOptionCount(optionRequest.getProductOptionCount())
+                        .build();
 
-            orderedProductRepository.save(orderedProduct);
+                orderedProductRepository.save(orderedProduct);
+            }
         }
         // 구매자 정보 저장
         OrderedPurchaserProfile purchaserProfile = OrderedPurchaserProfile.builder()
@@ -234,7 +312,7 @@ public class OrderServiceImpl implements OrderService{
                 .orderedPurchaseName(purchaserName)
                 .orderedPurchaseContactNumber(purchaserContactNumber)
                 .orderedPurchaseEmail(purchaserEmail)
-                .orderedPurchaseProfileAddress(new OrderedPurchaserProfileAddress(purchaserAddress, purchaserZipCode, purchaserAddressDetail))
+                .orderedPurchaseProfileAddress(new Address(purchaserAddress, purchaserZipCode, purchaserAddressDetail))
                 .build();
 
         orderedPurchaserProfileRepository.save(purchaserProfile);

@@ -19,6 +19,7 @@ public class ProductOrder {
     @Id
     private String id;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id")
     private User user;
     private int totalAmount;
     private LocalDate orderedTime;

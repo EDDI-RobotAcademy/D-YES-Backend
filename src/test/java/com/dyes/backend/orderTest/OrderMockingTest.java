@@ -8,7 +8,7 @@ import com.dyes.backend.domain.cart.repository.ContainProductOptionRepository;
 import com.dyes.backend.domain.cart.service.CartService;
 import com.dyes.backend.domain.farm.entity.Farm;
 import com.dyes.backend.domain.order.controller.form.OrderConfirmRequestForm;
-import com.dyes.backend.domain.order.controller.form.OrderConfirmResponseForm;
+import com.dyes.backend.domain.order.service.response.form.OrderConfirmResponseFormForUser;
 import com.dyes.backend.domain.order.controller.form.OrderProductInCartRequestForm;
 import com.dyes.backend.domain.order.controller.form.OrderProductInProductPageRequestForm;
 import com.dyes.backend.domain.order.entity.OrderedProduct;
@@ -33,7 +33,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -183,9 +182,9 @@ public class OrderMockingTest {
                 .value(productOption.getAmount().getValue())
                 .unit(productOption.getAmount().getUnit())
                 .build();
-        OrderConfirmResponseForm responseForm = new OrderConfirmResponseForm(userResponse, List.of(productResponse));
+        OrderConfirmResponseFormForUser responseForm = new OrderConfirmResponseFormForUser(userResponse, List.of(productResponse));
 
-        OrderConfirmResponseForm actual = mockOrderService.orderConfirm(requestForm);
+        OrderConfirmResponseFormForUser actual = mockOrderService.orderConfirm(requestForm);
 
         assertEquals(responseForm.getUserResponse().getEmail(), actual.getUserResponse().getEmail());
     }

@@ -10,10 +10,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderedPurchaserProfileRequest {
-        private String orderedPurchaserName;
-        private String orderedPurchaserContactNumber;
-        private String orderedPurchaserEmail;
-        private String orderedPurchaserAddress;
-        private String orderedPurchaserZipCode;
-        private String orderedPurchaserAddressDetail;
+    private String orderedPurchaserName;
+    private String orderedPurchaserContactNumber;
+    private String orderedPurchaserEmail;
+    private String orderedPurchaserAddress;
+    private String orderedPurchaserZipCode;
+    private String orderedPurchaserAddressDetail;
 }

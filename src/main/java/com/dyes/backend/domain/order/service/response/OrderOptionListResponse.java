@@ -1,6 +1,5 @@
 package com.dyes.backend.domain.order.service.response;
 
-import com.dyes.backend.domain.product.entity.Unit;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,12 +9,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderConfirmProductResponse {
+public class OrderOptionListResponse {
     private Long optionId;
-    private String productMainImage;
-    private String productName;
-    private Long value;
-    private Unit unit;
+    private String optionName;
     private int optionCount;
-    private Long optionPrice;
 }

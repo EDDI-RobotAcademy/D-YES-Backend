@@ -18,5 +18,6 @@ public class OrderedProduct {
     private Long productOptionId;
     private int productOptionCount;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "product_order_id")
     private ProductOrder productOrder;
 }
