@@ -120,7 +120,7 @@ public class UserProductServiceImpl implements UserProductService {
 
         // 랜덤 상품 목록 조회 진행
         try {
-            List<Product> productList = productRepository.findAllWithFarm();
+            List<Product> productList = productRepository.findAll();
             Collections.shuffle(productList);
             for (Product product : productList) {
 
@@ -208,7 +208,7 @@ public class UserProductServiceImpl implements UserProductService {
         // 지역별 상품 목록 조회 진행
         try {
             for (FarmCustomerServiceInfo farmByRegion : farmListByLocation) {
-                List<Product> productList = productRepository.findAllByFarm(farmByRegion.getFarm());
+                List<Product> productList = productRepository.findAllByFarmWithFarm(farmByRegion.getFarm());
                 for (Product product : productList) {
                     ProductListResponseFormForUser productListResponseFormForUser = createUserProductListResponseForm(product);
                     productListResponseFormListForUser.add(productListResponseFormForUser);

@@ -8,7 +8,6 @@ import com.dyes.backend.domain.cart.repository.ContainProductOptionRepository;
 import com.dyes.backend.domain.farm.entity.*;
 import com.dyes.backend.domain.farm.repository.*;
 import com.dyes.backend.domain.farm.service.response.FarmInfoResponseForAdmin;
-import com.dyes.backend.domain.farm.service.response.FarmOperationInfoResponseForAdmin;
 import com.dyes.backend.domain.product.controller.admin.form.ProductDeleteRequestForm;
 import com.dyes.backend.domain.product.controller.admin.form.ProductModifyRequestForm;
 import com.dyes.backend.domain.product.controller.admin.form.ProductRegisterRequestForm;
@@ -309,9 +308,9 @@ public class AdminProductMockingTest {
         when(mockAuthenticationService.findUserByUserToken(userToken)).thenReturn(new User());
 
         when(mockProductRepository.findByIdWithFarm(1L)).thenReturn(Optional.of(product));
-        when(mockProductMainImageRepository.findByProduct(product)).thenReturn(Optional.of(new ProductMainImage()));
-        when(mockProductDetailImagesRepository.findByProduct(product)).thenReturn(productDetailImagesList);
-        when(mockProductOptionRepository.findByProduct(product)).thenReturn(productOptionList);
+        when(mockProductMainImageRepository.findByProductWithProduct(product)).thenReturn(Optional.of(new ProductMainImage()));
+        when(mockProductDetailImagesRepository.findByProductWithProduct(product)).thenReturn(productDetailImagesList);
+        when(mockProductOptionRepository.findByProductWithProduct(product)).thenReturn(productOptionList);
 
         boolean result = adminProductService.deleteProduct(1L, new ProductDeleteRequestForm(userToken));
         assertTrue(result);
@@ -405,10 +404,8 @@ public class AdminProductMockingTest {
         ProductMainImage productMainImage = new ProductMainImage(product.getId(), "메인 이미지", product);
         List<ProductDetailImages> productDetailImages = new ArrayList<>();
         productDetailImages.add(new ProductDetailImages(1L, "디테일 이미지", product));
-        FarmBusinessInfo farmBusinessInfo = new FarmBusinessInfo(1L, "(주)투투농가", "123-45-67890", farm);
         FarmCustomerServiceInfo farmCustomerServiceInfo = new FarmCustomerServiceInfo(1L, "070-1234-5678", new Address(), farm);
         FarmIntroductionInfo farmIntroductionInfo = new FarmIntroductionInfo(1L, "mainImage", "한 줄 소개", new ArrayList<>(), farm);
-        FarmRepresentativeInfo farmRepresentativeInfo = new FarmRepresentativeInfo(1L, "정다운", "010-1234-5678", farm);
 
         when(mockProductRepository.findByIdWithFarm(product.getId())).thenReturn(Optional.of(product));
         when(mockProductOptionRepository.findByProduct(product)).thenReturn(productOption);
@@ -427,8 +424,6 @@ public class AdminProductMockingTest {
                 = new ProductDetailImagesResponseForAdmin().productDetailImagesResponseForAdminList(productDetailImages);
         FarmInfoResponseForAdmin farmInfoResponseForAdmin
                 = new FarmInfoResponseForAdmin().farmInfoResponseForAdmin(farm, farmCustomerServiceInfo, farmIntroductionInfo);
-        FarmOperationInfoResponseForAdmin farmOperationInfoResponseForAdmin
-                = new FarmOperationInfoResponseForAdmin().farmOperationInfoResponseForAdmin(farmBusinessInfo, farmRepresentativeInfo);
 
         ProductReadResponseFormForAdmin actual
                 = new ProductReadResponseFormForAdmin(

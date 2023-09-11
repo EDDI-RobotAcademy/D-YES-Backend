@@ -221,7 +221,7 @@ public class CartServiceImpl implements CartService{
     public ProductOption isReallyExistProductOption(Long productOptionId) {
         log.info("isReallyExistProductOption start");
 
-        Optional<ProductOption> maybeOption = productOptionRepository.findByIdWithProductAndFarm(productOptionId);
+        Optional<ProductOption> maybeOption = productOptionRepository.findByIdWithProduct(productOptionId);
 
         if (maybeOption.isEmpty()) {
             log.info("this option doesn't exist");
