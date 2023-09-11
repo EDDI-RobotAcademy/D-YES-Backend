@@ -1,5 +1,6 @@
 package com.dyes.backend.domain.order.service.response.form;
 
+import com.dyes.backend.domain.order.service.response.OrderDetailInfoResponse;
 import com.dyes.backend.domain.order.service.response.OrderProductListResponse;
 import com.dyes.backend.domain.order.service.response.OrderUserInfoResponse;
 import lombok.AllArgsConstructor;
@@ -12,8 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderListResponseFormForAdmin {
-    private String productOrderId;
     private OrderUserInfoResponse orderUserInfo;
     private List<OrderProductListResponse> orderProductList;
-    private Long totalPrice;
+    private OrderDetailInfoResponse orderDetailInfoResponse;
 }

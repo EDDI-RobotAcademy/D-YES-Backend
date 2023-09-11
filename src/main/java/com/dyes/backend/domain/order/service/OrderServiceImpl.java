@@ -228,6 +228,8 @@ public class OrderServiceImpl implements OrderService {
             // 주문한 상품 및 옵션 정보 가져오기
             Long totalPrice = 0L;
             String productOrderId = order.getId();
+            DeliveryStatus deliveryStatus = order.getDeliveryStatus();
+            LocalDate orderedTime = order.getOrderedTime();
             List<OrderProductListResponse> orderProductList = new ArrayList<>();
 
             List<OrderedProduct> orderedProducts = orderedProductRepository.findAllByProductOrder(order);
@@ -263,8 +265,10 @@ public class OrderServiceImpl implements OrderService {
                 orderProductList.add(orderProductListResponse);
             }
 
+            OrderDetailInfoResponse orderDetailInfoResponse
+                    = new OrderDetailInfoResponse(productOrderId, totalPrice, orderedTime, deliveryStatus);
             OrderListResponseFormForAdmin orderListResponseFormForAdmin
-                    = new OrderListResponseFormForAdmin(productOrderId, orderUserInfoResponse, orderProductList, totalPrice);
+                    = new OrderListResponseFormForAdmin(orderUserInfoResponse, orderProductList, orderDetailInfoResponse);
             orderListResponseFormForAdmins.add(orderListResponseFormForAdmin);
         }
         return orderListResponseFormForAdmins;
