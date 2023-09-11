@@ -18,5 +18,4 @@ public class ProductReadResponseFormForAdmin {
     private ProductMainImageResponseForAdmin mainImageResponseForAdmin;
     private List<ProductDetailImagesResponseForAdmin> detailImagesForAdmin;
     private FarmInfoResponseForAdmin farmInfoResponseForAdmin;
-    private FarmOperationInfoResponseForAdmin farmOperationInfoResponseForAdmin;
 }

@@ -73,13 +73,9 @@ public class AdminProductMockingTest {
     @Mock
     private FarmRepository mockFarmRepository;
     @Mock
-    private FarmBusinessInfoRepository mockFarmBusinessInfoRepository;
-    @Mock
     private FarmCustomerServiceInfoRepository mockFarmCustomerServiceInfoRepository;
     @Mock
     private FarmIntroductionInfoRepository mockFarmIntroductionInfoRepository;
-    @Mock
-    private FarmRepresentativeInfoRepository mockFarmRepresentativeInfoRepository;
     @Mock
     private ContainProductOptionRepository mockContainProductOptionRepository;
     @Mock
@@ -101,10 +97,8 @@ public class AdminProductMockingTest {
                 mockProductMainImageRepository,
                 mockProductDetailImagesRepository,
                 mockFarmRepository,
-                mockFarmBusinessInfoRepository,
                 mockFarmCustomerServiceInfoRepository,
                 mockFarmIntroductionInfoRepository,
-                mockFarmRepresentativeInfoRepository,
                 mockContainProductOptionRepository,
                 mockAdminService);
     }
@@ -389,15 +383,15 @@ public class AdminProductMockingTest {
         assertEquals(result.get(0).getProductName(), "상품명1");
         assertEquals(result.get(0).getProductId(), 1L);
         assertEquals(result.get(0).getProductSaleStatus(), AVAILABLE);
-        assertEquals(result.get(0).getProductOptionListResponse().get(0).getOptionName(), "상품옵션1");
-        assertEquals(result.get(0).getProductOptionListResponse().get(0).getStock(), 20);
+        assertEquals(result.get(0).getProductOptionList().get(0).getOptionName(), "상품옵션1");
+        assertEquals(result.get(0).getProductOptionList().get(0).getStock(), 20);
         assertEquals(result.get(0).getFarmName(), "투투농장");
 
         assertEquals(result.get(1).getProductName(), "상품명2");
         assertEquals(result.get(1).getProductId(), 2L);
         assertEquals(result.get(1).getProductSaleStatus(), UNAVAILABLE);
-        assertEquals(result.get(1).getProductOptionListResponse().get(1).getOptionName(), "상품옵션2");
-        assertEquals(result.get(1).getProductOptionListResponse().get(1).getStock(), 70);
+        assertEquals(result.get(1).getProductOptionList().get(1).getOptionName(), "상품옵션2");
+        assertEquals(result.get(1).getProductOptionList().get(1).getStock(), 70);
         assertEquals(result.get(1).getFarmName(), "투투농장");
     }
 
@@ -420,10 +414,8 @@ public class AdminProductMockingTest {
         when(mockProductOptionRepository.findByProduct(product)).thenReturn(productOption);
         when(mockProductMainImageRepository.findByProduct(product)).thenReturn(Optional.of(productMainImage));
         when(mockProductDetailImagesRepository.findByProduct(product)).thenReturn(productDetailImages);
-        when(mockFarmBusinessInfoRepository.findByFarm(farm)).thenReturn(farmBusinessInfo);
         when(mockFarmCustomerServiceInfoRepository.findByFarm(farm)).thenReturn(farmCustomerServiceInfo);
         when(mockFarmIntroductionInfoRepository.findByFarm(farm)).thenReturn(farmIntroductionInfo);
-        when(mockFarmRepresentativeInfoRepository.findByFarm(farm)).thenReturn(farmRepresentativeInfo);
 
         ProductResponseForAdmin productResponseForAdmin
                 = new ProductResponseForAdmin().productResponseForAdmin(product);
@@ -444,8 +436,7 @@ public class AdminProductMockingTest {
                 productOptionResponseForAdmin,
                 productMainImageResponseForAdmin,
                 productDetailImagesResponsesForAdmin,
-                farmInfoResponseForAdmin,
-                farmOperationInfoResponseForAdmin);
+                farmInfoResponseForAdmin);
 
         ProductReadResponseFormForAdmin result = adminProductService.readProductForAdmin(product.getId());
         assertEquals(result, actual);

@@ -9,7 +9,6 @@ import com.dyes.backend.domain.farm.repository.*;
 import com.dyes.backend.domain.farm.service.request.FarmAuthenticationRequest;
 import com.dyes.backend.domain.farm.service.response.FarmInfoResponseForAdmin;
 import com.dyes.backend.domain.farm.service.response.FarmInfoSummaryResponseForAdmin;
-import com.dyes.backend.domain.farm.service.response.FarmOperationInfoResponseForAdmin;
 import com.dyes.backend.domain.product.controller.admin.form.ProductDeleteRequestForm;
 import com.dyes.backend.domain.product.controller.admin.form.ProductListDeleteRequestForm;
 import com.dyes.backend.domain.product.controller.admin.form.ProductModifyRequestForm;
@@ -19,6 +18,7 @@ import com.dyes.backend.domain.product.repository.ProductDetailImagesRepository;
 import com.dyes.backend.domain.product.repository.ProductMainImageRepository;
 import com.dyes.backend.domain.product.repository.ProductOptionRepository;
 import com.dyes.backend.domain.product.repository.ProductRepository;
+import com.dyes.backend.domain.product.service.admin.request.delete.ProductListDeleteRequest;
 import com.dyes.backend.domain.product.service.admin.request.modify.ProductDetailImagesModifyRequest;
 import com.dyes.backend.domain.product.service.admin.request.modify.ProductMainImageModifyRequest;
 import com.dyes.backend.domain.product.service.admin.request.modify.ProductModifyRequest;
@@ -49,10 +49,8 @@ public class AdminProductServiceImpl implements AdminProductService {
     final private ProductMainImageRepository productMainImageRepository;
     final private ProductDetailImagesRepository productDetailImagesRepository;
     final private FarmRepository farmRepository;
-    final private FarmBusinessInfoRepository farmBusinessInfoRepository;
     final private FarmCustomerServiceInfoRepository farmCustomerServiceInfoRepository;
     final private FarmIntroductionInfoRepository farmIntroductionInfoRepository;
-    final private FarmRepresentativeInfoRepository farmRepresentativeInfoRepository;
     final private ContainProductOptionRepository containProductOptionRepository;
     final private AdminService adminService;
 
@@ -389,9 +387,11 @@ public class AdminProductServiceImpl implements AdminProductService {
             return false;
         }
 
+        ProductListDeleteRequest productListDeleteRequest = listDeleteForm.toProductListDeleteRequest();
+
         // 상품 삭제 진행
         try {
-            List<Product> productList = productRepository.findAllByIdWithFarm(listDeleteForm.getProductIdList());
+            List<Product> productList = productRepository.findAllByIdWithFarm(productListDeleteRequest.getProductIdList());
             for (Product deleteProduct : productList) {
                 Optional<ProductMainImage> maybeProductMainImage = productMainImageRepository.findByProduct(deleteProduct);
                 if (maybeProductMainImage.isEmpty()) {
@@ -442,10 +442,8 @@ public class AdminProductServiceImpl implements AdminProductService {
             List<ProductDetailImages> productDetailImages = productDetailImagesRepository.findByProduct(product);
 
             Farm farm = product.getFarm();
-            FarmBusinessInfo farmBusinessInfo = farmBusinessInfoRepository.findByFarm(farm);
             FarmCustomerServiceInfo farmCustomerServiceInfo = farmCustomerServiceInfoRepository.findByFarm(farm);
             FarmIntroductionInfo farmIntroductionInfo = farmIntroductionInfoRepository.findByFarm(farm);
-            FarmRepresentativeInfo farmRepresentativeInfo = farmRepresentativeInfoRepository.findByFarm(farm);
 
             ProductResponseForAdmin productResponseForAdmin
                     = new ProductResponseForAdmin().productResponseForAdmin(product);
@@ -469,22 +467,13 @@ public class AdminProductServiceImpl implements AdminProductService {
                     farmIntroductionInfo.getIntroduction(),
                     farmIntroductionInfo.getProduceTypes());
 
-            FarmOperationInfoResponseForAdmin farmOperationInfoResponseForAdmin
-                    = new FarmOperationInfoResponseForAdmin(
-                    farmBusinessInfo.getId(),
-                    farmBusinessInfo.getBusinessName(),
-                    farmBusinessInfo.getBusinessNumber(),
-                    farmRepresentativeInfo.getRepresentativeName(),
-                    farmRepresentativeInfo.getRepresentativeContactNumber());
-
             ProductReadResponseFormForAdmin responseForm
                     = new ProductReadResponseFormForAdmin(
                     productResponseForAdmin,
                     productOptionResponseForAdmin,
                     productMainImageResponseForAdmin,
                     productDetailImagesResponsesForAdmin,
-                    farmInfoResponseForAdmin,
-                    farmOperationInfoResponseForAdmin);
+                    farmInfoResponseForAdmin);
 
             log.info("Product read successful for product with ID: {}", productId);
             return responseForm;

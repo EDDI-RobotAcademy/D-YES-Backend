@@ -15,6 +15,6 @@ public class ProductListResponseFormForAdmin {
     private Long productId;
     private String productName;
     private SaleStatus productSaleStatus;
-    private List<ProductOptionListResponseForAdmin> productOptionListResponse;
+    private List<ProductOptionListResponseForAdmin> productOptionList;
     private String farmName;
 }

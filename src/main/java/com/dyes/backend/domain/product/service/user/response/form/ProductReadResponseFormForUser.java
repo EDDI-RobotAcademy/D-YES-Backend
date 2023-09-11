@@ -13,8 +13,8 @@ import java.util.List;
 @AllArgsConstructor
 public class ProductReadResponseFormForUser {
     private ProductResponseForUser productResponseForUser;
-    private List<ProductOptionResponseForUser> OptionList;
-    private ProductMainImageResponseForUser mainImage;
-    private List<ProductDetailImagesResponseForUser> detailImagesList;
+    private List<ProductOptionResponseForUser> optionResponseForUser;
+    private ProductMainImageResponseForUser mainImageResponseForUser;
+    private List<ProductDetailImagesResponseForUser> detailImagesForUser;
     private FarmInfoResponseForUser farmInfoResponseForUser;
 }
