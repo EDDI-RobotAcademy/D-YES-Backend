@@ -80,6 +80,12 @@ public class AuthenticationServiceImpl implements AuthenticationService{
             return user;
         }
 
+        if(!user.getAccessToken().equals(accessToken)) {
+            log.info("Access token refreshed");
+            redisService.deleteKeyAndValueWithUserToken(userToken);
+            redisService.setUserTokenAndUser(userToken, user.getAccessToken());
+        }
+
         return null;
     }
 }
