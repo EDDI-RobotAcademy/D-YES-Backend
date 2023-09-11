@@ -163,9 +163,9 @@ public class FarmMockingTest {
         when(mockFarmRepresentativeInfoRepository.findByFarm(farm)).thenReturn(farmRepresentativeInfo);
 
         FarmInfoReadResponseForm result = farmService.readFarm(farmId);
-        assertEquals(result.getFarmInfoResponseForm().getFarmName(), "투투농가");
-        assertEquals(result.getFarmOperationInfoResponseForm().getBusinessName(), "(주)투투농가");
-        assertEquals(result.getFarmOperationInfoResponseForm().getBusinessNumber(), "123-45-67890");
+        assertEquals(result.getFarmInfoResponseForAdmin().getFarmName(), "투투농가");
+        assertEquals(result.getFarmOperationInfoResponseForAdmin().getBusinessName(), "(주)투투농가");
+        assertEquals(result.getFarmOperationInfoResponseForAdmin().getBusinessNumber(), "123-45-67890");
     }
 
     @Test
