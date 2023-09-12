@@ -70,7 +70,7 @@ public class CartMockingTest {
         final Long optionId = 1L;
         final int optionCount = 1;
         ContainProductOptionRequest request = new ContainProductOptionRequest(optionId, optionCount);
-        ContainProductRequestForm requestForm = new ContainProductRequestForm(userToken, request);
+        ContainProductRequestForm requestForm = new ContainProductRequestForm(userToken, List.of(request));
 
         User user = new User("1", "엑세스토큰", "리프래시 토큰", Active.YES, UserType.GOOGLE);
         when(mockAuthenticationService.findUserByUserToken(userToken)).thenReturn(user);

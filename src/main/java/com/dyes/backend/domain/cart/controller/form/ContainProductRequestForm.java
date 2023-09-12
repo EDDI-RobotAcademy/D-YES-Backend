@@ -12,5 +12,5 @@ import java.util.List;
 @AllArgsConstructor
 public class ContainProductRequestForm {
     private String userToken;
-    private ContainProductOptionRequest request;
+    private List<ContainProductOptionRequest> requestList;
 }
