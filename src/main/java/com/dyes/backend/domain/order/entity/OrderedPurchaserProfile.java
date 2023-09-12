@@ -1,5 +1,6 @@
 package com.dyes.backend.domain.order.entity;
 
+import com.dyes.backend.domain.user.entity.Address;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,7 +20,8 @@ public class OrderedPurchaserProfile {
     private String orderedPurchaseContactNumber;
     private String orderedPurchaseEmail;
     @Embedded
-    private OrderedPurchaserProfileAddress orderedPurchaseProfileAddress;
+    private Address orderedPurchaseProfileAddress;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "product_order_id")
     private ProductOrder productOrder;
 }

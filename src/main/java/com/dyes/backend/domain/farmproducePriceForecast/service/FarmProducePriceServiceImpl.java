@@ -348,7 +348,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
         // 양배추
         List<Map<LocalDate, Integer>> CabbagePriceList = new ArrayList<>();
         FarmProducePriceForecastResponseForm cabbageResponseForm = new FarmProducePriceForecastResponseForm();
-        for(int j = 0; j < 12; j++) {
+        for(int j = 0; j < 14; j++) {
             LocalDate date = currentDate.plusDays(j);
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             String formattedDate = date.format(formatter);
@@ -371,7 +371,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
         // 당근
         List<Map<LocalDate, Integer>> CarrotPriceList = new ArrayList<>();
         FarmProducePriceForecastResponseForm carrotResponseForm = new FarmProducePriceForecastResponseForm();
-        for(int j = 0; j < 12; j++) {
+        for(int j = 0; j < 14; j++) {
             LocalDate date = currentDate.plusDays(j);
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             String formattedDate = date.format(formatter);
@@ -394,7 +394,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
         // 오이
         List<Map<LocalDate, Integer>> cucumberPriceList = new ArrayList<>();
         FarmProducePriceForecastResponseForm cucumberResponseForm = new FarmProducePriceForecastResponseForm();
-        for(int j = 0; j < 12; j++) {
+        for(int j = 0; j < 14; j++) {
             LocalDate date = currentDate.plusDays(j);
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             String formattedDate = date.format(formatter);
@@ -417,7 +417,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
         // 김치
         List<Map<LocalDate, Integer>> kimchiCabbagePriceList = new ArrayList<>();
         FarmProducePriceForecastResponseForm kimchiCabbageResponseForm = new FarmProducePriceForecastResponseForm();
-        for(int j = 0; j < 12; j++) {
+        for(int j = 0; j < 14; j++) {
             LocalDate date = currentDate.plusDays(j);
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             String formattedDate = date.format(formatter);
@@ -440,7 +440,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
         // 양파
         List<Map<LocalDate, Integer>> onionPriceList = new ArrayList<>();
         FarmProducePriceForecastResponseForm onionResponseForm = new FarmProducePriceForecastResponseForm();
-        for(int j = 0; j < 12; j++) {
+        for(int j = 0; j < 14; j++) {
             LocalDate date = currentDate.plusDays(j);
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             String formattedDate = date.format(formatter);
@@ -463,7 +463,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
         // 감자
         List<Map<LocalDate, Integer>> potatoPriceList = new ArrayList<>();
         FarmProducePriceForecastResponseForm potatoResponseForm = new FarmProducePriceForecastResponseForm();
-        for(int j = 0; j < 12; j++) {
+        for(int j = 0; j < 14; j++) {
             LocalDate date = currentDate.plusDays(j);
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             String formattedDate = date.format(formatter);
@@ -486,7 +486,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
         // 대파
         List<Map<LocalDate, Integer>> welshOnionPriceList = new ArrayList<>();
         FarmProducePriceForecastResponseForm welshOnionResponseForm = new FarmProducePriceForecastResponseForm();
-        for(int j = 0; j < 12; j++) {
+        for(int j = 0; j < 14; j++) {
             LocalDate date = currentDate.plusDays(j);
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             String formattedDate = date.format(formatter);
@@ -509,7 +509,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
         // 애호박
         List<Map<LocalDate, Integer>> youngPumpkinPriceList = new ArrayList<>();
         FarmProducePriceForecastResponseForm youngPumpkinResponseForm = new FarmProducePriceForecastResponseForm();
-        for(int j = 0; j < 12; j++) {
+        for(int j = 0; j < 14; j++) {
             LocalDate date = currentDate.plusDays(j);
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             String formattedDate = date.format(formatter);

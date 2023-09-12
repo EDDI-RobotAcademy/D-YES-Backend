@@ -1,6 +1,5 @@
-package com.dyes.backend.domain.order.service.response;
+package com.dyes.backend.domain.order.service.user.response;
 
-import com.dyes.backend.domain.product.entity.ProductMainImage;
 import com.dyes.backend.domain.product.entity.Unit;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
