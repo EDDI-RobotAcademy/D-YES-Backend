@@ -45,52 +45,57 @@ public class CartServiceImpl implements CartService{
         log.info("ContainProductRequestForm: " + requestForm);
 
         CartCheckFromUserTokenRequest tokenRequest = new CartCheckFromUserTokenRequest(requestForm.getUserToken());
-        ContainProductOptionRequest request = new ContainProductOptionRequest(requestForm.getRequest().getProductOptionId(), requestForm.getRequest().getOptionCount());
 
         final String userToken = tokenRequest.getUserToken();
-        final Long requestProductOptionId = request.getProductOptionId();
-        final int requestProductOptionCount = request.getOptionCount();
 
         // 유저토큰으로 장바구니 불러오기
         Cart cart = cartCheckFromUserToken(userToken);
 
-        log.info("ContainProductOptionRequest: " + request);
+        List<ContainProductOptionRequest> requestList = requestForm.getRequestList();
 
-        // 받아온 옵션이 DB에 있는 옵션인지 확인
-        ProductOption productOption = isReallyExistProductOption(requestProductOptionId);
-        Product product = productOption.getProduct();
-        final String productName = product.getProductName();
-        final Long productId = product.getId();
-        Optional<ProductMainImage> maybeProductMainImage = productMainImageRepository.findByProduct(product);
-        String productMainImage = "";
-        if(maybeProductMainImage.isPresent()) {
-            productMainImage = maybeProductMainImage.get().getMainImg();
-        }
+        for (ContainProductOptionRequest request : requestList){
 
-        // 받아온 옵션이 카트에 담긴 옵션인지 확인
-        ContainProductOption checkProductOptionInCart = checkProductOptionInCart(cart, requestProductOptionId);
+            log.info("ContainProductOptionRequest: " + request);
 
-        // 카트에 담긴 옵션이 없다면 새로 옵션을 저장하기
-        if (checkProductOptionInCart == null) {
-            log.info("savedOptionList isEmpty");
-            ContainProductOption containProductOption = ContainProductOption.builder()
-                    .cart(cart)
-                    .productName(productName)
-                    .productId(productId)
-                    .productMainImage(productMainImage)
-                    .optionId(productOption.getId())
-                    .optionName(productOption.getOptionName())
-                    .optionPrice(productOption.getOptionPrice())
-                    .optionCount(requestProductOptionCount)
-                    .build();
-            containProductOptionRepository.save(containProductOption);
-            log.info("containProductIntoCart end");
-        } else {
-            ContainProductOption containProductOption = checkProductOptionInCart(cart, requestProductOptionId);
-            // 카트에 담긴 옵션 카운트를 바꾸기
-            int changeCount = containProductOption.getOptionCount() + requestProductOptionCount;
-            containProductOption.setOptionCount(changeCount);
-            containProductOptionRepository.save(containProductOption);
+            final Long requestProductOptionId = request.getProductOptionId();
+            final int requestProductOptionCount = request.getOptionCount();
+
+            // 받아온 옵션이 DB에 있는 옵션인지 확인
+            ProductOption productOption = isReallyExistProductOption(requestProductOptionId);
+            Product product = productOption.getProduct();
+            final String productName = product.getProductName();
+            final Long productId = product.getId();
+            Optional<ProductMainImage> maybeProductMainImage = productMainImageRepository.findByProduct(product);
+            String productMainImage = "";
+            if(maybeProductMainImage.isPresent()) {
+                productMainImage = maybeProductMainImage.get().getMainImg();
+            }
+
+            // 받아온 옵션이 카트에 담긴 옵션인지 확인
+            ContainProductOption checkProductOptionInCart = checkProductOptionInCart(cart, requestProductOptionId);
+
+            // 카트에 담긴 옵션이 없다면 새로 옵션을 저장하기
+            if (checkProductOptionInCart == null) {
+                log.info("savedOptionList isEmpty");
+                ContainProductOption containProductOption = ContainProductOption.builder()
+                        .cart(cart)
+                        .productName(productName)
+                        .productId(productId)
+                        .productMainImage(productMainImage)
+                        .optionId(productOption.getId())
+                        .optionName(productOption.getOptionName())
+                        .optionPrice(productOption.getOptionPrice())
+                        .optionCount(requestProductOptionCount)
+                        .build();
+                containProductOptionRepository.save(containProductOption);
+                log.info("containProductIntoCart end");
+            } else {
+                ContainProductOption containProductOption = checkProductOptionInCart(cart, requestProductOptionId);
+                // 카트에 담긴 옵션 카운트를 바꾸기
+                int changeCount = containProductOption.getOptionCount() + requestProductOptionCount;
+                containProductOption.setOptionCount(changeCount);
+                containProductOptionRepository.save(containProductOption);
+            }
         }
     }
 
