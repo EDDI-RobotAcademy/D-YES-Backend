@@ -17,6 +17,7 @@ import java.util.List;
 @AllArgsConstructor
 public class ProductOrder {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String id;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id")

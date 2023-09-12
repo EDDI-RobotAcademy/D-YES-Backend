@@ -8,9 +8,7 @@ import com.dyes.backend.domain.cart.repository.ContainProductOptionRepository;
 import com.dyes.backend.domain.cart.service.CartService;
 import com.dyes.backend.domain.farm.entity.Farm;
 import com.dyes.backend.domain.order.controller.form.OrderConfirmRequestForm;
-import com.dyes.backend.domain.order.service.user.response.form.OrderConfirmResponseFormForUser;
-import com.dyes.backend.domain.order.controller.form.OrderProductInCartRequestForm;
-import com.dyes.backend.domain.order.controller.form.OrderProductInProductPageRequestForm;
+import com.dyes.backend.domain.order.controller.form.OrderProductRequestForm;
 import com.dyes.backend.domain.order.entity.OrderedProduct;
 import com.dyes.backend.domain.order.repository.OrderRepository;
 import com.dyes.backend.domain.order.repository.OrderedProductRepository;
@@ -21,6 +19,7 @@ import com.dyes.backend.domain.order.service.user.request.OrderedProductOptionRe
 import com.dyes.backend.domain.order.service.user.request.OrderedPurchaserProfileRequest;
 import com.dyes.backend.domain.order.service.user.response.OrderConfirmProductResponse;
 import com.dyes.backend.domain.order.service.user.response.OrderConfirmUserResponse;
+import com.dyes.backend.domain.order.service.user.response.form.OrderConfirmResponseFormForUser;
 import com.dyes.backend.domain.payment.repository.PaymentRepository;
 import com.dyes.backend.domain.payment.service.PaymentService;
 import com.dyes.backend.domain.product.entity.*;
@@ -43,7 +42,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 
@@ -104,10 +103,10 @@ public class OrderMockingTest {
         final String userToken = "google 유저";
         final String accessToken = "엑세스 토큰";
         final int totalAmount = 1;
-        OrderProductInCartRequestForm requestForm = new OrderProductInCartRequestForm(
+        OrderProductRequestForm requestForm = new OrderProductRequestForm(
                 userToken,
                 new OrderedPurchaserProfileRequest("구매자 이름", "전화 번호", "이메일", "주소", "코드", "주소 디테일"),
-                List.of(new OrderedProductOptionRequest(1L, 1)), 1
+                List.of(new OrderedProductOptionRequest(1L, 1)), 1, "cart"
         );
         OrderedProduct orderedProduct = new OrderedProduct();
         orderedProduct.setProductOptionId(requestForm.getOrderedProductOptionRequestList().get(0).getProductOptionId());
@@ -126,30 +125,6 @@ public class OrderMockingTest {
         when(mockContainProductOptionRepository.findAllByCart(cart)).thenReturn(List.of(containProductOption));
 
         boolean actual = mockOrderService.orderProductInCart(requestForm);
-        assertTrue(actual);
-    }
-    @Test
-    @DisplayName("order mocking test: order product in product page")
-    public void 사용자가_상품_페이지에서_물품을_주문합니다 () {
-        final String userToken = "google 유저";
-        final String accessToken = "엑세스 토큰";
-        final int totalAmount = 1;
-        OrderProductInProductPageRequestForm requestForm = new OrderProductInProductPageRequestForm(
-                userToken,
-                new OrderedPurchaserProfileRequest("구매자 이름", "전화 번호", "이메일", "주소", "코드", "주소 디테일"),
-                List.of(new OrderedProductOptionRequest(1L, 1)), 1
-        );
-
-        requestForm.setUserToken(userToken);
-        when(mockRedisService.getAccessToken(userToken)).thenReturn(accessToken);
-        User user = new User();
-        when(mockUserRepository.findByAccessToken(accessToken)).thenReturn(Optional.of(user));
-
-        when(mockAuthenticationService.findUserByUserToken(userToken)).thenReturn(user);
-        Cart cart = new Cart();
-        when(mockCartRepository.findByUser(user)).thenReturn(Optional.of(cart));
-
-        boolean actual = mockOrderService.orderProductInProductPage(requestForm);
         assertTrue(actual);
     }
     @Test

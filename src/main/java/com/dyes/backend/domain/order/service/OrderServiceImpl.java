@@ -7,8 +7,7 @@ import com.dyes.backend.domain.cart.repository.CartRepository;
 import com.dyes.backend.domain.cart.repository.ContainProductOptionRepository;
 import com.dyes.backend.domain.cart.service.CartService;
 import com.dyes.backend.domain.order.controller.form.OrderConfirmRequestForm;
-import com.dyes.backend.domain.order.controller.form.OrderProductInCartRequestForm;
-import com.dyes.backend.domain.order.controller.form.OrderProductInProductPageRequestForm;
+import com.dyes.backend.domain.order.controller.form.OrderProductRequestForm;
 import com.dyes.backend.domain.order.entity.DeliveryStatus;
 import com.dyes.backend.domain.order.entity.OrderedProduct;
 import com.dyes.backend.domain.order.entity.OrderedPurchaserProfile;
@@ -19,13 +18,15 @@ import com.dyes.backend.domain.order.repository.OrderedPurchaserProfileRepositor
 import com.dyes.backend.domain.order.service.admin.response.OrderDetailInfoResponse;
 import com.dyes.backend.domain.order.service.admin.response.OrderProductListResponse;
 import com.dyes.backend.domain.order.service.admin.response.OrderUserInfoResponse;
-import com.dyes.backend.domain.order.service.user.response.form.OrderListResponseFormForUser;
+import com.dyes.backend.domain.order.service.admin.response.form.OrderListResponseFormForAdmin;
 import com.dyes.backend.domain.order.service.user.request.OrderConfirmRequest;
 import com.dyes.backend.domain.order.service.user.request.OrderedProductOptionRequest;
 import com.dyes.backend.domain.order.service.user.request.OrderedPurchaserProfileRequest;
-import com.dyes.backend.domain.order.service.user.response.*;
+import com.dyes.backend.domain.order.service.user.response.OrderConfirmProductResponse;
+import com.dyes.backend.domain.order.service.user.response.OrderConfirmUserResponse;
+import com.dyes.backend.domain.order.service.user.response.OrderOptionListResponse;
 import com.dyes.backend.domain.order.service.user.response.form.OrderConfirmResponseFormForUser;
-import com.dyes.backend.domain.order.service.admin.response.form.OrderListResponseFormForAdmin;
+import com.dyes.backend.domain.order.service.user.response.form.OrderListResponseFormForUser;
 import com.dyes.backend.domain.payment.entity.Payment;
 import com.dyes.backend.domain.payment.entity.PaymentAmount;
 import com.dyes.backend.domain.payment.repository.PaymentRepository;
@@ -70,7 +71,7 @@ public class OrderServiceImpl implements OrderService {
     final private RedisService redisService;
     final private AuthenticationService authenticationService;
 
-    public RedirectView purchaseReadyWithKakao(OrderProductInCartRequestForm requestForm) {
+    public RedirectView purchaseReadyWithKakao(OrderProductRequestForm requestForm) {
         log.info("purchaseKakao start");
 
         User user = authenticationService.findUserByUserToken(requestForm.getUserToken());
@@ -114,9 +115,8 @@ public class OrderServiceImpl implements OrderService {
 
         return new RedirectView(response.getNext_redirect_pc_url());
     }
-    // 장바구니에서 상품 주문
-    @Override
-    public boolean orderProductInCart(OrderProductInCartRequestForm requestForm) {
+    // 상품 주문
+    public boolean orderProductInCart(OrderProductRequestForm requestForm) {
         log.info("orderProductInCart start");
         try {
             OrderedPurchaserProfileRequest profileRequest = OrderedPurchaserProfileRequest.builder()
@@ -127,27 +127,28 @@ public class OrderServiceImpl implements OrderService {
                     .orderedPurchaserZipCode(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserZipCode())
                     .orderedPurchaserAddressDetail(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserAddressDetail())
                     .build();
-            final String paymentNumber = "랜덤한 결제 정보" + UUID.randomUUID();
+
             final String userToken = requestForm.getUserToken();
             final int totalAmount = requestForm.getTotalAmount();
             User user = authenticationService.findUserByUserToken(userToken);
             List<OrderedProductOptionRequest> orderedProductOptionRequestList = requestForm.getOrderedProductOptionRequestList();
 
-            saveOrderedData(profileRequest, paymentNumber, totalAmount, user, orderedProductOptionRequestList);
-
-            // 주문한 상품이 장바구니에 있으면 장바구니에서 목록 제거
+            saveOrderedData(profileRequest, totalAmount, user, orderedProductOptionRequestList);
 
             // 유저 토큰으로 장바구니 찾기
             Cart cart = cartService.cartCheckFromUserToken(userToken);
 
-            // 장바구니에 담긴 상품 리스트 불러오기
-            List<ContainProductOption> productOptionList = containProductOptionRepository.findAllByCart(cart);
+            // 주문한 상품이 장바구니에 있으면 장바구니에서 목록 제거
+            if (requestForm.getFrom().equals("cart")) {
+                // 장바구니에 담긴 상품 리스트 불러오기
+                List<ContainProductOption> productOptionList = containProductOptionRepository.findAllByCart(cart);
 
-            for (ContainProductOption containProductOption : productOptionList) {
-                for (OrderedProductOptionRequest orderedProductOptionRequest : orderedProductOptionRequestList)
-                    if (Objects.equals(containProductOption.getOptionId(), orderedProductOptionRequest.getProductOptionId())) {
-                        containProductOptionRepository.delete(containProductOption);
-                    }
+                for (ContainProductOption containProductOption : productOptionList) {
+                    for (OrderedProductOptionRequest orderedProductOptionRequest : orderedProductOptionRequestList)
+                        if (Objects.equals(containProductOption.getOptionId(), orderedProductOptionRequest.getProductOptionId())) {
+                            containProductOptionRepository.delete(containProductOption);
+                        }
+                }
             }
             return true;
         } catch (Exception e) {
@@ -155,37 +156,6 @@ public class OrderServiceImpl implements OrderService {
             return false;
         }
     }
-
-    // 제품 페이지에서 상품 주문
-    @Override
-    public boolean orderProductInProductPage(OrderProductInProductPageRequestForm requestForm) {
-        log.info("orderProductInProductPage start");
-
-        try {
-            OrderedPurchaserProfileRequest profileRequest = OrderedPurchaserProfileRequest.builder()
-                    .orderedPurchaserName(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserName())
-                    .orderedPurchaserContactNumber(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserContactNumber())
-                    .orderedPurchaserEmail(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserEmail())
-                    .orderedPurchaserAddress(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserAddress())
-                    .orderedPurchaserZipCode(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserZipCode())
-                    .orderedPurchaserAddressDetail(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserAddressDetail())
-                    .build();
-            final String paymentNumber = "랜덤한 결제 정보" + UUID.randomUUID();
-            final String userToken = requestForm.getUserToken();
-            final int totalAmount = requestForm.getTotalAmount();
-            User user = authenticationService.findUserByUserToken(userToken);
-            List<OrderedProductOptionRequest> orderedProductOptionRequestList = requestForm.getOrderedProductOptionRequestList();
-
-            saveOrderedData(profileRequest, paymentNumber, totalAmount, user, orderedProductOptionRequestList);
-
-            log.info("orderProductInProductPage end");
-            return true;
-        } catch (Exception e) {
-            log.error("Error occurred while ordering products in cart", e);
-            return false;
-        }
-    }
-
     // 상품을 주문하기 전에 확인하기
     @Override
     public OrderConfirmResponseFormForUser orderConfirm(OrderConfirmRequestForm requestForm) {
@@ -394,7 +364,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     // 주문 진행
-    public void saveOrderedData(OrderedPurchaserProfileRequest profileRequest, String paymentNumber,
+    public void saveOrderedData(OrderedPurchaserProfileRequest profileRequest,
                                 int totalAmount, User user, List<OrderedProductOptionRequest> orderedProductOptionRequestList) {
 
         final String purchaserName = profileRequest.getOrderedPurchaserName();
@@ -406,7 +376,6 @@ public class OrderServiceImpl implements OrderService {
 
         // 주문 저장
         ProductOrder order = ProductOrder.builder()
-                .id(paymentNumber)
                 .user(user)
                 .totalAmount(totalAmount)
                 .orderedTime(LocalDate.now())
