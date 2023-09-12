@@ -14,6 +14,7 @@ import java.time.Duration;
 @RequiredArgsConstructor
 public class RedisServiceImpl implements RedisService{
     final private RedisTemplate<String, String> redisTemplateObject;
+    final private RedisTemplate<String, Object> longObjectRedisTemplate;
 
     @Override
     public void setUserTokenAndUser (String userToken, String accessToken) {
@@ -40,6 +41,12 @@ public class RedisServiceImpl implements RedisService{
         } catch (RedisException e) {
             log.error("Error while deleting key and value for userToken: {}", userToken, e);
         }
+    }
+
+    @Override
+    public void paymentTemporaryStorage(String id, Object object) {
+        ValueOperations<String, Object> value = longObjectRedisTemplate.opsForValue();
+        value.set(id, object);
     }
 
 }

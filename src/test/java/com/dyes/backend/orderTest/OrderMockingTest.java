@@ -21,6 +21,8 @@ import com.dyes.backend.domain.order.service.user.request.OrderedProductOptionRe
 import com.dyes.backend.domain.order.service.user.request.OrderedPurchaserProfileRequest;
 import com.dyes.backend.domain.order.service.user.response.OrderConfirmProductResponse;
 import com.dyes.backend.domain.order.service.user.response.OrderConfirmUserResponse;
+import com.dyes.backend.domain.payment.repository.PaymentRepository;
+import com.dyes.backend.domain.payment.service.PaymentService;
 import com.dyes.backend.domain.product.entity.*;
 import com.dyes.backend.domain.product.repository.ProductMainImageRepository;
 import com.dyes.backend.domain.product.repository.ProductOptionRepository;
@@ -69,6 +71,11 @@ public class OrderMockingTest {
     @Mock
     private UserRepository mockUserRepository;
     @Mock
+    private PaymentRepository mockPaymentRepository;
+    @Mock
+    private PaymentService mockPaymentService;
+
+    @Mock
     OrderedPurchaserProfileRepository mockOrderedPurchaserProfileRepository;
     @InjectMocks
     private OrderServiceImpl mockOrderService;
@@ -84,9 +91,12 @@ public class OrderMockingTest {
                 mockProductMainImageRepository,
                 mockOrderedProductRepository,
                 mockOrderedPurchaserProfileRepository,
+                mockPaymentRepository,
                 mockCartService,
+                mockPaymentService,
+                mockRedisService,
                 mockAuthenticationService
-        );
+                );
     }
     @Test
     @DisplayName("order mocking test: order product in cart")

@@ -26,6 +26,12 @@ import com.dyes.backend.domain.order.service.user.request.OrderedPurchaserProfil
 import com.dyes.backend.domain.order.service.user.response.*;
 import com.dyes.backend.domain.order.service.user.response.form.OrderConfirmResponseFormForUser;
 import com.dyes.backend.domain.order.service.admin.response.form.OrderListResponseFormForAdmin;
+import com.dyes.backend.domain.payment.entity.Payment;
+import com.dyes.backend.domain.payment.entity.PaymentAmount;
+import com.dyes.backend.domain.payment.repository.PaymentRepository;
+import com.dyes.backend.domain.payment.service.PaymentService;
+import com.dyes.backend.domain.payment.service.request.KakaoPaymentRequest;
+import com.dyes.backend.domain.payment.service.response.KakaoPaymentReadyResponse;
 import com.dyes.backend.domain.product.entity.Product;
 import com.dyes.backend.domain.product.entity.ProductMainImage;
 import com.dyes.backend.domain.product.entity.ProductOption;
@@ -35,9 +41,11 @@ import com.dyes.backend.domain.user.entity.Address;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserProfile;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
+import com.dyes.backend.utility.redis.RedisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.view.RedirectView;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -56,15 +64,61 @@ public class OrderServiceImpl implements OrderService {
     final private ProductMainImageRepository productMainImageRepository;
     final private OrderedProductRepository orderedProductRepository;
     final private OrderedPurchaserProfileRepository orderedPurchaserProfileRepository;
+    final private PaymentRepository paymentRepository;
     final private CartService cartService;
+    final private PaymentService paymentService;
+    final private RedisService redisService;
     final private AuthenticationService authenticationService;
 
+    public RedirectView purchaseReadyWithKakao(OrderProductInCartRequestForm requestForm) {
+        log.info("purchaseKakao start");
+
+        User user = authenticationService.findUserByUserToken(requestForm.getUserToken());
+        StringBuilder stringBuilder = new StringBuilder();
+        String itemName = stringBuilder.toString();
+        Integer quantity = null;
+
+        for (OrderedProductOptionRequest optionRequest : requestForm.getOrderedProductOptionRequestList()) {
+
+            ProductOption productOption = productOptionRepository.findById(optionRequest.getProductOptionId()).get();
+
+            stringBuilder.append(productOption.getOptionName() + ',');
+            quantity += optionRequest.getProductOptionCount();
+        }
+
+        KakaoPaymentRequest request = KakaoPaymentRequest.builder()
+                .partner_order_id("TOTO_MARKET")
+                .partner_user_id(user.getId())
+                .item_name(itemName)
+                .quantity(quantity)
+                .total_amount(requestForm.getTotalAmount())
+                .tax_free_amount(requestForm.getTotalAmount()/10)
+                .build();
+
+        KakaoPaymentReadyResponse response = paymentService.paymentRequest(request);
+
+        redisService.paymentTemporaryStorage(user.getId(), requestForm);
+
+        PaymentAmount paymentAmount = new PaymentAmount();
+        paymentAmount.setTotal(requestForm.getTotalAmount());
+
+        Payment payment = Payment.builder()
+                .tid(response.getTid())
+                .partner_user_id(user.getId())
+                .paymentAmount(paymentAmount)
+                .item_name(itemName)
+                .quantity(quantity)
+                .build();
+
+        paymentRepository.save(payment);
+
+        return new RedirectView(response.getNext_redirect_pc_url());
+    }
     // 장바구니에서 상품 주문
     @Override
     public boolean orderProductInCart(OrderProductInCartRequestForm requestForm) {
         log.info("orderProductInCart start");
         try {
-
             OrderedPurchaserProfileRequest profileRequest = OrderedPurchaserProfileRequest.builder()
                     .orderedPurchaserName(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserName())
                     .orderedPurchaserContactNumber(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserContactNumber())
@@ -108,7 +162,6 @@ public class OrderServiceImpl implements OrderService {
         log.info("orderProductInProductPage start");
 
         try {
-
             OrderedPurchaserProfileRequest profileRequest = OrderedPurchaserProfileRequest.builder()
                     .orderedPurchaserName(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserName())
                     .orderedPurchaserContactNumber(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserContactNumber())

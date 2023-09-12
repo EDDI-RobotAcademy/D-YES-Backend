@@ -10,6 +10,7 @@ import com.dyes.backend.domain.order.service.admin.response.form.OrderListRespon
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.view.RedirectView;
 
 import java.util.List;
 
@@ -19,6 +20,12 @@ import java.util.List;
 @RequestMapping("/order")
 public class OrderController {
     final private OrderService orderService;
+
+    // 카카오로 상품 구매
+    @PostMapping("/payment/kakao")
+    public RedirectView orderWithKakaoPayment(@RequestBody OrderProductInCartRequestForm requestForm) {
+        return orderService.purchaseReadyWithKakao(requestForm);
+    }
 
     // 장바구니에서 상품 주문
     @PostMapping("/in-cart")
