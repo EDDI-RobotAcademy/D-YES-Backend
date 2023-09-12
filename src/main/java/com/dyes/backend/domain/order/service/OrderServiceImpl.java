@@ -6,10 +6,12 @@ import com.dyes.backend.domain.cart.entity.ContainProductOption;
 import com.dyes.backend.domain.cart.repository.CartRepository;
 import com.dyes.backend.domain.cart.repository.ContainProductOptionRepository;
 import com.dyes.backend.domain.cart.service.CartService;
+import com.dyes.backend.domain.delivery.entity.Delivery;
+import com.dyes.backend.domain.delivery.repository.DeliveryRepository;
 import com.dyes.backend.domain.order.controller.form.OrderConfirmRequestForm;
 import com.dyes.backend.domain.order.controller.form.OrderProductInCartRequestForm;
 import com.dyes.backend.domain.order.controller.form.OrderProductInProductPageRequestForm;
-import com.dyes.backend.domain.order.entity.DeliveryStatus;
+import com.dyes.backend.domain.delivery.entity.DeliveryStatus;
 import com.dyes.backend.domain.order.entity.OrderedProduct;
 import com.dyes.backend.domain.order.entity.OrderedPurchaserProfile;
 import com.dyes.backend.domain.order.entity.ProductOrder;
@@ -42,7 +44,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.*;
 
-import static com.dyes.backend.domain.order.entity.DeliveryStatus.PREPARING;
+import static com.dyes.backend.domain.delivery.entity.DeliveryStatus.PREPARING;
 
 @Service
 @Slf4j
@@ -56,6 +58,7 @@ public class OrderServiceImpl implements OrderService {
     final private ProductMainImageRepository productMainImageRepository;
     final private OrderedProductRepository orderedProductRepository;
     final private OrderedPurchaserProfileRepository orderedPurchaserProfileRepository;
+    final private DeliveryRepository deliveryRepository;
     final private CartService cartService;
     final private AuthenticationService authenticationService;
 
@@ -232,7 +235,8 @@ public class OrderServiceImpl implements OrderService {
             // 주문한 상품 및 옵션 정보 가져오기
             Long totalPrice = 0L;
             String productOrderId = order.getId();
-            DeliveryStatus deliveryStatus = order.getDeliveryStatus();
+            Delivery delivery = order.getDelivery();
+            DeliveryStatus deliveryStatus = delivery.getDeliveryStatus();
             LocalDate orderedTime = order.getOrderedTime();
             List<OrderProductListResponse> orderProductList = new ArrayList<>();
 
@@ -285,7 +289,7 @@ public class OrderServiceImpl implements OrderService {
         User user = authenticationService.findUserByUserToken(userToken);
 
         // 모든 주문 내역 가져오기
-        List<ProductOrder> orderList = orderRepository.findAllByUserWithUser(user);
+        List<ProductOrder> orderList = orderRepository.findAllByUserWithUserAndDelivery(user);
 
         List<OrderListResponseFormForUser> orderListResponseFormForUsers = new ArrayList<>();
 
@@ -294,7 +298,8 @@ public class OrderServiceImpl implements OrderService {
             // 주문한 상품 및 옵션 정보 가져오기
             Long totalPrice = 0L;
             String productOrderId = order.getId();
-            DeliveryStatus deliveryStatus = order.getDeliveryStatus();
+            Delivery delivery = order.getDelivery();
+            DeliveryStatus deliveryStatus = delivery.getDeliveryStatus();
             LocalDate orderedTime = order.getOrderedTime();
             List<OrderProductListResponse> orderProductList = new ArrayList<>();
 
@@ -352,12 +357,17 @@ public class OrderServiceImpl implements OrderService {
         final String purchaserAddressDetail = profileRequest.getOrderedPurchaserAddressDetail();
 
         // 주문 저장
+        Delivery delivery = Delivery.builder()
+                .deliveryStatus(PREPARING)
+                .build();
+        deliveryRepository.save(delivery);
+
         ProductOrder order = ProductOrder.builder()
                 .id(paymentNumber)
                 .user(user)
                 .totalAmount(totalAmount)
                 .orderedTime(LocalDate.now())
-                .deliveryStatus(PREPARING)
+                .delivery(delivery)
                 .build();
 
         orderRepository.save(order);
