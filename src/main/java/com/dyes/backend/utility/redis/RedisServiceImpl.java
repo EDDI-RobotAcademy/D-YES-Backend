@@ -4,6 +4,7 @@ import io.lettuce.core.RedisException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 
@@ -13,18 +14,17 @@ import java.time.Duration;
 @Service
 @RequiredArgsConstructor
 public class RedisServiceImpl implements RedisService{
-    final private RedisTemplate<String, String> redisTemplateObject;
-    final private RedisTemplate<String, Object> longObjectRedisTemplate;
-
+    final private RedisTemplate<String, Object> redisTemplateObject;
+    final private StringRedisTemplate stringRedisTemplate;
     @Override
     public void setUserTokenAndUser (String userToken, String accessToken) {
-        ValueOperations<String, String> value = redisTemplateObject.opsForValue();
+        ValueOperations<String, String> value = stringRedisTemplate.opsForValue();
         value.set(userToken, accessToken);
     }
 
     @Override
     public String getAccessToken(String userToken) {
-        ValueOperations<String, String> value = redisTemplateObject.opsForValue();
+        ValueOperations<String, String> value = stringRedisTemplate.opsForValue();
         String accessToken = value.get(userToken);
 
         if(accessToken == null) {
@@ -45,7 +45,7 @@ public class RedisServiceImpl implements RedisService{
 
     @Override
     public void paymentTemporaryStorage(String id, Object object) {
-        ValueOperations<String, Object> value = longObjectRedisTemplate.opsForValue();
+        ValueOperations<String, Object> value = redisTemplateObject.opsForValue();
         value.set(id, object);
     }
 

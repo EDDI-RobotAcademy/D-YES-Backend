@@ -26,18 +26,6 @@ public class OrderController {
         return orderService.purchaseReadyWithKakao(requestForm);
     }
 
-//    // 장바구니에서 상품 주문
-//    @PostMapping("/in-cart")
-//    public boolean orderProductInCart(@RequestBody OrderProductInCartRequestForm requestForm) {
-//        return orderService.orderProductInCart(requestForm);
-//    }
-//
-//    // 상세 페이지에서 상품 주문
-//    @PostMapping("/in-product-page")
-//    public boolean orderProductInProductPage(@RequestBody OrderProductInProductPageRequestForm requestForm) {
-//        return orderService.orderProductInProductPage(requestForm);
-//    }
-
     // 결제 전 주문 요청내역 확인
     @GetMapping("/confirm")
     public OrderConfirmResponseFormForUser confirmProductInCart(@RequestParam("userToken") String userToken) {

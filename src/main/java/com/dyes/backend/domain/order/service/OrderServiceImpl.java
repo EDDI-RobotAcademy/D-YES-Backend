@@ -22,6 +22,7 @@ import com.dyes.backend.domain.order.service.admin.response.form.OrderListRespon
 import com.dyes.backend.domain.order.service.user.request.OrderConfirmRequest;
 import com.dyes.backend.domain.order.service.user.request.OrderedProductOptionRequest;
 import com.dyes.backend.domain.order.service.user.request.OrderedPurchaserProfileRequest;
+import com.dyes.backend.domain.order.service.user.request.PaymentTemporarySaveRequest;
 import com.dyes.backend.domain.order.service.user.response.OrderConfirmProductResponse;
 import com.dyes.backend.domain.order.service.user.response.OrderConfirmUserResponse;
 import com.dyes.backend.domain.order.service.user.response.OrderOptionListResponse;
@@ -42,6 +43,7 @@ import com.dyes.backend.domain.user.entity.Address;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserProfile;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
+import com.dyes.backend.domain.user.repository.UserRepository;
 import com.dyes.backend.utility.redis.RedisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -69,49 +71,68 @@ public class OrderServiceImpl implements OrderService {
     final private CartService cartService;
     final private PaymentService paymentService;
     final private RedisService redisService;
+    final private UserRepository userRepository;
     final private AuthenticationService authenticationService;
 
     public RedirectView purchaseReadyWithKakao(OrderProductRequestForm requestForm) {
         log.info("purchaseKakao start");
 
         User user = authenticationService.findUserByUserToken(requestForm.getUserToken());
-        StringBuilder stringBuilder = new StringBuilder();
-        String itemName = stringBuilder.toString();
-        Integer quantity = null;
 
-        for (OrderedProductOptionRequest optionRequest : requestForm.getOrderedProductOptionRequestList()) {
+        PaymentTemporarySaveRequest saveRequest = PaymentTemporarySaveRequest.builder()
+                .userToken(requestForm.getUserToken())
+                .orderedPurchaserProfileRequest(requestForm.getOrderedPurchaserProfileRequest())
+                .orderedProductOptionRequestList(requestForm.getOrderedProductOptionRequestList())
+                .totalAmount(requestForm.getTotalAmount())
+                .from(requestForm.getFrom())
+                .build();
+
+        String itemName = "";
+        Integer quantity = 0;
+
+        for (OrderedProductOptionRequest optionRequest : saveRequest.getOrderedProductOptionRequestList()) {
 
             ProductOption productOption = productOptionRepository.findById(optionRequest.getProductOptionId()).get();
 
-            stringBuilder.append(productOption.getOptionName() + ',');
+            itemName += productOption.getOptionName() + ", ";
             quantity += optionRequest.getProductOptionCount();
         }
+        log.info("itemName: " + itemName);
+        log.info("quantity: " + quantity);
 
         KakaoPaymentRequest request = KakaoPaymentRequest.builder()
-                .partner_order_id("TOTO_MARKET")
+                .partner_order_id(user.getId() + itemName)
                 .partner_user_id(user.getId())
                 .item_name(itemName)
                 .quantity(quantity)
-                .total_amount(requestForm.getTotalAmount())
-                .tax_free_amount(requestForm.getTotalAmount()/10)
+                .total_amount(saveRequest.getTotalAmount())
+                .tax_free_amount(saveRequest.getTotalAmount()/11) // 세금을 10퍼센트라고 했을 때
                 .build();
+        log.info("request: " + request);
 
         KakaoPaymentReadyResponse response = paymentService.paymentRequest(request);
+        log.info("response: " + response);
 
-        redisService.paymentTemporaryStorage(user.getId(), requestForm);
-
-        PaymentAmount paymentAmount = new PaymentAmount();
-        paymentAmount.setTotal(requestForm.getTotalAmount());
 
         Payment payment = Payment.builder()
                 .tid(response.getTid())
+                .partner_order_id(user.getId() + ": " + itemName)
                 .partner_user_id(user.getId())
-                .paymentAmount(paymentAmount)
+                .paymentAmount(new PaymentAmount(saveRequest.getTotalAmount(),
+                        saveRequest.getTotalAmount()*1.1,
+                        (saveRequest.getTotalAmount()*1.1)*10,
+                        0,0))
                 .item_name(itemName)
                 .quantity(quantity)
+                .approved_at(response.getCreated_at())
                 .build();
 
         paymentRepository.save(payment);
+        log.info("payment: " + payment);
+
+        saveRequest.setTid(response.getTid());
+        redisService.paymentTemporaryStorage(user.getId(), saveRequest);
+        log.info("saveRequest: " + saveRequest);
 
         return new RedirectView(response.getNext_redirect_pc_url());
     }
