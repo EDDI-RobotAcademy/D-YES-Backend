@@ -8,13 +8,11 @@ import com.dyes.backend.domain.authentication.service.AuthenticationService;
 import com.dyes.backend.domain.authentication.service.google.GoogleAuthenticationService;
 import com.dyes.backend.domain.authentication.service.kakao.service.KakaoAuthenticationService;
 import com.dyes.backend.domain.authentication.service.naver.NaverAuthenticationService;
-import com.dyes.backend.domain.user.controller.form.GoogleUserLoginRequestForm;
-import com.dyes.backend.domain.user.controller.form.KakaoUserLoginRequestForm;
-import com.dyes.backend.domain.user.controller.form.NaverUserLoginRequestForm;
-import com.dyes.backend.domain.user.controller.form.UserProfileModifyRequestForm;
+import com.dyes.backend.domain.user.controller.form.*;
 import com.dyes.backend.domain.user.entity.*;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import com.dyes.backend.domain.user.repository.UserRepository;
+import com.dyes.backend.domain.user.service.request.UserAddressModifyRequest;
 import com.dyes.backend.domain.user.service.response.*;
 import com.dyes.backend.utility.provider.GoogleOauthSecretsProvider;
 import com.dyes.backend.utility.provider.KakaoOauthSecretsProvider;
@@ -459,6 +457,32 @@ public class UserServiceImpl implements UserService {
             }
             return userLogOut(userToken);
         } else {
+            return false;
+        }
+    }
+
+    // 사용자 배송지 정보 업데이트
+    @Override
+    public Boolean updateAddress(UserAddressModifyRequestForm requestForm) {
+        final User user = authenticationService.findUserByUserToken(requestForm.getUserToken());
+        if(user == null) {
+            return false;
+        }
+
+        UserAddressModifyRequest userAddressModifyRequest = requestForm.toUserAddressModifyRequest();
+        Address address = userAddressModifyRequest.toAddress();
+
+        try {
+            Optional<UserProfile> maybeUserProfile = userProfileRepository.findByUser(user);
+            if(maybeUserProfile.isPresent()) {
+                UserProfile userProfile = maybeUserProfile.get();
+                userProfile.setAddress(address);
+                userProfileRepository.save(userProfile);
+            }
+            return true;
+
+        } catch (Exception e) {
+            log.error("Failed to update the user address: {}", e.getMessage(), e);
             return false;
         }
     }

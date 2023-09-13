@@ -1,5 +1,6 @@
 package com.dyes.backend.domain.user.controller;
 
+import com.dyes.backend.domain.user.controller.form.UserAddressModifyRequestForm;
 import com.dyes.backend.domain.user.controller.form.UserProfileModifyRequestForm;
 import com.dyes.backend.domain.user.service.UserService;
 import com.dyes.backend.domain.user.service.response.UserInfoResponseForm;
@@ -59,6 +60,13 @@ public class UserController {
     public Boolean userWithdrawal(@RequestParam("userToken") String userToken) {
 
         return userService.userWithdrawal(userToken);
+    }
+
+    // 사용자 배송지 정보 업데이트
+    @PutMapping("/update-address")
+    public Boolean updateAddress(@RequestBody UserAddressModifyRequestForm requestForm) {
+        log.info("배송지 업데이트");
+        return userService.updateAddress(requestForm);
     }
 
     // 관리자의 회원 목록 조회
