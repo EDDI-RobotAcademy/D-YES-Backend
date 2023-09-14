@@ -1,6 +1,6 @@
 package com.dyes.backend.utility.redis;
 
-import com.dyes.backend.domain.order.service.user.request.PaymentTemporarySaveRequest;
+import com.dyes.backend.domain.payment.service.request.PaymentTemporarySaveRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 public interface RedisService {
@@ -10,4 +10,5 @@ public interface RedisService {
     void deleteKeyAndValueWithUserToken(String userToken);
     void paymentTemporarySaveData(String id, PaymentTemporarySaveRequest saveRequest) throws JsonProcessingException;
     PaymentTemporarySaveRequest getPaymentTemporarySaveData (String id) throws JsonProcessingException;
+    boolean deletePaymentTemporarySaveData (String id);
 }

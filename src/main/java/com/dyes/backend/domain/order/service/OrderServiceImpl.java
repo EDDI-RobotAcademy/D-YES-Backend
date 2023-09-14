@@ -6,6 +6,7 @@ import com.dyes.backend.domain.cart.entity.ContainProductOption;
 import com.dyes.backend.domain.cart.repository.CartRepository;
 import com.dyes.backend.domain.cart.repository.ContainProductOptionRepository;
 import com.dyes.backend.domain.cart.service.CartService;
+import com.dyes.backend.domain.order.controller.form.KakaoPaymentApprovalRequestForm;
 import com.dyes.backend.domain.order.controller.form.OrderConfirmRequestForm;
 import com.dyes.backend.domain.order.controller.form.OrderProductRequestForm;
 import com.dyes.backend.domain.order.entity.DeliveryStatus;
@@ -20,20 +21,16 @@ import com.dyes.backend.domain.order.service.admin.response.OrderProductListResp
 import com.dyes.backend.domain.order.service.admin.response.OrderUserInfoResponse;
 import com.dyes.backend.domain.order.service.admin.response.form.OrderListResponseFormForAdmin;
 import com.dyes.backend.domain.order.service.user.request.OrderConfirmRequest;
+import com.dyes.backend.domain.order.service.user.request.OrderProductRequest;
 import com.dyes.backend.domain.order.service.user.request.OrderedProductOptionRequest;
 import com.dyes.backend.domain.order.service.user.request.OrderedPurchaserProfileRequest;
-import com.dyes.backend.domain.order.service.user.request.PaymentTemporarySaveRequest;
 import com.dyes.backend.domain.order.service.user.response.OrderConfirmProductResponse;
 import com.dyes.backend.domain.order.service.user.response.OrderConfirmUserResponse;
 import com.dyes.backend.domain.order.service.user.response.OrderOptionListResponse;
 import com.dyes.backend.domain.order.service.user.response.form.OrderConfirmResponseFormForUser;
 import com.dyes.backend.domain.order.service.user.response.form.OrderListResponseFormForUser;
-import com.dyes.backend.domain.payment.entity.Payment;
-import com.dyes.backend.domain.payment.entity.PaymentAmount;
-import com.dyes.backend.domain.payment.repository.PaymentRepository;
 import com.dyes.backend.domain.payment.service.PaymentService;
-import com.dyes.backend.domain.payment.service.request.KakaoPaymentRequest;
-import com.dyes.backend.domain.payment.service.response.KakaoPaymentReadyResponse;
+import com.dyes.backend.domain.payment.service.request.KakaoPaymentApprovalRequest;
 import com.dyes.backend.domain.product.entity.Product;
 import com.dyes.backend.domain.product.entity.ProductMainImage;
 import com.dyes.backend.domain.product.entity.ProductOption;
@@ -43,7 +40,6 @@ import com.dyes.backend.domain.user.entity.Address;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserProfile;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
-import com.dyes.backend.utility.redis.RedisService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -70,72 +66,30 @@ public class OrderServiceImpl implements OrderService {
     final private ProductMainImageRepository productMainImageRepository;
     final private OrderedProductRepository orderedProductRepository;
     final private OrderedPurchaserProfileRepository orderedPurchaserProfileRepository;
-    final private PaymentRepository paymentRepository;
     final private CartService cartService;
     final private PaymentService paymentService;
-    final private RedisService redisService;
     final private AuthenticationService authenticationService;
 
     public RedirectView purchaseReadyWithKakao(OrderProductRequestForm requestForm) throws JsonProcessingException {
         log.info("purchaseKakao start");
 
-        User user = authenticationService.findUserByUserToken(requestForm.getUserToken());
-        PaymentTemporarySaveRequest saveRequest = PaymentTemporarySaveRequest.builder()
-                .userToken(requestForm.getUserToken())
-                .orderedPurchaserProfileRequest(requestForm.getOrderedPurchaserProfileRequest())
-                .orderedProductOptionRequestList(requestForm.getOrderedProductOptionRequestList())
-                .totalAmount(requestForm.getTotalAmount())
-                .from(requestForm.getFrom())
-                .build();
+        OrderProductRequest request = new OrderProductRequest(
+                requestForm.getUserToken(),
+                requestForm.getOrderedPurchaserProfileRequest(),
+                requestForm.getOrderedProductOptionRequestList(),
+                requestForm.getTotalAmount(),
+                requestForm.getFrom()
+                );
+        RedirectView redirectUrl = paymentService.paymentTemporaryDataSaveAndReturnRedirectView(request);
 
-        String itemName = "";
-        Integer quantity = 0;
-
-        for (OrderedProductOptionRequest optionRequest : saveRequest.getOrderedProductOptionRequestList()) {
-
-            ProductOption productOption = productOptionRepository.findById(optionRequest.getProductOptionId()).get();
-
-            itemName += productOption.getOptionName() + ", ";
-            quantity += optionRequest.getProductOptionCount();
-        }
-        log.info("itemName: " + itemName);
-        log.info("quantity: " + quantity);
-
-        KakaoPaymentRequest request = KakaoPaymentRequest.builder()
-                .partner_order_id(user.getId() + itemName)
-                .partner_user_id(user.getId())
-                .item_name(itemName)
-                .quantity(quantity)
-                .total_amount(saveRequest.getTotalAmount())
-                .tax_free_amount(saveRequest.getTotalAmount()/11) // 세금을 10퍼센트라고 했을 때
-                .build();
-        log.info("request: " + request);
-
-        KakaoPaymentReadyResponse response = paymentService.paymentRequest(request);
-        log.info("response: " + response);
-
-
-        Payment payment = Payment.builder()
-                .tid(response.getTid())
-                .partner_order_id(user.getId() + ": " + itemName)
-                .partner_user_id(user.getId())
-                .paymentAmount(new PaymentAmount(saveRequest.getTotalAmount(),
-                        saveRequest.getTotalAmount()*1.1,
-                        (saveRequest.getTotalAmount()*1.1)*10,
-                        0,0))
-                .item_name(itemName)
-                .quantity(quantity)
-                .approved_at(response.getCreated_at())
-                .build();
-
-        paymentRepository.save(payment);
-        log.info("payment: " + payment);
-
-        saveRequest.setTid(response.getTid());
-        redisService.paymentTemporarySaveData(user.getId(), saveRequest);
-        log.info("saveRequest: " + saveRequest);
-
-        return new RedirectView(response.getNext_redirect_pc_url());
+        return redirectUrl;
+    }
+    public boolean approvalPurchaseWithKakao (KakaoPaymentApprovalRequestForm requestForm) throws JsonProcessingException {
+        log.info("approvalPurchaseKakao start");
+        KakaoPaymentApprovalRequest request = new KakaoPaymentApprovalRequest(requestForm.getUserToken(), requestForm.getPg_token());
+        boolean result = paymentService.paymentApprovalRequest(request);
+        log.info("approvalPurchaseKakao end");
+        return result;
     }
     // 상품 주문
     public boolean orderProductInCart(OrderProductRequestForm requestForm) {
@@ -153,6 +107,9 @@ public class OrderServiceImpl implements OrderService {
             final String userToken = requestForm.getUserToken();
             final int totalAmount = requestForm.getTotalAmount();
             User user = authenticationService.findUserByUserToken(userToken);
+            if (user == null) {
+                return false;
+            }
             List<OrderedProductOptionRequest> orderedProductOptionRequestList = requestForm.getOrderedProductOptionRequestList();
 
             saveOrderedData(profileRequest, totalAmount, user, orderedProductOptionRequestList);
@@ -187,6 +144,9 @@ public class OrderServiceImpl implements OrderService {
             final String userToken = request.getUserToken();
             // 유저 정보 찾기
             User user = authenticationService.findUserByUserToken(userToken);
+            if (user == null) {
+                return null;
+            }
             UserProfile userProfile = userProfileRepository.findByUser(user).get();
 
             // 반환될 유저 정보
@@ -328,6 +288,9 @@ public class OrderServiceImpl implements OrderService {
     public List<OrderListResponseFormForUser> getMyOrderListForUser(String userToken) {
 
         User user = authenticationService.findUserByUserToken(userToken);
+        if (user == null) {
+            return null;
+        }
 
         // 모든 주문 내역 가져오기
         List<ProductOrder> orderList = orderRepository.findAllByUserWithUser(user);

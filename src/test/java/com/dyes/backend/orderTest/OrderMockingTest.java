@@ -14,13 +14,13 @@ import com.dyes.backend.domain.order.repository.OrderRepository;
 import com.dyes.backend.domain.order.repository.OrderedProductRepository;
 import com.dyes.backend.domain.order.repository.OrderedPurchaserProfileRepository;
 import com.dyes.backend.domain.order.service.OrderServiceImpl;
+import com.dyes.backend.domain.order.service.user.request.OrderConfirmProductRequest;
 import com.dyes.backend.domain.order.service.user.request.OrderConfirmRequest;
 import com.dyes.backend.domain.order.service.user.request.OrderedProductOptionRequest;
 import com.dyes.backend.domain.order.service.user.request.OrderedPurchaserProfileRequest;
 import com.dyes.backend.domain.order.service.user.response.OrderConfirmProductResponse;
 import com.dyes.backend.domain.order.service.user.response.OrderConfirmUserResponse;
 import com.dyes.backend.domain.order.service.user.response.form.OrderConfirmResponseFormForUser;
-import com.dyes.backend.domain.payment.repository.PaymentRepository;
 import com.dyes.backend.domain.payment.service.PaymentService;
 import com.dyes.backend.domain.product.entity.*;
 import com.dyes.backend.domain.product.repository.ProductMainImageRepository;
@@ -70,8 +70,6 @@ public class OrderMockingTest {
     @Mock
     private UserRepository mockUserRepository;
     @Mock
-    private PaymentRepository mockPaymentRepository;
-    @Mock
     private PaymentService mockPaymentService;
     @Mock
     private OrderedPurchaserProfileRepository mockOrderedPurchaserProfileRepository;
@@ -89,10 +87,8 @@ public class OrderMockingTest {
                 mockProductMainImageRepository,
                 mockOrderedProductRepository,
                 mockOrderedPurchaserProfileRepository,
-                mockPaymentRepository,
                 mockCartService,
                 mockPaymentService,
-                mockRedisService,
                 mockAuthenticationService
                 );
     }
@@ -130,8 +126,8 @@ public class OrderMockingTest {
     @DisplayName("order mocking test: confirm order")
     public void 사용자가_주문하기_전에_주문_확인을_할_수_있습니다 () {
         final String userToken = "google 유저";
-
-        OrderConfirmRequestForm requestForm = new OrderConfirmRequestForm(userToken);
+        OrderConfirmProductRequest productRequest = new OrderConfirmProductRequest(1L);
+        OrderConfirmRequestForm requestForm = new OrderConfirmRequestForm(userToken, List.of(productRequest));
         OrderConfirmRequest request = new OrderConfirmRequest(requestForm.getUserToken());
 
         User user = new User("1", "엑세스토큰", "리프래시 토큰", Active.YES, UserType.GOOGLE);
@@ -161,7 +157,6 @@ public class OrderMockingTest {
                 .productName(productOption.getProduct().getProductName())
                 .optionId(productOption.getId())
                 .optionPrice(productOption.getOptionPrice())
-                .optionCount(containProductOption.getOptionCount())
                 .productMainImage(mainImage.getMainImg())
                 .value(productOption.getAmount().getValue())
                 .unit(productOption.getAmount().getUnit())

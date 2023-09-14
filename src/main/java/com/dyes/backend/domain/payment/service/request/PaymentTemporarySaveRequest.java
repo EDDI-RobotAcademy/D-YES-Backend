@@ -1,5 +1,7 @@
-package com.dyes.backend.domain.order.service.user.request;
+package com.dyes.backend.domain.payment.service.request;
 
+import com.dyes.backend.domain.order.service.user.request.OrderedProductOptionRequest;
+import com.dyes.backend.domain.order.service.user.request.OrderedPurchaserProfileRequest;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,4 +20,6 @@ public class PaymentTemporarySaveRequest {
     private int totalAmount;
     private String from;
     private String tid;
+    private String partnerOrderId;
+    private String partnerUserId;
 }

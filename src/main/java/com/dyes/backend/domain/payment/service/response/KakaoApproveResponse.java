@@ -1,20 +1,18 @@
-package com.dyes.backend.domain.payment.entity;
+package com.dyes.backend.domain.payment.service.response;
 
-import jakarta.persistence.*;
+import com.dyes.backend.domain.payment.entity.PaymentAmount;
+import com.dyes.backend.domain.payment.entity.PaymentCardInfo;
+import jakarta.persistence.Embedded;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
-@Entity
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Payment {
-    @Id
+public class KakaoApproveResponse {
     private String aid;
     private String tid;
     private String cid;
@@ -22,9 +20,9 @@ public class Payment {
     private String partner_user_id;
     private String payment_method_type;
     @Embedded
-    private PaymentAmount amount;
+    private KakaoApproveAmountResponse amount;
     @Embedded
-    private PaymentCardInfo card_info;
+    private KakaoApproveCardInfoResponse card_info;
     private String item_name;
     private int quantity;
     private LocalDate created_at;
