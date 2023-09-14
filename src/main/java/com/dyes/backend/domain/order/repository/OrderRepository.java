@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<ProductOrder, Long> {
-    @Query("select po FROM ProductOrder po join fetch po.user")
+    @Query("select po FROM ProductOrder po join fetch po.user join fetch po.delivery")
     List<ProductOrder> findAllWithUser();
 
     @Query("select po FROM ProductOrder po join fetch po.user u join fetch po.delivery where u = :user")
