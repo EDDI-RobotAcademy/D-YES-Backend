@@ -49,4 +49,10 @@ public class UserProductController {
             @PathVariable("region") String region) {
         return userProductService.getProductListByRegionForUser(region);
     }
+
+    // 6. 신규 상품 10개 목록 조회
+    @GetMapping("/user/list/new")
+    public List<ProductListResponseFormForUser> getNew10ProductListForUser() {
+        return userProductService.getNew10ProductListForUser();
+    }
 }
