@@ -22,5 +22,6 @@ public interface UserService {
     boolean userWithdrawal(String userToken);
     Boolean updateAddress(UserAddressModifyRequestForm requestForm);
     List<UserAddressBookResponseForm> getAddressBook(String userToken);
+    Boolean updateAddressBook(UserAddressUpdateRequestForm requestForm);
     List<UserInfoResponseForm> getUserList(String userToken);
 }

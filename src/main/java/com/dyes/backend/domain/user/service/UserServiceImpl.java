@@ -14,6 +14,7 @@ import com.dyes.backend.domain.user.repository.AddressBookRepository;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import com.dyes.backend.domain.user.repository.UserRepository;
 import com.dyes.backend.domain.user.service.request.UserAddressModifyRequest;
+import com.dyes.backend.domain.user.service.request.UserAddressUpdateRequest;
 import com.dyes.backend.domain.user.service.response.form.UserAddressBookResponseForm;
 import com.dyes.backend.domain.user.service.response.form.UserInfoResponseForm;
 import com.dyes.backend.domain.user.service.response.form.UserProfileResponseForm;
@@ -36,6 +37,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static com.dyes.backend.domain.user.entity.AddressBookOption.DEFAULT_OPTION;
+import static com.dyes.backend.domain.user.entity.AddressBookOption.NON_DEFAULT_OPTION;
 import static com.dyes.backend.utility.nickName.NickNameUtils.getRandomNickName;
 
 @Service
@@ -540,6 +542,43 @@ public class UserServiceImpl implements UserService {
             return userAddressBookResponseFormList;
         }
         return null;
+    }
+
+    // 사용자 주소록 추가(배송지 정보)
+    @Override
+    public Boolean updateAddressBook(UserAddressUpdateRequestForm requestForm) {
+        final User user = authenticationService.findUserByUserToken(requestForm.getUserToken());
+        if (user == null) {
+            return null;
+        }
+        UserAddressUpdateRequest userAddressUpdateRequest = requestForm.toUserAddressUpdateRequest();
+
+        try {
+            if(userAddressUpdateRequest.getAddressBookOption().equals(DEFAULT_OPTION)) {
+                Optional<AddressBook> maybeAddressBook = addressBookRepository.findByAddressBookOption(DEFAULT_OPTION);
+                if(maybeAddressBook.isPresent()) {
+                    AddressBook addressBook = maybeAddressBook.get();
+                    addressBook.setAddressBookOption(NON_DEFAULT_OPTION);
+                    addressBookRepository.save(addressBook);
+                }
+            }
+            AddressBook addressBook = AddressBook.builder()
+                    .addressBookOption(userAddressUpdateRequest.getAddressBookOption())
+                    .receiver(userAddressUpdateRequest.getReceiver())
+                    .contactNumber(userAddressUpdateRequest.getContactNumber())
+                    .address(userAddressUpdateRequest.getAddress())
+                    .user(user)
+                    .build();
+
+            addressBookRepository.save(addressBook);
+
+            log.info("Update address book successful");
+            return true;
+
+        } catch (Exception e) {
+            log.error("Failed to update the address book: {}", e.getMessage(), e);
+            return false;
+        }
     }
 
     // 관리자의 회원 목록 조회

@@ -1,6 +1,7 @@
 package com.dyes.backend.domain.user.controller;
 
 import com.dyes.backend.domain.user.controller.form.UserAddressModifyRequestForm;
+import com.dyes.backend.domain.user.controller.form.UserAddressUpdateRequestForm;
 import com.dyes.backend.domain.user.controller.form.UserProfileModifyRequestForm;
 import com.dyes.backend.domain.user.service.UserService;
 import com.dyes.backend.domain.user.service.response.form.UserAddressBookResponseForm;
@@ -74,6 +75,12 @@ public class UserController {
     @GetMapping("/address-book")
     public List<UserAddressBookResponseForm> getAddressBook(@RequestParam("userToken") String userToken) {
         return userService.getAddressBook(userToken);
+    }
+
+    // 사용자 주소록 추가(배송지 정보)
+    @PostMapping("/address-book/update")
+    public Boolean updateAddressBook(@RequestBody UserAddressUpdateRequestForm requestForm) {
+        return userService.updateAddressBook(requestForm);
     }
 
     // 관리자의 회원 목록 조회
