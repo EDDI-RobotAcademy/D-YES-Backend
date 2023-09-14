@@ -74,8 +74,6 @@ public class PaymentServiceImpl implements PaymentService{
 
             HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(parameters, this.getHeaders());
 
-            RestTemplate restTemplate = new RestTemplate();
-
             KakaoPaymentReadyResponse response = restTemplate.postForObject(requestUrl, requestEntity, KakaoPaymentReadyResponse.class);
 
             log.info("paymentRequest end");
@@ -243,7 +241,7 @@ public class PaymentServiceImpl implements PaymentService{
         return redirectView;
     }
 
-    private HttpHeaders getHeaders() {
+    public HttpHeaders getHeaders() {
         HttpHeaders httpHeaders = new HttpHeaders();
 
         String auth = "KakaoAK " + kakaoPaymentSecretsProvider.getAdminKey();
