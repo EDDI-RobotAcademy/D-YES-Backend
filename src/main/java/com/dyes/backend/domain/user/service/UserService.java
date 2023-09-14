@@ -1,9 +1,6 @@
 package com.dyes.backend.domain.user.service;
 
-import com.dyes.backend.domain.user.controller.form.GoogleUserLoginRequestForm;
-import com.dyes.backend.domain.user.controller.form.KakaoUserLoginRequestForm;
-import com.dyes.backend.domain.user.controller.form.NaverUserLoginRequestForm;
-import com.dyes.backend.domain.user.controller.form.UserProfileModifyRequestForm;
+import com.dyes.backend.domain.user.controller.form.*;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.service.response.UserInfoResponseForm;
 import com.dyes.backend.domain.user.service.response.UserProfileResponseForm;
@@ -22,5 +19,6 @@ public interface UserService {
     String userLogIn(User user, String platform);
     boolean userLogOut(String userToken);
     boolean userWithdrawal(String userToken);
+    Boolean updateAddress(UserAddressModifyRequestForm requestForm);
     List<UserInfoResponseForm> getUserList(String userToken);
 }

@@ -6,6 +6,7 @@ import com.dyes.backend.domain.cart.entity.ContainProductOption;
 import com.dyes.backend.domain.cart.repository.CartRepository;
 import com.dyes.backend.domain.cart.repository.ContainProductOptionRepository;
 import com.dyes.backend.domain.cart.service.CartService;
+import com.dyes.backend.domain.delivery.repository.DeliveryRepository;
 import com.dyes.backend.domain.farm.entity.Farm;
 import com.dyes.backend.domain.order.controller.form.OrderConfirmRequestForm;
 import com.dyes.backend.domain.order.controller.form.OrderProductRequestForm;
@@ -66,6 +67,8 @@ public class OrderMockingTest {
     @Mock
     private OrderedProductRepository mockOrderedProductRepository;
     @Mock
+    private DeliveryRepository deliveryRepository;
+    @Mock
     private RedisService mockRedisService;
     @Mock
     private UserRepository mockUserRepository;
@@ -87,6 +90,7 @@ public class OrderMockingTest {
                 mockProductMainImageRepository,
                 mockOrderedProductRepository,
                 mockOrderedPurchaserProfileRepository,
+                deliveryRepository,
                 mockCartService,
                 mockPaymentService,
                 mockAuthenticationService
