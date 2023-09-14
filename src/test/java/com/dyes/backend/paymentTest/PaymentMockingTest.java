@@ -4,7 +4,6 @@ import com.dyes.backend.domain.authentication.service.AuthenticationService;
 import com.dyes.backend.domain.order.service.user.request.OrderProductRequest;
 import com.dyes.backend.domain.order.service.user.request.OrderedProductOptionRequest;
 import com.dyes.backend.domain.order.service.user.request.OrderedPurchaserProfileRequest;
-import com.dyes.backend.domain.payment.entity.Payment;
 import com.dyes.backend.domain.payment.repository.PaymentRepository;
 import com.dyes.backend.domain.payment.service.PaymentServiceImpl;
 import com.dyes.backend.domain.payment.service.request.KakaoPaymentApprovalRequest;
@@ -19,11 +18,9 @@ import com.dyes.backend.domain.product.entity.Product;
 import com.dyes.backend.domain.product.entity.ProductOption;
 import com.dyes.backend.domain.product.entity.SaleStatus;
 import com.dyes.backend.domain.product.repository.ProductOptionRepository;
-import com.dyes.backend.domain.product.service.user.UserProductServiceImpl;
 import com.dyes.backend.domain.user.entity.Active;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserType;
-import com.dyes.backend.domain.user.repository.UserRepository;
 import com.dyes.backend.utility.provider.KakaoPaymentSecretsProvider;
 import com.dyes.backend.utility.redis.RedisService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -42,11 +39,9 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.view.RedirectView;
 
 import java.time.LocalDate;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
@@ -54,8 +49,6 @@ import static org.mockito.Mockito.*;
 public class PaymentMockingTest {
     @Mock
     private KakaoPaymentSecretsProvider mockKakaoPaymentSecretsProvider;
-    @Mock
-    private UserRepository mockUserRepository;
     @Mock
     private RedisService mockRedisService;
     @Mock
@@ -74,7 +67,6 @@ public class PaymentMockingTest {
     public void setup() throws Exception {
         MockitoAnnotations.initMocks(this);
         mockService = new PaymentServiceImpl(
-                mockUserRepository,
                 mockRedisService,
                 mockPaymentRepository,
                 mockKakaoPaymentSecretsProvider,
@@ -252,15 +244,31 @@ public class PaymentMockingTest {
                 .tax_free_amount(saveRequest.getTotalAmount()/11) // 세금을 10퍼센트라고 했을 때
                 .build();
 
+        final String requestUrl = "requestUrl";
+        final String adminKey = "adminKey";
+
+        when(mockKakaoPaymentSecretsProvider.getKakaoPaymentRequestUrl()).thenReturn(requestUrl);
+        when(mockKakaoPaymentSecretsProvider.getAdminKey()).thenReturn(adminKey);
+
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+
+        String auth = "KakaoAK " + adminKey;
+        httpHeaders.set("Authorization", auth);
+        httpHeaders.set("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
+
+        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(parameters, httpHeaders);
+
         KakaoPaymentReadyResponse response = new KakaoPaymentReadyResponse("tid",
                 "mobile_url",
                 "pc_url",
                 "created_at"
         );
 
-//        when(mockService.paymentRequest(paymentRequest)).thenReturn(response);
-//        verify(mockRedisService, times(1)).paymentTemporarySaveData(user.getId(), saveRequest);
-//        RedirectView result = mockService.paymentTemporaryDataSaveAndReturnRedirectView(request);
-//        assertTrue(result.toString().equals(response.getNext_redirect_pc_url()));
+        when(mockRestTemplate.postForObject(eq(requestUrl), any(HttpEntity.class), eq(KakaoPaymentReadyResponse.class))).thenReturn(response);
+
+        RedirectView result = mockService.paymentTemporaryDataSaveAndReturnRedirectView(request);
+        assertTrue(result.getUrl().equals(response.getNext_redirect_pc_url()));
     }
 }

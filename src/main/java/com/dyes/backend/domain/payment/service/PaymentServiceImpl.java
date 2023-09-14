@@ -3,19 +3,18 @@ package com.dyes.backend.domain.payment.service;
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
 import com.dyes.backend.domain.order.service.user.request.OrderProductRequest;
 import com.dyes.backend.domain.order.service.user.request.OrderedProductOptionRequest;
+import com.dyes.backend.domain.payment.entity.Payment;
 import com.dyes.backend.domain.payment.entity.PaymentAmount;
 import com.dyes.backend.domain.payment.entity.PaymentCardInfo;
-import com.dyes.backend.domain.payment.service.request.KakaoPaymentApprovalRequest;
-import com.dyes.backend.domain.payment.service.request.PaymentTemporarySaveRequest;
-import com.dyes.backend.domain.payment.entity.Payment;
 import com.dyes.backend.domain.payment.repository.PaymentRepository;
+import com.dyes.backend.domain.payment.service.request.KakaoPaymentApprovalRequest;
 import com.dyes.backend.domain.payment.service.request.KakaoPaymentRequest;
+import com.dyes.backend.domain.payment.service.request.PaymentTemporarySaveRequest;
 import com.dyes.backend.domain.payment.service.response.KakaoApproveResponse;
 import com.dyes.backend.domain.payment.service.response.KakaoPaymentReadyResponse;
 import com.dyes.backend.domain.product.entity.ProductOption;
 import com.dyes.backend.domain.product.repository.ProductOptionRepository;
 import com.dyes.backend.domain.user.entity.User;
-import com.dyes.backend.domain.user.repository.UserRepository;
 import com.dyes.backend.utility.provider.KakaoPaymentSecretsProvider;
 import com.dyes.backend.utility.redis.RedisService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -23,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -36,7 +34,6 @@ import org.springframework.web.servlet.view.RedirectView;
 @Slf4j
 @RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService{
-    final private UserRepository userRepository;
     final private RedisService redisService;
     final private PaymentRepository paymentRepository;
     final private KakaoPaymentSecretsProvider kakaoPaymentSecretsProvider;
@@ -192,53 +189,57 @@ public class PaymentServiceImpl implements PaymentService{
             return false;
         }
     }
-    public RedirectView paymentTemporaryDataSaveAndReturnRedirectView (OrderProductRequest request) throws JsonProcessingException {
+    public RedirectView paymentTemporaryDataSaveAndReturnRedirectView (OrderProductRequest request){
+        try {
+            User user = authenticationService.findUserByUserToken(request.getUserToken());
 
-        User user = authenticationService.findUserByUserToken(request.getUserToken());
+            PaymentTemporarySaveRequest saveRequest = PaymentTemporarySaveRequest.builder()
+                    .userToken(request.getUserToken())
+                    .orderedPurchaserProfileRequest(request.getOrderedPurchaserProfileRequest())
+                    .orderedProductOptionRequestList(request.getOrderedProductOptionRequestList())
+                    .totalAmount(request.getTotalAmount())
+                    .from(request.getFrom())
+                    .build();
 
-        PaymentTemporarySaveRequest saveRequest = PaymentTemporarySaveRequest.builder()
-                .userToken(request.getUserToken())
-                .orderedPurchaserProfileRequest(request.getOrderedPurchaserProfileRequest())
-                .orderedProductOptionRequestList(request.getOrderedProductOptionRequestList())
-                .totalAmount(request.getTotalAmount())
-                .from(request.getFrom())
-                .build();
+            String itemName = "";
+            Integer quantity = 0;
 
-        String itemName = "";
-        Integer quantity = 0;
+            for (OrderedProductOptionRequest optionRequest : saveRequest.getOrderedProductOptionRequestList()) {
 
-        for (OrderedProductOptionRequest optionRequest : saveRequest.getOrderedProductOptionRequestList()) {
+                ProductOption productOption = productOptionRepository.findById(optionRequest.getProductOptionId()).get();
 
-            ProductOption productOption = productOptionRepository.findById(optionRequest.getProductOptionId()).get();
+                itemName += productOption.getOptionName() + ", ";
+                quantity += optionRequest.getProductOptionCount();
+            }
 
-            itemName += productOption.getOptionName() + ", ";
-            quantity += optionRequest.getProductOptionCount();
+            log.info("itemName: " + itemName);
+            log.info("quantity: " + quantity);
+
+            KakaoPaymentRequest paymentRequest = KakaoPaymentRequest.builder()
+                    .partner_order_id(user.getId() + itemName)
+                    .partner_user_id(user.getId())
+                    .item_name(itemName)
+                    .quantity(quantity)
+                    .total_amount(saveRequest.getTotalAmount())
+                    .tax_free_amount(saveRequest.getTotalAmount()/11) // 세금을 10퍼센트라고 했을 때
+                    .build();
+            log.info("paymentRequest: " + paymentRequest);
+
+            KakaoPaymentReadyResponse response = paymentRequest(paymentRequest);
+            log.info("response: " + response);
+
+            saveRequest.setTid(response.getTid());
+            saveRequest.setPartnerOrderId(paymentRequest.getPartner_order_id());
+            saveRequest.setPartnerUserId(paymentRequest.getPartner_user_id());
+            redisService.paymentTemporarySaveData(user.getId(), saveRequest);
+            log.info("saveRequest: " + saveRequest);
+
+            RedirectView redirectView = new RedirectView(response.getNext_redirect_pc_url());
+            return redirectView;
+        } catch (Exception e) {
+            log.error("Failed connect to server: {}", e.getMessage(), e);
+            return null;
         }
-
-        log.info("itemName: " + itemName);
-        log.info("quantity: " + quantity);
-
-        KakaoPaymentRequest paymentRequest = KakaoPaymentRequest.builder()
-                .partner_order_id(user.getId() + itemName)
-                .partner_user_id(user.getId())
-                .item_name(itemName)
-                .quantity(quantity)
-                .total_amount(saveRequest.getTotalAmount())
-                .tax_free_amount(saveRequest.getTotalAmount()/11) // 세금을 10퍼센트라고 했을 때
-                .build();
-        log.info("paymentRequest: " + paymentRequest);
-
-        KakaoPaymentReadyResponse response = paymentRequest(paymentRequest);
-        log.info("response: " + response);
-
-        saveRequest.setTid(response.getTid());
-        saveRequest.setPartnerOrderId(paymentRequest.getPartner_order_id());
-        saveRequest.setPartnerUserId(paymentRequest.getPartner_user_id());
-        redisService.paymentTemporarySaveData(user.getId(), saveRequest);
-        log.info("saveRequest: " + saveRequest);
-
-        RedirectView redirectView = new RedirectView(response.getNext_redirect_pc_url());
-        return redirectView;
     }
 
     public HttpHeaders getHeaders() {
