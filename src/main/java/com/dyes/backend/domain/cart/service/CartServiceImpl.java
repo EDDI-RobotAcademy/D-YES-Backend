@@ -202,6 +202,9 @@ public class CartServiceImpl implements CartService{
     // 유저 토큰으로 사용자의 카트 유무 확인
     public Cart cartCheckFromUserToken(String userToken) {
         User user = authenticationService.findUserByUserToken(userToken);
+        if(user == null) {
+            return null;
+        }
         log.info("user: " + user);
 
         Optional<Cart> maybeCart = cartRepository.findByUser(user);
