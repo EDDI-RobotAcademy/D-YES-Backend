@@ -27,6 +27,10 @@ public class OrderController {
     public RedirectView orderWithKakaoPayment(@RequestBody OrderProductRequestForm requestForm) throws JsonProcessingException {
         return orderService.purchaseReadyWithKakao(requestForm);
     }
+    @PostMapping("/payment/kakao/approve")
+    public boolean approveWithKakaoPayment(@RequestBody KakaoPaymentApprovalRequestForm requestForm) throws JsonProcessingException {
+        return orderService.approvalPurchaseWithKakao(requestForm);
+    }
 
     // 결제 전 주문 요청내역 확인
     @PostMapping("/confirm")
