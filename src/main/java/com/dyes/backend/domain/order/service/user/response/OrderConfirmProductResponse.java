@@ -16,6 +16,5 @@ public class OrderConfirmProductResponse {
     private String productName;
     private Long value;
     private Unit unit;
-    private int optionCount;
     private Long optionPrice;
 }

@@ -20,10 +20,7 @@ import com.dyes.backend.domain.order.service.admin.response.OrderDetailInfoRespo
 import com.dyes.backend.domain.order.service.admin.response.OrderProductListResponse;
 import com.dyes.backend.domain.order.service.admin.response.OrderUserInfoResponse;
 import com.dyes.backend.domain.order.service.admin.response.form.OrderListResponseFormForAdmin;
-import com.dyes.backend.domain.order.service.user.request.OrderConfirmRequest;
-import com.dyes.backend.domain.order.service.user.request.OrderProductRequest;
-import com.dyes.backend.domain.order.service.user.request.OrderedProductOptionRequest;
-import com.dyes.backend.domain.order.service.user.request.OrderedPurchaserProfileRequest;
+import com.dyes.backend.domain.order.service.user.request.*;
 import com.dyes.backend.domain.order.service.user.response.OrderConfirmProductResponse;
 import com.dyes.backend.domain.order.service.user.response.OrderConfirmUserResponse;
 import com.dyes.backend.domain.order.service.user.response.OrderOptionListResponse;
@@ -140,6 +137,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderConfirmResponseFormForUser orderConfirm(OrderConfirmRequestForm requestForm) {
         try {
             OrderConfirmRequest request = new OrderConfirmRequest(requestForm.getUserToken());
+            List<OrderConfirmProductRequest> requestList = requestForm.getRequestList();
 
             final String userToken = request.getUserToken();
             // 유저 정보 찾기
@@ -164,22 +162,9 @@ public class OrderServiceImpl implements OrderService {
                 log.error("please set your user profile");
             }
 
-            // 유저 토큰으로 장바구니 찾기
-            Cart cart = cartRepository.findByUser(user).get();
-            log.info("cart: " + cart.getId());
-
-            // 장바구니에 담긴 상품 리스트 불러오기
-            List<ContainProductOption> productOptionList = containProductOptionRepository.findAllByCart(cart);
-            log.info("productOptionList: " + productOptionList.get(0).getProductName());
-
-            // 장바구니에 담긴 물건이 없으면 에러
-            if (productOptionList.size() == 0) {
-                throw new IllegalArgumentException("No exist product in the cart");
-            }
-            // 장바구니에 담긴 물건을 모조리 불러오기
             List<OrderConfirmProductResponse> productResponseList = new ArrayList<>();
-            for (ContainProductOption containProductOption : productOptionList) {
-                ProductOption productOption = productOptionRepository.findByIdWithProduct(containProductOption.getOptionId()).get();
+            for (OrderConfirmProductRequest productRequest : requestList) {
+                ProductOption productOption = productOptionRepository.findByIdWithProduct(productRequest.getProductOptionId()).get();
                 log.info("productOption: " + productOption.getOptionName());
 
                 ProductMainImage mainImage = productMainImageRepository.findByProductId(productOption.getProduct().getId()).get();
@@ -190,7 +175,6 @@ public class OrderServiceImpl implements OrderService {
                         .productName(productOption.getProduct().getProductName())
                         .optionId(productOption.getId())
                         .optionPrice(productOption.getOptionPrice())
-                        .optionCount(containProductOption.getOptionCount())
                         .productMainImage(mainImage.getMainImg())
                         .value(productOption.getAmount().getValue())
                         .unit(productOption.getAmount().getUnit())
