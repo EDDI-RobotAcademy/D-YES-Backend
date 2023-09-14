@@ -10,10 +10,13 @@ import com.dyes.backend.domain.authentication.service.kakao.service.KakaoAuthent
 import com.dyes.backend.domain.authentication.service.naver.NaverAuthenticationService;
 import com.dyes.backend.domain.user.controller.form.*;
 import com.dyes.backend.domain.user.entity.*;
+import com.dyes.backend.domain.user.repository.AddressBookRepository;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import com.dyes.backend.domain.user.repository.UserRepository;
 import com.dyes.backend.domain.user.service.request.UserAddressModifyRequest;
-import com.dyes.backend.domain.user.service.response.*;
+import com.dyes.backend.domain.user.service.response.form.UserAddressBookResponseForm;
+import com.dyes.backend.domain.user.service.response.form.UserInfoResponseForm;
+import com.dyes.backend.domain.user.service.response.form.UserProfileResponseForm;
 import com.dyes.backend.utility.provider.GoogleOauthSecretsProvider;
 import com.dyes.backend.utility.provider.KakaoOauthSecretsProvider;
 import com.dyes.backend.utility.provider.NaverOauthSecretsProvider;
@@ -32,6 +35,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static com.dyes.backend.domain.user.entity.AddressBookOption.DEFAULT_OPTION;
 import static com.dyes.backend.utility.nickName.NickNameUtils.getRandomNickName;
 
 @Service
@@ -48,6 +52,7 @@ public class UserServiceImpl implements UserService {
     final private AuthenticationService authenticationService;
     final private UserRepository userRepository;
     final private UserProfileRepository userProfileRepository;
+    final private AddressBookRepository addressBookRepository;
     final private AdminRepository adminRepository;
     final private RedisService redisService;
     final private AdminService adminService;
@@ -57,7 +62,7 @@ public class UserServiceImpl implements UserService {
     public Boolean checkNickNameDuplicate(String nickName) {
         Optional<UserProfile> maybeUserProfile = userProfileRepository.findByNickName(nickName);
 
-        if(maybeUserProfile.isPresent()) {
+        if (maybeUserProfile.isPresent()) {
             log.info("nickname already exists");
             return false;
         }
@@ -70,7 +75,7 @@ public class UserServiceImpl implements UserService {
     public Boolean checkEmailDuplicate(String email) {
         Optional<UserProfile> maybeUserProfile = userProfileRepository.findByEmail(email);
 
-        if(maybeUserProfile.isPresent()) {
+        if (maybeUserProfile.isPresent()) {
             log.info("email already exists");
             return false;
         }
@@ -82,13 +87,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserProfileResponseForm getUserProfile(String userToken) {
         final User user = authenticationService.findUserByUserToken(userToken);
-        if(user == null) {
+        if (user == null) {
             return null;
         }
 
         Optional<UserProfile> maybeUserProfile = userProfileRepository.findByUser(user);
 
-        if(maybeUserProfile.isEmpty()) {
+        if (maybeUserProfile.isEmpty()) {
             UserProfileResponseForm userProfileResponseForm = new UserProfileResponseForm(user.getId());
             return userProfileResponseForm;
         }
@@ -96,12 +101,12 @@ public class UserServiceImpl implements UserService {
         UserProfile userProfile = maybeUserProfile.get();
         UserProfileResponseForm userProfileResponseForm
                 = new UserProfileResponseForm(
-                    user.getId(),
-                    userProfile.getNickName(),
-                    userProfile.getEmail(),
-                    userProfile.getProfileImg(),
-                    userProfile.getContactNumber(),
-                    userProfile.getAddress());
+                user.getId(),
+                userProfile.getNickName(),
+                userProfile.getEmail(),
+                userProfile.getProfileImg(),
+                userProfile.getContactNumber(),
+                userProfile.getAddress());
 
         return userProfileResponseForm;
     }
@@ -110,12 +115,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserProfileResponseForm modifyUserProfile(UserProfileModifyRequestForm requestForm) {
         final User user = authenticationService.findUserByUserToken(requestForm.getUserToken());
-        if(user == null) {
+        if (user == null) {
             return null;
         }
 
         Optional<UserProfile> maybeUserProfile = userProfileRepository.findByUser(user);
-        if(maybeUserProfile.isEmpty()) {
+        if (maybeUserProfile.isEmpty()) {
 
             Address address = new Address(requestForm.getAddress(), requestForm.getZipCode(), requestForm.getAddressDetail());
 
@@ -133,12 +138,12 @@ public class UserServiceImpl implements UserService {
 
             UserProfileResponseForm userProfileResponseForm
                     = new UserProfileResponseForm(
-                        user.getId(),
-                        userProfile.getNickName(),
-                        userProfile.getEmail(),
-                        userProfile.getProfileImg(),
-                        userProfile.getContactNumber(),
-                        userProfile.getAddress());
+                    user.getId(),
+                    userProfile.getNickName(),
+                    userProfile.getEmail(),
+                    userProfile.getProfileImg(),
+                    userProfile.getContactNumber(),
+                    userProfile.getAddress());
 
             return userProfileResponseForm;
         }
@@ -156,12 +161,12 @@ public class UserServiceImpl implements UserService {
 
         UserProfileResponseForm userProfileResponseForm
                 = new UserProfileResponseForm(
-                    user.getId(),
-                    userProfile.getNickName(),
-                    userProfile.getEmail(),
-                    userProfile.getProfileImg(),
-                    userProfile.getContactNumber(),
-                    userProfile.getAddress());
+                user.getId(),
+                userProfile.getNickName(),
+                userProfile.getEmail(),
+                userProfile.getProfileImg(),
+                userProfile.getContactNumber(),
+                userProfile.getAddress());
 
         return userProfileResponseForm;
     }
@@ -304,7 +309,7 @@ public class UserServiceImpl implements UserService {
         Optional<User> maybeUser = userRepository.findByStringId(requestForm.getId());
 
         // 없다면 회원가입(사용자, 사용자 프로필 생성)
-        if(maybeUser.isEmpty()) {
+        if (maybeUser.isEmpty()) {
             User user = User.builder()
                     .id(requestForm.getId())
                     .active(Active.YES)
@@ -328,7 +333,7 @@ public class UserServiceImpl implements UserService {
             String mainPageUserInfo = userLogIn(user, "kakao");
             return new RedirectView(redirectUrl + mainPageUserInfo);
 
-        } else if(maybeUser.isPresent() && maybeUser.get().getActive().equals(Active.YES)) {
+        } else if (maybeUser.isPresent() && maybeUser.get().getActive().equals(Active.YES)) {
 
             // 활동하고 있는 회원이면 accessToken, refreshToken 갱신 후 로그인
             final User user = maybeUser.get();
@@ -340,7 +345,7 @@ public class UserServiceImpl implements UserService {
             String mainPageUserInfo = userLogIn(user, "kakao");
             return new RedirectView(redirectUrl + mainPageUserInfo);
 
-        } else if(maybeUser.isPresent() && maybeUser.get().getActive().equals(Active.NO)) {
+        } else if (maybeUser.isPresent() && maybeUser.get().getActive().equals(Active.NO)) {
 
             // 탈퇴한 회원이면 Active YES로 변경 후 프로필 재생성
             final User user = maybeUser.get();
@@ -378,10 +383,10 @@ public class UserServiceImpl implements UserService {
             String userToken = platform + UUID.randomUUID();
 
             Optional<Admin> maybeAdmin = adminRepository.findByUser(user);
-            if(maybeAdmin.isPresent()) {
+            if (maybeAdmin.isPresent()) {
                 Admin admin = maybeAdmin.get();
 
-                if(admin.getRoleType().equals(RoleType.MAIN_ADMIN)) {
+                if (admin.getRoleType().equals(RoleType.MAIN_ADMIN)) {
                     userToken = "mainadmin" + userToken;
                 } else if (admin.getRoleType().equals(RoleType.NORMAL_ADMIN)) {
                     userToken = "normaladmin" + userToken;
@@ -417,7 +422,7 @@ public class UserServiceImpl implements UserService {
         User user = authenticationService.findUserByUserToken(userToken);
         Optional<Admin> maybeAdmin = adminRepository.findByUser(user);
 
-        if(maybeAdmin.isPresent()) {
+        if (maybeAdmin.isPresent()) {
             log.info("Admin can not withdrawal");
             return false;
         }
@@ -426,33 +431,33 @@ public class UserServiceImpl implements UserService {
 
         if (userType.equals(UserType.GOOGLE)) {
             User withdrawlUser = googleAuthenticationService.googleUserDisconnect(user);
-            if(withdrawlUser == null) {
+            if (withdrawlUser == null) {
                 return false;
             }
             Boolean isCompleteDeleteUser = inactiveUser(withdrawlUser);
-            if(isCompleteDeleteUser == false) {
+            if (isCompleteDeleteUser == false) {
                 return false;
             }
             return userLogOut(userToken);
 
         } else if (userType.equals(UserType.NAVER)) {
             User withdrawlUser = naverAuthenticationService.naverUserDisconnect(user);
-            if(withdrawlUser == null) {
+            if (withdrawlUser == null) {
                 return false;
             }
             Boolean isCompleteDeleteUser = inactiveUser(withdrawlUser);
-            if(isCompleteDeleteUser == false) {
+            if (isCompleteDeleteUser == false) {
                 return false;
             }
             return userLogOut(userToken);
 
-        } else if (userType.equals(UserType.KAKAO)){
+        } else if (userType.equals(UserType.KAKAO)) {
             User withdrawlUser = kakaoAuthenticationService.kakaoUserDisconnect(user);
-            if(withdrawlUser == null) {
+            if (withdrawlUser == null) {
                 return false;
             }
             Boolean isCompleteDeleteUser = inactiveUser(withdrawlUser);
-            if(isCompleteDeleteUser == false) {
+            if (isCompleteDeleteUser == false) {
                 return false;
             }
             return userLogOut(userToken);
@@ -465,7 +470,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public Boolean updateAddress(UserAddressModifyRequestForm requestForm) {
         final User user = authenticationService.findUserByUserToken(requestForm.getUserToken());
-        if(user == null) {
+        if (user == null) {
             return false;
         }
 
@@ -474,7 +479,7 @@ public class UserServiceImpl implements UserService {
 
         try {
             Optional<UserProfile> maybeUserProfile = userProfileRepository.findByUser(user);
-            if(maybeUserProfile.isPresent()) {
+            if (maybeUserProfile.isPresent()) {
                 UserProfile userProfile = maybeUserProfile.get();
                 userProfile.setAddress(address);
                 userProfileRepository.save(userProfile);
@@ -487,23 +492,73 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    // 사용자 주소록 조회(배송지 정보)
+    @Override
+    public List<UserAddressBookResponseForm> getAddressBook(String userToken) {
+        final User user = authenticationService.findUserByUserToken(userToken);
+        if (user == null) {
+            return null;
+        }
+        List<UserAddressBookResponseForm> userAddressBookResponseFormList = new ArrayList<>();
+
+        List<AddressBook> addressBookList = addressBookRepository.findAllByUser(user);
+        if (addressBookList.size() == 0) {
+            Optional<UserProfile> maybeUserProfile = userProfileRepository.findByUser(user);
+            if (maybeUserProfile.isEmpty()) {
+                return null;
+            } else if (maybeUserProfile.isPresent()) {
+                UserProfile userProfile = maybeUserProfile.get();
+                AddressBook addressBook = AddressBook.builder()
+                        .addressBookOption(DEFAULT_OPTION)
+                        .contactNumber(userProfile.getContactNumber())
+                        .address(userProfile.getAddress())
+                        .user(user)
+                        .build();
+                addressBookRepository.save(addressBook);
+                UserAddressBookResponseForm userAddressBookResponseForm
+                        = new UserAddressBookResponseForm(
+                        addressBook.getId(),
+                        addressBook.getAddressBookOption(),
+                        addressBook.getReceiver(),
+                        addressBook.getContactNumber(),
+                        addressBook.getAddress());
+                userAddressBookResponseFormList.add(userAddressBookResponseForm);
+
+                return userAddressBookResponseFormList;
+            }
+        } else {
+            for (AddressBook addressBook : addressBookList) {
+                UserAddressBookResponseForm userAddressBookResponseForm
+                        = new UserAddressBookResponseForm(
+                        addressBook.getId(),
+                        addressBook.getAddressBookOption(),
+                        addressBook.getReceiver(),
+                        addressBook.getContactNumber(),
+                        addressBook.getAddress());
+                userAddressBookResponseFormList.add(userAddressBookResponseForm);
+            }
+            return userAddressBookResponseFormList;
+        }
+        return null;
+    }
+
     // 관리자의 회원 목록 조회
     @Override
     public List<UserInfoResponseForm> getUserList(String userToken) {
         final Admin admin = adminService.findAdminByUserToken(userToken);
 
-        if(admin == null) {
+        if (admin == null) {
             log.info("Can not find Admin");
             return null;
         }
 
         List<UserInfoResponseForm> userInfoResponseFormList = new ArrayList<>();
         List<User> userList = userRepository.findAll();
-        for(User user: userList) {
+        for (User user : userList) {
             Optional<Admin> maybeAdmin = adminRepository.findByUser(user);
             UserInfoResponseForm userInfoResponseForm;
 
-            if(maybeAdmin.isPresent()) {
+            if (maybeAdmin.isPresent()) {
                 Admin isAdmin = maybeAdmin.get();
                 userInfoResponseForm
                         = new UserInfoResponseForm(user.getId(), user.getUserType(), user.getActive(), isAdmin.getRoleType());
@@ -537,7 +592,7 @@ public class UserServiceImpl implements UserService {
     public String divideUserByPlatform(String userToken) {
         log.info("divideUserByPlatform start");
         String platform;
-        if (userToken.contains("google")){
+        if (userToken.contains("google")) {
             platform = "google";
             log.info("divideUserByPlatform end");
             return platform;
@@ -553,7 +608,7 @@ public class UserServiceImpl implements UserService {
     }
 
     // 로그아웃 요청한 사용자의 userToken
-    public Boolean logOutWithDeleteKeyAndValueInRedis (String userToken) {
+    public Boolean logOutWithDeleteKeyAndValueInRedis(String userToken) {
         log.info("logOutWithDeleteKeyAndValueInRedis start");
         try {
             redisService.deleteKeyAndValueWithUserToken(userToken);
