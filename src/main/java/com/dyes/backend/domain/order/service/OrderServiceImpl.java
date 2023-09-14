@@ -43,15 +43,18 @@ import com.dyes.backend.domain.user.entity.Address;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserProfile;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
-import com.dyes.backend.domain.user.repository.UserRepository;
 import com.dyes.backend.utility.redis.RedisService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.view.RedirectView;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import static com.dyes.backend.domain.order.entity.DeliveryStatus.PREPARING;
 
@@ -71,14 +74,12 @@ public class OrderServiceImpl implements OrderService {
     final private CartService cartService;
     final private PaymentService paymentService;
     final private RedisService redisService;
-    final private UserRepository userRepository;
     final private AuthenticationService authenticationService;
 
-    public RedirectView purchaseReadyWithKakao(OrderProductRequestForm requestForm) {
+    public RedirectView purchaseReadyWithKakao(OrderProductRequestForm requestForm) throws JsonProcessingException {
         log.info("purchaseKakao start");
 
         User user = authenticationService.findUserByUserToken(requestForm.getUserToken());
-
         PaymentTemporarySaveRequest saveRequest = PaymentTemporarySaveRequest.builder()
                 .userToken(requestForm.getUserToken())
                 .orderedPurchaserProfileRequest(requestForm.getOrderedPurchaserProfileRequest())
@@ -131,7 +132,7 @@ public class OrderServiceImpl implements OrderService {
         log.info("payment: " + payment);
 
         saveRequest.setTid(response.getTid());
-        redisService.paymentTemporaryStorage(user.getId(), saveRequest);
+        redisService.paymentTemporarySaveData(user.getId(), saveRequest);
         log.info("saveRequest: " + saveRequest);
 
         return new RedirectView(response.getNext_redirect_pc_url());

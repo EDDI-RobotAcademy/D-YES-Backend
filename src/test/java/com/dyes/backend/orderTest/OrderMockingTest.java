@@ -73,9 +73,8 @@ public class OrderMockingTest {
     private PaymentRepository mockPaymentRepository;
     @Mock
     private PaymentService mockPaymentService;
-
     @Mock
-    OrderedPurchaserProfileRepository mockOrderedPurchaserProfileRepository;
+    private OrderedPurchaserProfileRepository mockOrderedPurchaserProfileRepository;
     @InjectMocks
     private OrderServiceImpl mockOrderService;
     @BeforeEach

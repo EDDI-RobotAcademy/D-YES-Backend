@@ -6,6 +6,7 @@ import com.dyes.backend.domain.order.service.OrderService;
 import com.dyes.backend.domain.order.service.admin.response.form.OrderListResponseFormForAdmin;
 import com.dyes.backend.domain.order.service.user.response.form.OrderConfirmResponseFormForUser;
 import com.dyes.backend.domain.order.service.user.response.form.OrderListResponseFormForUser;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +23,7 @@ public class OrderController {
 
     // 카카오로 상품 구매
     @PostMapping("/payment/kakao")
-    public RedirectView orderWithKakaoPayment(@RequestBody OrderProductRequestForm requestForm) {
+    public RedirectView orderWithKakaoPayment(@RequestBody OrderProductRequestForm requestForm) throws JsonProcessingException {
         return orderService.purchaseReadyWithKakao(requestForm);
     }
 
