@@ -7,6 +7,7 @@ import com.dyes.backend.domain.cart.repository.CartRepository;
 import com.dyes.backend.domain.cart.repository.ContainProductOptionRepository;
 import com.dyes.backend.domain.cart.service.CartService;
 import com.dyes.backend.domain.order.controller.form.KakaoPaymentApprovalRequestForm;
+import com.dyes.backend.domain.order.controller.form.KakaoPaymentRejectRequestForm;
 import com.dyes.backend.domain.order.controller.form.OrderConfirmRequestForm;
 import com.dyes.backend.domain.order.controller.form.OrderProductRequestForm;
 import com.dyes.backend.domain.delivery.entity.Delivery;
@@ -89,6 +90,10 @@ public class OrderServiceImpl implements OrderService {
         KakaoPaymentApprovalRequest request = new KakaoPaymentApprovalRequest(requestForm.getUserToken(), requestForm.getPg_token());
         boolean result = paymentService.paymentApprovalRequest(request);
         log.info("approvalPurchaseKakao end");
+        return result;
+    }
+    public boolean rejectPurchaseWithKakao (KakaoPaymentRejectRequestForm requestForm) {
+        boolean result = paymentService.paymentRejectWithKakao(requestForm);
         return result;
     }
     // 상품 주문

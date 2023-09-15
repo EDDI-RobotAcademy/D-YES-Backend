@@ -1,12 +1,14 @@
 package com.dyes.backend.paymentTest;
 
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
+import com.dyes.backend.domain.order.controller.form.KakaoPaymentRejectRequestForm;
 import com.dyes.backend.domain.order.service.user.request.OrderProductRequest;
 import com.dyes.backend.domain.order.service.user.request.OrderedProductOptionRequest;
 import com.dyes.backend.domain.order.service.user.request.OrderedPurchaserProfileRequest;
 import com.dyes.backend.domain.payment.repository.PaymentRepository;
 import com.dyes.backend.domain.payment.service.PaymentServiceImpl;
 import com.dyes.backend.domain.payment.service.request.KakaoPaymentApprovalRequest;
+import com.dyes.backend.domain.payment.service.request.KakaoPaymentRejectRequest;
 import com.dyes.backend.domain.payment.service.request.KakaoPaymentRequest;
 import com.dyes.backend.domain.payment.service.request.PaymentTemporarySaveRequest;
 import com.dyes.backend.domain.payment.service.response.KakaoApproveAmountResponse;
@@ -230,35 +232,14 @@ public class PaymentMockingTest {
                 .from(request.getFrom())
                 .build();
 
-        String itemName = "";
-        Integer quantity = 0;
         ProductOption productOption = new ProductOption(1L, "optionName", 1L, 1, new Amount(), new Product(), SaleStatus.AVAILABLE);
         when(mockProductOptionRepository.findById(saveRequest.getOrderedProductOptionRequestList().get(0).getProductOptionId())).thenReturn(Optional.of(productOption));
-
-        KakaoPaymentRequest paymentRequest = KakaoPaymentRequest.builder()
-                .partner_order_id(user.getId() + itemName)
-                .partner_user_id(user.getId())
-                .item_name(itemName)
-                .quantity(quantity)
-                .total_amount(saveRequest.getTotalAmount())
-                .tax_free_amount(saveRequest.getTotalAmount()/11) // 세금을 10퍼센트라고 했을 때
-                .build();
 
         final String requestUrl = "requestUrl";
         final String adminKey = "adminKey";
 
         when(mockKakaoPaymentSecretsProvider.getKakaoPaymentRequestUrl()).thenReturn(requestUrl);
         when(mockKakaoPaymentSecretsProvider.getAdminKey()).thenReturn(adminKey);
-
-        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-
-        HttpHeaders httpHeaders = new HttpHeaders();
-
-        String auth = "KakaoAK " + adminKey;
-        httpHeaders.set("Authorization", auth);
-        httpHeaders.set("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
-
-        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(parameters, httpHeaders);
 
         KakaoPaymentReadyResponse response = new KakaoPaymentReadyResponse("tid",
                 "mobile_url",
@@ -270,5 +251,18 @@ public class PaymentMockingTest {
 
         RedirectView result = mockService.paymentTemporaryDataSaveAndReturnRedirectView(request);
         assertTrue(result.getUrl().equals(response.getNext_redirect_pc_url()));
+    }
+    @Test
+    @DisplayName("payment mocking test: kakao payment reject")
+    public void 사용자가_결제를_취소하거나_실패하였습니다() {
+        final String userToken = "userToken";
+        KakaoPaymentRejectRequestForm requestForm = new KakaoPaymentRejectRequestForm(userToken);
+        KakaoPaymentRejectRequest request = new KakaoPaymentRejectRequest(requestForm.getUserToken());
+
+        User user = new User();
+        when(mockAuthenticationService.findUserByUserToken(request.getUserToken())).thenReturn(user);
+
+        boolean result = mockService.paymentRejectWithKakao(requestForm);
+        assertTrue(result);
     }
 }

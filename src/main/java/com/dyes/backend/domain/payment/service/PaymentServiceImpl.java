@@ -1,6 +1,7 @@
 package com.dyes.backend.domain.payment.service;
 
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
+import com.dyes.backend.domain.order.controller.form.KakaoPaymentRejectRequestForm;
 import com.dyes.backend.domain.order.service.user.request.OrderProductRequest;
 import com.dyes.backend.domain.order.service.user.request.OrderedProductOptionRequest;
 import com.dyes.backend.domain.payment.entity.Payment;
@@ -8,6 +9,7 @@ import com.dyes.backend.domain.payment.entity.PaymentAmount;
 import com.dyes.backend.domain.payment.entity.PaymentCardInfo;
 import com.dyes.backend.domain.payment.repository.PaymentRepository;
 import com.dyes.backend.domain.payment.service.request.KakaoPaymentApprovalRequest;
+import com.dyes.backend.domain.payment.service.request.KakaoPaymentRejectRequest;
 import com.dyes.backend.domain.payment.service.request.KakaoPaymentRequest;
 import com.dyes.backend.domain.payment.service.request.PaymentTemporarySaveRequest;
 import com.dyes.backend.domain.payment.service.response.KakaoApproveResponse;
@@ -118,6 +120,23 @@ public class PaymentServiceImpl implements PaymentService{
             log.error("Failed connect to server: {}", e.getMessage(), e);
         }
         return false;
+    }
+    public boolean paymentRejectWithKakao(KakaoPaymentRejectRequestForm requestForm) {
+        KakaoPaymentRejectRequest request = new KakaoPaymentRejectRequest(requestForm.getUserToken());
+
+        final String userToken = request.getUserToken();
+        try {
+            User user = authenticationService.findUserByUserToken(userToken);
+            if (user == null) {
+                return false;
+            }
+            redisService.deletePaymentTemporarySaveData(user.getId());
+            return true;
+        } catch (Exception e) {
+            log.error("Failed to reject: {}", e.getMessage(), e);
+            return false;
+        }
+
     }
     public boolean paymentCompleteAndSaveWithKakao(KakaoApproveResponse response) {
         log.info("paymentCompleteAndSaveWithKakao start");

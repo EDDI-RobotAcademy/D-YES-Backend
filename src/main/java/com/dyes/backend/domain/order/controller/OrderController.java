@@ -1,6 +1,7 @@
 package com.dyes.backend.domain.order.controller;
 
 import com.dyes.backend.domain.order.controller.form.KakaoPaymentApprovalRequestForm;
+import com.dyes.backend.domain.order.controller.form.KakaoPaymentRejectRequestForm;
 import com.dyes.backend.domain.order.controller.form.OrderConfirmRequestForm;
 import com.dyes.backend.domain.order.controller.form.OrderProductRequestForm;
 import com.dyes.backend.domain.order.service.OrderService;
@@ -30,6 +31,10 @@ public class OrderController {
     @PostMapping("/payment/kakao/approve")
     public boolean approveWithKakaoPayment(@RequestBody KakaoPaymentApprovalRequestForm requestForm) throws JsonProcessingException {
         return orderService.approvalPurchaseWithKakao(requestForm);
+    }
+    @DeleteMapping("/payment/kakao/reject")
+    public boolean rejectWithKakaoPayment(@RequestBody KakaoPaymentRejectRequestForm requestForm) {
+        return orderService.rejectPurchaseWithKakao(requestForm);
     }
 
     // 결제 전 주문 요청내역 확인
