@@ -13,9 +13,7 @@ import com.dyes.backend.domain.order.controller.form.OrderProductRequestForm;
 import com.dyes.backend.domain.delivery.entity.Delivery;
 import com.dyes.backend.domain.delivery.repository.DeliveryRepository;
 import com.dyes.backend.domain.delivery.entity.DeliveryStatus;
-import com.dyes.backend.domain.order.entity.OrderedProduct;
-import com.dyes.backend.domain.order.entity.OrderedPurchaserProfile;
-import com.dyes.backend.domain.order.entity.ProductOrder;
+import com.dyes.backend.domain.order.entity.*;
 import com.dyes.backend.domain.order.repository.OrderRepository;
 import com.dyes.backend.domain.order.repository.OrderedProductRepository;
 import com.dyes.backend.domain.order.repository.OrderedPurchaserProfileRepository;
@@ -228,7 +226,7 @@ public class OrderServiceImpl implements OrderService {
 
             // 주문한 상품 및 옵션 정보 가져오기
             Long totalPrice = 0L;
-            String productOrderId = order.getId();
+            Long productOrderId = order.getId();
             Delivery delivery = order.getDelivery();
             DeliveryStatus deliveryStatus = delivery.getDeliveryStatus();
             LocalDate orderedTime = order.getOrderedTime();
@@ -294,7 +292,7 @@ public class OrderServiceImpl implements OrderService {
 
             // 주문한 상품 및 옵션 정보 가져오기
             Long totalPrice = 0L;
-            String productOrderId = order.getId();
+            Long productOrderId = order.getId();
             Delivery delivery = order.getDelivery();
             DeliveryStatus deliveryStatus = delivery.getDeliveryStatus();
             LocalDate orderedTime = order.getOrderedTime();
@@ -361,7 +359,8 @@ public class OrderServiceImpl implements OrderService {
 
         ProductOrder order = ProductOrder.builder()
                 .user(user)
-                .totalAmount(totalAmount)
+                .orderStatus(OrderStatus.SUCCESS_PAYMENT)
+                .amount(new OrderAmount(totalAmount, 0))
                 .orderedTime(LocalDate.now())
                 .delivery(delivery)
                 .build();

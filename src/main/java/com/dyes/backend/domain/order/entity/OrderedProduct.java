@@ -17,6 +17,8 @@ public class OrderedProduct {
     private Long id;
     private Long productOptionId;
     private int productOptionCount;
+    @Enumerated(EnumType.STRING)
+    private OrderedProductStatus orderedProductStatus;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_order_id")
     private ProductOrder productOrder;

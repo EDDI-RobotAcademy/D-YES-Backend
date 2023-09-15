@@ -11,7 +11,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderDetailInfoResponse {
-    private String productOrderId;
+    private Long productOrderId;
     private Long totalPrice;
     private LocalDate orderedTime;
     private DeliveryStatus deliveryStatus;

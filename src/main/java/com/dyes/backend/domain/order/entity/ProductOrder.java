@@ -18,13 +18,16 @@ import java.time.LocalDate;
 public class ProductOrder {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
+    private Long id;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id")
     private User user;
-    private int totalAmount;
+    @Enumerated(EnumType.STRING)
+    private OrderStatus orderStatus;
+    @Embedded
+    private OrderAmount amount;
+    private String tid;
     private LocalDate orderedTime;
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "delivery_id")
     private Delivery delivery;

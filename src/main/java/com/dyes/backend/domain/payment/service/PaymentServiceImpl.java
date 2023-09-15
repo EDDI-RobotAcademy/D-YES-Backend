@@ -1,13 +1,23 @@
 package com.dyes.backend.domain.payment.service;
 
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
+import com.dyes.backend.domain.order.controller.form.KakaoPaymentRefundRequestForm;
 import com.dyes.backend.domain.order.controller.form.KakaoPaymentRejectRequestForm;
+import com.dyes.backend.domain.order.entity.OrderAmount;
+import com.dyes.backend.domain.order.entity.OrderStatus;
+import com.dyes.backend.domain.order.entity.ProductOrder;
+import com.dyes.backend.domain.order.repository.OrderRepository;
+import com.dyes.backend.domain.order.service.user.request.KakaoPaymentRefundProductOptionRequest;
+import com.dyes.backend.domain.order.service.user.request.KakaoPaymentRefundRequest;
 import com.dyes.backend.domain.order.service.user.request.OrderProductRequest;
 import com.dyes.backend.domain.order.service.user.request.OrderedProductOptionRequest;
+import com.dyes.backend.domain.order.service.user.response.KakaoPaymentRefundResponse;
 import com.dyes.backend.domain.payment.entity.Payment;
 import com.dyes.backend.domain.payment.entity.PaymentAmount;
 import com.dyes.backend.domain.payment.entity.PaymentCardInfo;
+import com.dyes.backend.domain.payment.entity.RefundedPayment;
 import com.dyes.backend.domain.payment.repository.PaymentRepository;
+import com.dyes.backend.domain.payment.repository.RefundedPaymentRepository;
 import com.dyes.backend.domain.payment.service.request.KakaoPaymentApprovalRequest;
 import com.dyes.backend.domain.payment.service.request.KakaoPaymentRejectRequest;
 import com.dyes.backend.domain.payment.service.request.KakaoPaymentRequest;
@@ -32,6 +42,13 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.view.RedirectView;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import static com.dyes.backend.domain.order.entity.OrderStatus.CANCEL_PAYMENT;
+import static com.dyes.backend.domain.order.entity.OrderStatus.PART_CANCEL_PAYMENT;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -42,6 +59,8 @@ public class PaymentServiceImpl implements PaymentService{
     final private RestTemplate restTemplate;
     final private ProductOptionRepository productOptionRepository;
     final private AuthenticationService authenticationService;
+    final private OrderRepository orderRepository;
+    final private RefundedPaymentRepository refundedPaymentRepository;
     public KakaoPaymentReadyResponse paymentRequest(KakaoPaymentRequest request) {
         log.info("paymentRequest start");
         try{
@@ -53,7 +72,7 @@ public class PaymentServiceImpl implements PaymentService{
             final String itemName = request.getItem_name();
             final String quantity = String.valueOf(request.getQuantity());
             final String totalAmount = String.valueOf(request.getTotal_amount());
-            final String vatAmount = String.valueOf(request.getTax_free_amount());
+            final String vatAmount = String.valueOf(0);
             final String approvalUrl = kakaoPaymentSecretsProvider.getKakaoPaymentApprovalUrl();
             final String cancelUrl = kakaoPaymentSecretsProvider.getKakaoPaymentCancelUrl();
             final String failUrl = kakaoPaymentSecretsProvider.getKakaoPaymentFailUrl();
@@ -112,7 +131,7 @@ public class PaymentServiceImpl implements PaymentService{
             if (approveResponse != null) {
                 if(paymentCompleteAndSaveWithKakao(approveResponse)) {
                     redisService.deletePaymentTemporarySaveData(userId);
-                    log.info("paymentApprovalRequest start");
+                    log.info("paymentApprovalRequest end");
                     return true;
                 }
             }
@@ -136,8 +155,101 @@ public class PaymentServiceImpl implements PaymentService{
             log.error("Failed to reject: {}", e.getMessage(), e);
             return false;
         }
-
     }
+
+    public boolean paymentRefundRequest(KakaoPaymentRefundRequestForm requestForm) {
+        KakaoPaymentRefundRequest request = new KakaoPaymentRefundRequest(requestForm.getUserToken(), requestForm.getOrderId());
+        List<KakaoPaymentRefundProductOptionRequest> requestList = requestForm.getRequestList();
+
+        final String userToken = request.getUserToken();
+        final Long orderId = request.getOrderId();
+
+        try {
+            User user = authenticationService.findUserByUserToken(userToken);
+            if (user == null) {
+                return false;
+            }
+            log.info("user: " + user.getId());
+            Optional<ProductOrder> maybeOrder = orderRepository.findById(orderId);
+            if (maybeOrder.isEmpty()) {
+                return false;
+            }
+            ProductOrder order = maybeOrder.get();
+            log.info("order: " + order.getId());
+
+            final String cid = kakaoPaymentSecretsProvider.getCid();
+            final String tid = order.getTid();
+            final String refundUrl = kakaoPaymentSecretsProvider.getKakaoPaymentRefundUrl();
+            Integer cancelAmount = 0;
+
+            List<ProductOption> refundProductOptionList = new ArrayList<>();
+
+            for (KakaoPaymentRefundProductOptionRequest optionRequest : requestList) {
+                Long productOptionId = optionRequest.getProductOptionId();
+                Optional<ProductOption> maybeProductOption = productOptionRepository.findById(productOptionId);
+                if (maybeProductOption.isEmpty()) {
+                    return false;
+                }
+                ProductOption productOption = maybeProductOption.get();
+                log.info("productOption: " + productOption.getOptionName());
+
+                cancelAmount += productOption.getOptionPrice().intValue();
+                log.info("cancelAmount: " + cancelAmount);
+
+                refundProductOptionList.add(productOption);
+            }
+
+            MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+            parameters.add("cid", cid);
+            parameters.add("tid", tid);
+            parameters.add("cancel_amount", String.valueOf(cancelAmount));
+            parameters.add("cancel_tax_free_amount", String.valueOf(cancelAmount));
+            HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(parameters, this.getHeaders());
+
+            try {
+                KakaoPaymentRefundResponse response = restTemplate.postForObject(refundUrl, requestEntity, KakaoPaymentRefundResponse.class);
+                log.info("response: " + response);
+                if (response.getApproved_cancel_amount() != null) {
+
+                    OrderAmount orderAmount = order.getAmount();
+                    Integer existingAmount = orderAmount.getTotalAmount();
+                    Integer existingRefundAmount = orderAmount.getRefundedAmount();
+                    orderAmount.setTotalAmount(existingAmount - cancelAmount);
+                    orderAmount.setTotalAmount(existingRefundAmount + cancelAmount);
+                    order.setAmount(orderAmount);
+
+                    if (response.getStatus().equals(CANCEL_PAYMENT)) {
+                        order.setOrderStatus(CANCEL_PAYMENT);
+                    } else if (order.getAmount().getTotalAmount() == 0) {
+                        order.setOrderStatus(CANCEL_PAYMENT);
+                    } else {
+                        order.setOrderStatus(PART_CANCEL_PAYMENT);
+                    }
+
+                    RefundedPayment refundedPayment = RefundedPayment.builder()
+                            .aid(response.getAid())
+                            .tid(response.getTid())
+                            .user(user)
+                            .approved_cancel_amount(response.getApproved_cancel_amount().getTotal())
+                            .canceled_at(response.getCanceled_at())
+                            .productOptionList(refundProductOptionList)
+                            .build();
+                    
+                    orderRepository.save(order);
+                    refundedPaymentRepository.save(refundedPayment);
+                    return true;
+                }
+            } catch (HttpClientErrorException | HttpServerErrorException | NullPointerException e) {
+                log.error("Failed connect to server: {}", e.getMessage(), e);
+                return false;
+            }
+            return false;
+        } catch (Exception e) {
+            log.error("Failed to reject: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+
     public boolean paymentCompleteAndSaveWithKakao(KakaoApproveResponse response) {
         log.info("paymentCompleteAndSaveWithKakao start");
         try {
@@ -240,7 +352,6 @@ public class PaymentServiceImpl implements PaymentService{
                     .item_name(itemName)
                     .quantity(quantity)
                     .total_amount(saveRequest.getTotalAmount())
-                    .tax_free_amount(saveRequest.getTotalAmount()/11) // 세금을 10퍼센트라고 했을 때
                     .build();
             log.info("paymentRequest: " + paymentRequest);
 

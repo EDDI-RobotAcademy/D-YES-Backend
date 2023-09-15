@@ -27,4 +27,6 @@ public class KakaoPaymentSecretsProvider {
     private String cid;
     @Value("${kakao.payment.admin.key}")
     private String adminKey;
+    @Value("${kakao.payment.refund.url}")
+    private String kakaoPaymentRefundUrl;
 }

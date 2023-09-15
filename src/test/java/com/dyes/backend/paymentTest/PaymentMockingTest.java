@@ -1,11 +1,17 @@
 package com.dyes.backend.paymentTest;
 
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
+import com.dyes.backend.domain.delivery.entity.Delivery;
+import com.dyes.backend.domain.order.controller.form.KakaoPaymentRefundRequestForm;
 import com.dyes.backend.domain.order.controller.form.KakaoPaymentRejectRequestForm;
-import com.dyes.backend.domain.order.service.user.request.OrderProductRequest;
-import com.dyes.backend.domain.order.service.user.request.OrderedProductOptionRequest;
-import com.dyes.backend.domain.order.service.user.request.OrderedPurchaserProfileRequest;
+import com.dyes.backend.domain.order.entity.OrderAmount;
+import com.dyes.backend.domain.order.entity.OrderStatus;
+import com.dyes.backend.domain.order.entity.ProductOrder;
+import com.dyes.backend.domain.order.repository.OrderRepository;
+import com.dyes.backend.domain.order.service.user.request.*;
+import com.dyes.backend.domain.order.service.user.response.*;
 import com.dyes.backend.domain.payment.repository.PaymentRepository;
+import com.dyes.backend.domain.payment.repository.RefundedPaymentRepository;
 import com.dyes.backend.domain.payment.service.PaymentServiceImpl;
 import com.dyes.backend.domain.payment.service.request.KakaoPaymentApprovalRequest;
 import com.dyes.backend.domain.payment.service.request.KakaoPaymentRejectRequest;
@@ -44,6 +50,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import static com.dyes.backend.domain.order.entity.OrderStatus.CANCEL_PAYMENT;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
@@ -61,6 +68,10 @@ public class PaymentMockingTest {
     private ProductOptionRepository mockProductOptionRepository;
     @Mock
     private AuthenticationService mockAuthenticationService;
+    @Mock
+    private OrderRepository mockOrderRepository;
+    @Mock
+    private RefundedPaymentRepository mockRefundedPaymentRepository;
 
     @InjectMocks
     private PaymentServiceImpl mockService;
@@ -74,7 +85,9 @@ public class PaymentMockingTest {
                 mockKakaoPaymentSecretsProvider,
                 mockRestTemplate,
                 mockProductOptionRepository,
-                mockAuthenticationService
+                mockAuthenticationService,
+                mockOrderRepository,
+                mockRefundedPaymentRepository
         );
     }
 
@@ -84,7 +97,7 @@ public class PaymentMockingTest {
 
         KakaoPaymentRequest request = new KakaoPaymentRequest("partnerOrderId",
                 "partnerUserId",
-                "itemName", 1, 1, 1
+                "itemName", 1, 1
                 );
 
         final String requestUrl = "requestUrl";
@@ -120,13 +133,12 @@ public class PaymentMockingTest {
         httpHeaders.set("Authorization", auth);
         httpHeaders.set("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
 
-        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(parameters, httpHeaders);
         KakaoPaymentReadyResponse response = new KakaoPaymentReadyResponse("tid",
                 "mobile_url",
                 "pc_url",
                 "created_at"
                 );
-        when(mockRestTemplate.postForObject(requestUrl, requestEntity, KakaoPaymentReadyResponse.class)).thenReturn(response);
+        when(mockRestTemplate.postForObject(eq(requestUrl), any(HttpEntity.class), eq(KakaoPaymentReadyResponse.class))).thenReturn(response);
 
         KakaoPaymentReadyResponse result = mockService.paymentRequest(request);
         assertTrue(result != null);
@@ -263,6 +275,57 @@ public class PaymentMockingTest {
         when(mockAuthenticationService.findUserByUserToken(request.getUserToken())).thenReturn(user);
 
         boolean result = mockService.paymentRejectWithKakao(requestForm);
+        assertTrue(result);
+    }
+    @Test
+    @DisplayName("payment mocking test: kakao payment refund")
+    public void 사용자가_확정된_결제를_환불합니다() {
+        final String userToken = "userToken";
+        final Long orderId = 1L;
+        final Long productOptionId = 1L;
+        KakaoPaymentRefundProductOptionRequest optionRequest = new KakaoPaymentRefundProductOptionRequest(productOptionId);
+        KakaoPaymentRefundRequestForm requestForm = new KakaoPaymentRefundRequestForm(userToken, orderId, List.of(optionRequest));
+        KakaoPaymentRefundRequest request = new KakaoPaymentRefundRequest(requestForm.getUserToken(), requestForm.getOrderId());
+
+        User user = new User();
+        user.setId("id");
+        when(mockAuthenticationService.findUserByUserToken(userToken)).thenReturn(user);
+
+        final String tid = "tid";
+        ProductOrder order = new ProductOrder();
+        order.setId(1L);
+        order.setTid(tid);
+
+        OrderAmount orderAmount = new OrderAmount(100, 100);
+        order.setAmount(orderAmount);
+        when(mockOrderRepository.findById(request.getOrderId())).thenReturn(Optional.of(order));
+
+        final String refundUrl = "refund_url";
+        final String cid = "cid";
+
+        when(mockKakaoPaymentSecretsProvider.getCid()).thenReturn(cid);
+        when(mockKakaoPaymentSecretsProvider.getKakaoPaymentRefundUrl()).thenReturn(refundUrl);
+
+        final Integer cancel_amount = 1;
+
+        ProductOption productOption = new ProductOption();
+        productOption.setOptionName("option_name");
+        productOption.setOptionPrice(1L);
+        when(mockProductOptionRepository.findById(optionRequest.getProductOptionId())).thenReturn(Optional.of(productOption));
+
+        KakaoPaymentRefundResponse refundResponse = new KakaoPaymentRefundResponse();
+        KakaoRefundApprovedCancelAmountRequest approvedCancelAmountRequest = new KakaoRefundApprovedCancelAmountRequest();
+        approvedCancelAmountRequest.setTotal(cancel_amount);
+        refundResponse.setTid(tid);
+        refundResponse.setApproved_cancel_amount(approvedCancelAmountRequest);
+        refundResponse.setStatus(String.valueOf(CANCEL_PAYMENT));
+
+        final String adminKey = "adminKey";
+        when(mockKakaoPaymentSecretsProvider.getAdminKey()).thenReturn(adminKey);
+
+        when(mockRestTemplate.postForObject(eq(refundUrl), any(HttpEntity.class), eq(KakaoPaymentRefundResponse.class))).thenReturn(refundResponse);
+
+        boolean result = mockService.paymentRefundRequest(requestForm);
         assertTrue(result);
     }
 }

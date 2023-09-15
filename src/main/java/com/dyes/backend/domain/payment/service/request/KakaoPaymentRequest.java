@@ -15,5 +15,4 @@ public class KakaoPaymentRequest {
     private String item_name;
     private Integer quantity;
     private Integer total_amount;
-    private Integer tax_free_amount;
 }
