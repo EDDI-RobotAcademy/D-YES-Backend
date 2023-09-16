@@ -14,10 +14,7 @@ import com.dyes.backend.domain.product.controller.admin.form.ProductListDeleteRe
 import com.dyes.backend.domain.product.controller.admin.form.ProductModifyRequestForm;
 import com.dyes.backend.domain.product.controller.admin.form.ProductRegisterRequestForm;
 import com.dyes.backend.domain.product.entity.*;
-import com.dyes.backend.domain.product.repository.ProductDetailImagesRepository;
-import com.dyes.backend.domain.product.repository.ProductMainImageRepository;
-import com.dyes.backend.domain.product.repository.ProductOptionRepository;
-import com.dyes.backend.domain.product.repository.ProductRepository;
+import com.dyes.backend.domain.product.repository.*;
 import com.dyes.backend.domain.product.service.admin.request.delete.ProductListDeleteRequest;
 import com.dyes.backend.domain.product.service.admin.request.modify.ProductDetailImagesModifyRequest;
 import com.dyes.backend.domain.product.service.admin.request.modify.ProductMainImageModifyRequest;
@@ -36,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.*;
 
 import static com.dyes.backend.domain.product.entity.SaleStatus.AVAILABLE;
@@ -48,6 +46,7 @@ public class AdminProductServiceImpl implements AdminProductService {
     final private ProductOptionRepository productOptionRepository;
     final private ProductMainImageRepository productMainImageRepository;
     final private ProductDetailImagesRepository productDetailImagesRepository;
+    final private ProductManagementRepository productManagementRepository;
     final private FarmRepository farmRepository;
     final private FarmCustomerServiceInfoRepository farmCustomerServiceInfoRepository;
     final private FarmIntroductionInfoRepository farmIntroductionInfoRepository;
@@ -109,6 +108,15 @@ public class AdminProductServiceImpl implements AdminProductService {
                     .build();
 
             productRepository.save(product);
+
+            ProductManagement productManagement = ProductManagement.builder()
+                    .id(product.getId())
+                    .createdDate(LocalDate.now())
+                    .adminId(admin.getId())
+                    .product(product)
+                    .build();
+
+            productManagementRepository.save(productManagement);
 
             for (int i = 0; i < productOptionRegisterRequests.size(); i++) {
                 ProductOption productOption = ProductOption.builder()

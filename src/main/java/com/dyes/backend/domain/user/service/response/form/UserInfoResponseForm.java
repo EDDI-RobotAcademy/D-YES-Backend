@@ -1,4 +1,4 @@
-package com.dyes.backend.domain.user.service.response;
+package com.dyes.backend.domain.user.service.response.form;
 
 import com.dyes.backend.domain.admin.entity.RoleType;
 import com.dyes.backend.domain.user.entity.Active;

@@ -4,16 +4,16 @@ import com.dyes.backend.domain.farm.entity.*;
 import com.dyes.backend.domain.farm.repository.*;
 import com.dyes.backend.domain.farm.service.response.FarmInfoResponseForUser;
 import com.dyes.backend.domain.product.entity.*;
-import com.dyes.backend.domain.product.repository.ProductDetailImagesRepository;
-import com.dyes.backend.domain.product.repository.ProductMainImageRepository;
-import com.dyes.backend.domain.product.repository.ProductOptionRepository;
-import com.dyes.backend.domain.product.repository.ProductRepository;
+import com.dyes.backend.domain.product.repository.*;
 import com.dyes.backend.domain.product.service.user.response.*;
 import com.dyes.backend.domain.product.service.user.response.form.ProductListResponseFormForUser;
 import com.dyes.backend.domain.product.service.user.response.form.ProductReadResponseFormForUser;
 import com.dyes.backend.domain.product.service.user.response.form.RandomProductListResponseFormForUser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -28,6 +28,7 @@ public class UserProductServiceImpl implements UserProductService {
     final private ProductOptionRepository productOptionRepository;
     final private ProductMainImageRepository productMainImageRepository;
     final private ProductDetailImagesRepository productDetailImagesRepository;
+    final private ProductManagementRepository productManagementRepository;
     final private FarmCustomerServiceInfoRepository farmCustomerServiceInfoRepository;
     final private FarmIntroductionInfoRepository farmIntroductionInfoRepository;
     final private FarmRepresentativeInfoRepository farmRepresentativeInfoRepository;
@@ -220,6 +221,32 @@ public class UserProductServiceImpl implements UserProductService {
 
         } catch (Exception e) {
             log.error("Failed to read the random product list: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+
+    // 신규 상품 10개 목록 조회
+    @Override
+    public List<ProductListResponseFormForUser> getNew10ProductListForUser() {
+        log.info("Reading new product list");
+
+        List<ProductListResponseFormForUser> productListResponseFormListForUser = new ArrayList<>();
+
+        // 상품 목록 조회 진행
+        try {
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<ProductManagement> productManagementList = productManagementRepository.findNew10ByCreatedDate(pageable);
+            for(ProductManagement productManagement: productManagementList) {
+                Product product = productManagement.getProduct();
+                ProductListResponseFormForUser productListResponseFormForUser = createUserProductListResponseForm(product);
+                productListResponseFormListForUser.add(productListResponseFormForUser);
+            }
+
+            log.info("New Product list read successful");
+            return productListResponseFormListForUser;
+
+        } catch (Exception e) {
+            log.error("Failed to read the new product list: {}", e.getMessage(), e);
             return null;
         }
     }
