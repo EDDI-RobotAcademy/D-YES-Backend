@@ -12,10 +12,7 @@ import com.dyes.backend.domain.product.controller.admin.form.ProductDeleteReques
 import com.dyes.backend.domain.product.controller.admin.form.ProductModifyRequestForm;
 import com.dyes.backend.domain.product.controller.admin.form.ProductRegisterRequestForm;
 import com.dyes.backend.domain.product.entity.*;
-import com.dyes.backend.domain.product.repository.ProductDetailImagesRepository;
-import com.dyes.backend.domain.product.repository.ProductMainImageRepository;
-import com.dyes.backend.domain.product.repository.ProductOptionRepository;
-import com.dyes.backend.domain.product.repository.ProductRepository;
+import com.dyes.backend.domain.product.repository.*;
 import com.dyes.backend.domain.product.service.admin.AdminProductServiceImpl;
 import com.dyes.backend.domain.product.service.admin.request.modify.ProductDetailImagesModifyRequest;
 import com.dyes.backend.domain.product.service.admin.request.modify.ProductMainImageModifyRequest;
@@ -66,6 +63,8 @@ public class AdminProductMockingTest {
     @Mock
     private ProductDetailImagesRepository mockProductDetailImagesRepository;
     @Mock
+    private ProductManagementRepository productManagementRepository;
+    @Mock
     private AdminRepository mockAdminRepository;
     @Mock
     private UserRepository mockUserRepository;
@@ -95,6 +94,7 @@ public class AdminProductMockingTest {
                 mockProductOptionRepository,
                 mockProductMainImageRepository,
                 mockProductDetailImagesRepository,
+                productManagementRepository,
                 mockFarmRepository,
                 mockFarmCustomerServiceInfoRepository,
                 mockFarmIntroductionInfoRepository,
