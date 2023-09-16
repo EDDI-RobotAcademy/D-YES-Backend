@@ -4,10 +4,7 @@ import com.dyes.backend.domain.farm.entity.*;
 import com.dyes.backend.domain.farm.repository.*;
 import com.dyes.backend.domain.farm.service.response.FarmInfoResponseForUser;
 import com.dyes.backend.domain.product.entity.*;
-import com.dyes.backend.domain.product.repository.ProductDetailImagesRepository;
-import com.dyes.backend.domain.product.repository.ProductMainImageRepository;
-import com.dyes.backend.domain.product.repository.ProductOptionRepository;
-import com.dyes.backend.domain.product.repository.ProductRepository;
+import com.dyes.backend.domain.product.repository.*;
 import com.dyes.backend.domain.product.service.user.UserProductServiceImpl;
 import com.dyes.backend.domain.product.service.user.response.*;
 import com.dyes.backend.domain.product.service.user.response.form.ProductListResponseFormForUser;
@@ -42,6 +39,8 @@ public class UserProductMockingTest {
     @Mock
     private ProductDetailImagesRepository mockProductDetailImagesRepository;
     @Mock
+    private ProductManagementRepository productManagementRepository;
+    @Mock
     private FarmBusinessInfoRepository mockFarmBusinessInfoRepository;
     @Mock
     private FarmCustomerServiceInfoRepository mockFarmCustomerServiceInfoRepository;
@@ -61,6 +60,7 @@ public class UserProductMockingTest {
                 mockProductOptionRepository,
                 mockProductMainImageRepository,
                 mockProductDetailImagesRepository,
+                productManagementRepository,
                 mockFarmCustomerServiceInfoRepository,
                 mockFarmIntroductionInfoRepository,
                 mockFarmRepresentativeInfoRepository);
