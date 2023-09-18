@@ -11,9 +11,15 @@ import com.dyes.backend.domain.review.controller.form.ReviewOrderedCheckRequestF
 import com.dyes.backend.domain.review.controller.form.ReviewRegisterRequestForm;
 import com.dyes.backend.domain.review.entity.Review;
 import com.dyes.backend.domain.review.entity.ReviewContent;
+import com.dyes.backend.domain.review.entity.ReviewDetailImages;
+import com.dyes.backend.domain.review.entity.ReviewMainImage;
 import com.dyes.backend.domain.review.repository.ReviewContentRepository;
+import com.dyes.backend.domain.review.repository.ReviewDetailImagesRepository;
+import com.dyes.backend.domain.review.repository.ReviewMainImageRepository;
 import com.dyes.backend.domain.review.repository.ReviewRepository;
 import com.dyes.backend.domain.review.service.ReviewServiceImpl;
+import com.dyes.backend.domain.review.service.request.ReviewDetailImagesRegisterRequest;
+import com.dyes.backend.domain.review.service.request.ReviewMainImageRegisterRequest;
 import com.dyes.backend.domain.review.service.request.ReviewOrderedCheckRequest;
 import com.dyes.backend.domain.review.service.request.ReviewRegisterRequest;
 import com.dyes.backend.domain.review.service.response.ReviewRequestResponse;
@@ -53,6 +59,10 @@ public class ReviewMockingTest {
     private ReviewContentRepository mockReviewContentRepository;
     @Mock
     private UserProfileRepository mockUserProfileRepository;
+    @Mock
+    private ReviewMainImageRepository mockReviewMainImageRepository;
+    @Mock
+    private ReviewDetailImagesRepository mockReviewDetailImagesRepository;
     @InjectMocks
     private ReviewServiceImpl mockService;
 
@@ -66,7 +76,9 @@ public class ReviewMockingTest {
                 mockProductRepository,
                 mockReviewRepository,
                 mockReviewContentRepository,
-                mockUserProfileRepository
+                mockUserProfileRepository,
+                mockReviewMainImageRepository,
+                mockReviewDetailImagesRepository
         );
     }
 
@@ -101,7 +113,7 @@ public class ReviewMockingTest {
         final String title = "제목";
         final String content = "내용";
 
-        ReviewRegisterRequestForm requestForm = new ReviewRegisterRequestForm(userToken, productId, title, content);
+        ReviewRegisterRequestForm requestForm = new ReviewRegisterRequestForm(userToken, productId, title, content, new ReviewMainImageRegisterRequest(), List.of(new ReviewDetailImagesRegisterRequest()));
         ReviewRegisterRequest request = new ReviewRegisterRequest(requestForm.getUserToken(), requestForm.getProductId(), requestForm.getTitle(), requestForm.getContent());
 
         User user = new User();
@@ -141,9 +153,17 @@ public class ReviewMockingTest {
         review.setReviewContent(reviewContent);
         review.setUserNickName(nickName);
         review.setCreateDate(createDate);
-        review.setModifyDate(createDate);
+        review.setModifyDate(modifyDate);
 
         when(mockReviewRepository.findByIdWithContent(reviewId)).thenReturn(Optional.of(review));
+
+        ReviewMainImage reviewMainImage = new ReviewMainImage();
+        reviewMainImage.setMainImg("main image");
+        when(mockReviewMainImageRepository.findByReview(review)).thenReturn(reviewMainImage);
+
+        ReviewDetailImages reviewDetailImages = new ReviewDetailImages();
+        reviewDetailImages.setDetailImgs("detail images");
+        when(mockReviewDetailImagesRepository.findAllByReview(review)).thenReturn(List.of(reviewDetailImages));
 
         ReviewRequestResponseForm result = mockService.readReview(reviewId);
         assertTrue(result != null);

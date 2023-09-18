@@ -11,10 +11,18 @@ import com.dyes.backend.domain.review.controller.form.ReviewOrderedCheckRequestF
 import com.dyes.backend.domain.review.controller.form.ReviewRegisterRequestForm;
 import com.dyes.backend.domain.review.entity.Review;
 import com.dyes.backend.domain.review.entity.ReviewContent;
+import com.dyes.backend.domain.review.entity.ReviewDetailImages;
+import com.dyes.backend.domain.review.entity.ReviewMainImage;
 import com.dyes.backend.domain.review.repository.ReviewContentRepository;
+import com.dyes.backend.domain.review.repository.ReviewDetailImagesRepository;
+import com.dyes.backend.domain.review.repository.ReviewMainImageRepository;
 import com.dyes.backend.domain.review.repository.ReviewRepository;
+import com.dyes.backend.domain.review.service.request.ReviewDetailImagesRegisterRequest;
+import com.dyes.backend.domain.review.service.request.ReviewMainImageRegisterRequest;
 import com.dyes.backend.domain.review.service.request.ReviewOrderedCheckRequest;
 import com.dyes.backend.domain.review.service.request.ReviewRegisterRequest;
+import com.dyes.backend.domain.review.service.response.ReviewRequestDetailImagesResponse;
+import com.dyes.backend.domain.review.service.response.ReviewRequestMainImageResponse;
 import com.dyes.backend.domain.review.service.response.ReviewRequestResponse;
 import com.dyes.backend.domain.review.service.response.form.ReviewRequestResponseForm;
 import com.dyes.backend.domain.user.entity.User;
@@ -25,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,6 +48,8 @@ public class ReviewServiceImpl implements ReviewService{
     final private ReviewRepository reviewRepository;
     final private ReviewContentRepository reviewContentRepository;
     final private UserProfileRepository userProfileRepository;
+    final private ReviewMainImageRepository reviewMainImageRepository;
+    final private ReviewDetailImagesRepository reviewDetailImagesRepository;
     public boolean beforeMakeReview(ReviewOrderedCheckRequestForm requestForm) {
         log.info("beforeMakeReview start");
         ReviewOrderedCheckRequest request = new ReviewOrderedCheckRequest(requestForm.getUserToken(), requestForm.getProductId());
@@ -81,6 +92,8 @@ public class ReviewServiceImpl implements ReviewService{
 
         ReviewRegisterRequest request = new ReviewRegisterRequest(requestForm.getUserToken(), requestForm.getProductId(),
                 requestForm.getTitle(), requestForm.getContent());
+        ReviewMainImageRegisterRequest mainImageRegisterRequest = requestForm.getMainImageRegisterRequest();
+        List<ReviewDetailImagesRegisterRequest> detailImagesRegisterRequestList = requestForm.getDetailImagesRegisterRequestList();
 
         final String userToken = request.getUserToken();
         final Long productId = request.getProductId();
@@ -119,6 +132,21 @@ public class ReviewServiceImpl implements ReviewService{
             reviewRepository.save(review);
             log.info("registerReview end");
 
+            ReviewMainImage mainImage = ReviewMainImage.builder()
+                    .mainImg(mainImageRegisterRequest.getMainImg())
+                    .review(review)
+                    .build();
+
+            reviewMainImageRepository.save(mainImage);
+
+            for (ReviewDetailImagesRegisterRequest detailImagesRegisterRequest : detailImagesRegisterRequestList) {
+                ReviewDetailImages detailImages = ReviewDetailImages.builder()
+                        .detailImgs(detailImagesRegisterRequest.getDetailImgs())
+                        .review(review)
+                        .build();
+                reviewDetailImagesRepository.save(detailImages);
+            }
+
             return true;
         } catch (Exception e) {
             log.error("Failed connect to server: {}", e.getMessage(), e);
@@ -126,17 +154,16 @@ public class ReviewServiceImpl implements ReviewService{
         }
     }
     public ReviewRequestResponseForm readReview(Long reviewId) {
-        log.info("**************************** review: " + reviewId);
 
         Optional<Review> maybeReview = reviewRepository.findByIdWithContent(reviewId);
         try {
             if (maybeReview.isEmpty()) {
-                log.info("**************************** empty: ");
-
                 return null;
             }
             Review review = maybeReview.get();
-            log.info("review: " + review.getTitle());
+            ReviewMainImage mainImage = reviewMainImageRepository.findByReview(review);
+            List<ReviewDetailImages> detailImages = reviewDetailImagesRepository.findAllByReview(review);
+
             ReviewRequestResponse response = ReviewRequestResponse.builder()
                     .title(review.getTitle())
                     .content(review.getReviewContent().getReviewContent())
@@ -144,16 +171,29 @@ public class ReviewServiceImpl implements ReviewService{
                     .modifyDate(review.getModifyDate())
                     .userNickName(review.getUserNickName())
                     .build();
-            log.info("response: " + response);
+
+            ReviewRequestMainImageResponse mainImageResponse = ReviewRequestMainImageResponse.builder()
+                    .mainImg(mainImage.getMainImg())
+                    .build();
+
+            List<ReviewRequestDetailImagesResponse> reviewRequestDetailImagesResponses = new ArrayList<>();
+            for (ReviewDetailImages reviewDetailImages : detailImages) {
+                ReviewRequestDetailImagesResponse detailImagesResponse = ReviewRequestDetailImagesResponse.builder()
+                        .detailImages(reviewDetailImages.getDetailImgs())
+                        .build();
+                reviewRequestDetailImagesResponses.add(detailImagesResponse);
+            }
+
 
             ReviewRequestResponseForm responseForm = ReviewRequestResponseForm.builder()
                     .title(response.getTitle())
                     .content(response.getContent())
+                    .mainImageResponse(mainImageResponse)
+                    .detailImagesResponseList(reviewRequestDetailImagesResponses)
                     .createDate(response.getCreateDate())
                     .modifyDate(response.getModifyDate())
                     .userNickName(response.getUserNickName())
                     .build();
-            log.info("responseForm: " + responseForm);
 
             return responseForm;
         } catch (Exception e) {
