@@ -31,6 +31,7 @@ import com.dyes.backend.domain.product.entity.ProductMainImage;
 import com.dyes.backend.domain.product.entity.ProductOption;
 import com.dyes.backend.domain.product.repository.ProductMainImageRepository;
 import com.dyes.backend.domain.product.repository.ProductOptionRepository;
+import com.dyes.backend.domain.product.repository.ProductRepository;
 import com.dyes.backend.domain.user.entity.Address;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserProfile;
@@ -66,6 +67,7 @@ public class OrderServiceImpl implements OrderService {
     final private PaymentService paymentService;
     final private AuthenticationService authenticationService;
     final private RedisService redisService;
+    final private ProductRepository productRepository;
 
     public RedirectView purchaseReadyWithKakao(OrderProductRequestForm requestForm) throws JsonProcessingException {
         log.info("purchaseKakao start");
@@ -384,12 +386,23 @@ public class OrderServiceImpl implements OrderService {
             Optional<ProductOption> maybeProductOption = productOptionRepository.findById(optionRequest.getProductOptionId());
             if (maybeProductOption.isEmpty()) {
                 log.info("Can not find ProductOption");
+                return;
             } else if (maybeProductOption.isPresent()) {
                 ProductOption productOption = maybeProductOption.get();
+                Optional<Product> maybeProduct = productRepository.findById(productOption.getProduct().getId());
+                if (maybeProduct.isEmpty()) {
+                    log.info("Can not find ProductOption");
+                    return;
+                }
+                Product product = maybeProduct.get();
+
                 productOption.setStock(productOption.getStock() - optionRequest.getProductOptionCount());
                 productOptionRepository.save(productOption);
+
                 OrderedProduct orderedProduct = OrderedProduct.builder()
                         .productOrder(order)
+                        .productId(product.getId())
+                        .productName(product.getProductName())
                         .productOptionId(optionRequest.getProductOptionId())
                         .productOptionCount(optionRequest.getProductOptionCount())
                         .orderedProductStatus(OrderedProductStatus.PURCHASED)

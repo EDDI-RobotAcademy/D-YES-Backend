@@ -15,6 +15,8 @@ public class OrderedProduct {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private Long productId;
+    private String productName;
     private Long productOptionId;
     private int productOptionCount;
     @Enumerated(EnumType.STRING)
