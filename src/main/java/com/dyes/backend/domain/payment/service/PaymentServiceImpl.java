@@ -4,7 +4,6 @@ import com.dyes.backend.domain.authentication.service.AuthenticationService;
 import com.dyes.backend.domain.order.controller.form.KakaoPaymentRefundRequestForm;
 import com.dyes.backend.domain.order.controller.form.KakaoPaymentRejectRequestForm;
 import com.dyes.backend.domain.order.entity.OrderAmount;
-import com.dyes.backend.domain.order.entity.OrderStatus;
 import com.dyes.backend.domain.order.entity.ProductOrder;
 import com.dyes.backend.domain.order.repository.OrderRepository;
 import com.dyes.backend.domain.order.service.user.request.KakaoPaymentRefundProductOptionRequest;
@@ -101,7 +100,7 @@ public class PaymentServiceImpl implements PaymentService{
             return null;
         }
     }
-    public boolean paymentApprovalRequest(KakaoPaymentApprovalRequest request) throws JsonProcessingException {
+    public PaymentTemporarySaveRequest paymentApprovalRequest(KakaoPaymentApprovalRequest request) throws JsonProcessingException {
         log.info("paymentApprovalRequest start");
 
         final String userToken = request.getUserToken();
@@ -130,15 +129,14 @@ public class PaymentServiceImpl implements PaymentService{
             KakaoApproveResponse approveResponse = restTemplate.postForObject(approveUrl, requestEntity, KakaoApproveResponse.class);
             if (approveResponse != null) {
                 if(paymentCompleteAndSaveWithKakao(approveResponse)) {
-                    redisService.deletePaymentTemporarySaveData(userId);
                     log.info("paymentApprovalRequest end");
-                    return true;
+                    return saveRequest;
                 }
             }
         } catch (HttpClientErrorException | HttpServerErrorException e) {
             log.error("Failed connect to server: {}", e.getMessage(), e);
         }
-        return false;
+        return null;
     }
     public boolean paymentRejectWithKakao(KakaoPaymentRejectRequestForm requestForm) {
         KakaoPaymentRejectRequest request = new KakaoPaymentRejectRequest(requestForm.getUserToken());
@@ -312,6 +310,7 @@ public class PaymentServiceImpl implements PaymentService{
                         .created_at(response.getCreated_at())
                         .approved_at(response.getApproved_at())
                         .build();
+                paymentRepository.save(payment);
                 log.info("paymentCompleteAndSaveWithKakao end");
                 return true;
             }

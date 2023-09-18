@@ -3,16 +3,15 @@ package com.dyes.backend.domain.order.service;
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
 import com.dyes.backend.domain.cart.entity.Cart;
 import com.dyes.backend.domain.cart.entity.ContainProductOption;
-import com.dyes.backend.domain.cart.repository.CartRepository;
 import com.dyes.backend.domain.cart.repository.ContainProductOptionRepository;
 import com.dyes.backend.domain.cart.service.CartService;
+import com.dyes.backend.domain.delivery.entity.Delivery;
+import com.dyes.backend.domain.delivery.entity.DeliveryStatus;
+import com.dyes.backend.domain.delivery.repository.DeliveryRepository;
 import com.dyes.backend.domain.order.controller.form.KakaoPaymentApprovalRequestForm;
 import com.dyes.backend.domain.order.controller.form.KakaoPaymentRejectRequestForm;
 import com.dyes.backend.domain.order.controller.form.OrderConfirmRequestForm;
 import com.dyes.backend.domain.order.controller.form.OrderProductRequestForm;
-import com.dyes.backend.domain.delivery.entity.Delivery;
-import com.dyes.backend.domain.delivery.repository.DeliveryRepository;
-import com.dyes.backend.domain.delivery.entity.DeliveryStatus;
 import com.dyes.backend.domain.order.entity.*;
 import com.dyes.backend.domain.order.repository.OrderRepository;
 import com.dyes.backend.domain.order.repository.OrderedProductRepository;
@@ -29,6 +28,7 @@ import com.dyes.backend.domain.order.service.user.response.form.OrderConfirmResp
 import com.dyes.backend.domain.order.service.user.response.form.OrderListResponseFormForUser;
 import com.dyes.backend.domain.payment.service.PaymentService;
 import com.dyes.backend.domain.payment.service.request.KakaoPaymentApprovalRequest;
+import com.dyes.backend.domain.payment.service.request.PaymentTemporarySaveRequest;
 import com.dyes.backend.domain.product.entity.Product;
 import com.dyes.backend.domain.product.entity.ProductMainImage;
 import com.dyes.backend.domain.product.entity.ProductOption;
@@ -38,6 +38,7 @@ import com.dyes.backend.domain.user.entity.Address;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserProfile;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
+import com.dyes.backend.utility.redis.RedisService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,7 +58,6 @@ import static com.dyes.backend.domain.delivery.entity.DeliveryStatus.PREPARING;
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
     final private OrderRepository orderRepository;
-    final private CartRepository cartRepository;
     final private ProductOptionRepository productOptionRepository;
     final private ContainProductOptionRepository containProductOptionRepository;
     final private UserProfileRepository userProfileRepository;
@@ -68,6 +68,7 @@ public class OrderServiceImpl implements OrderService {
     final private CartService cartService;
     final private PaymentService paymentService;
     final private AuthenticationService authenticationService;
+    final private RedisService redisService;
 
     public RedirectView purchaseReadyWithKakao(OrderProductRequestForm requestForm) throws JsonProcessingException {
         log.info("purchaseKakao start");
@@ -86,42 +87,52 @@ public class OrderServiceImpl implements OrderService {
     public boolean approvalPurchaseWithKakao (KakaoPaymentApprovalRequestForm requestForm) throws JsonProcessingException {
         log.info("approvalPurchaseKakao start");
         KakaoPaymentApprovalRequest request = new KakaoPaymentApprovalRequest(requestForm.getUserToken(), requestForm.getPg_token());
-        boolean result = paymentService.paymentApprovalRequest(request);
+        PaymentTemporarySaveRequest result = paymentService.paymentApprovalRequest(request);
+        if (result != null) {
+            orderProduct(result);
+
+            final String userToken = request.getUserToken();
+            User user = authenticationService.findUserByUserToken(userToken);
+
+            redisService.deletePaymentTemporarySaveData(user.getId());
+            return true;
+        }
         log.info("approvalPurchaseKakao end");
-        return result;
+        return false;
     }
     public boolean rejectPurchaseWithKakao (KakaoPaymentRejectRequestForm requestForm) {
         boolean result = paymentService.paymentRejectWithKakao(requestForm);
         return result;
     }
     // 상품 주문
-    public boolean orderProductInCart(OrderProductRequestForm requestForm) {
+    public void orderProduct(PaymentTemporarySaveRequest saveRequest) {
         log.info("orderProductInCart start");
         try {
             OrderedPurchaserProfileRequest profileRequest = OrderedPurchaserProfileRequest.builder()
-                    .orderedPurchaserName(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserName())
-                    .orderedPurchaserContactNumber(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserContactNumber())
-                    .orderedPurchaserEmail(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserEmail())
-                    .orderedPurchaserAddress(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserAddress())
-                    .orderedPurchaserZipCode(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserZipCode())
-                    .orderedPurchaserAddressDetail(requestForm.getOrderedPurchaserProfileRequest().getOrderedPurchaserAddressDetail())
+                    .orderedPurchaserName(saveRequest.getOrderedPurchaserProfileRequest().getOrderedPurchaserName())
+                    .orderedPurchaserContactNumber(saveRequest.getOrderedPurchaserProfileRequest().getOrderedPurchaserContactNumber())
+                    .orderedPurchaserEmail(saveRequest.getOrderedPurchaserProfileRequest().getOrderedPurchaserEmail())
+                    .orderedPurchaserAddress(saveRequest.getOrderedPurchaserProfileRequest().getOrderedPurchaserAddress())
+                    .orderedPurchaserZipCode(saveRequest.getOrderedPurchaserProfileRequest().getOrderedPurchaserZipCode())
+                    .orderedPurchaserAddressDetail(saveRequest.getOrderedPurchaserProfileRequest().getOrderedPurchaserAddressDetail())
                     .build();
 
-            final String userToken = requestForm.getUserToken();
-            final int totalAmount = requestForm.getTotalAmount();
+            final String userToken = saveRequest.getUserToken();
+            final int totalAmount = saveRequest.getTotalAmount();
+            final String tid = saveRequest.getTid();
             User user = authenticationService.findUserByUserToken(userToken);
             if (user == null) {
-                return false;
+                return;
             }
-            List<OrderedProductOptionRequest> orderedProductOptionRequestList = requestForm.getOrderedProductOptionRequestList();
+            List<OrderedProductOptionRequest> orderedProductOptionRequestList = saveRequest.getOrderedProductOptionRequestList();
 
-            saveOrderedData(profileRequest, totalAmount, user, orderedProductOptionRequestList);
+            saveOrderedData(profileRequest, totalAmount, tid, user, orderedProductOptionRequestList);
 
             // 유저 토큰으로 장바구니 찾기
             Cart cart = cartService.cartCheckFromUserToken(userToken);
 
             // 주문한 상품이 장바구니에 있으면 장바구니에서 목록 제거
-            if (requestForm.getFrom().equals("cart")) {
+            if (saveRequest.getFrom().equals("cart")) {
                 // 장바구니에 담긴 상품 리스트 불러오기
                 List<ContainProductOption> productOptionList = containProductOptionRepository.findAllByCart(cart);
 
@@ -132,10 +143,8 @@ public class OrderServiceImpl implements OrderService {
                         }
                 }
             }
-            return true;
         } catch (Exception e) {
             log.error("Error occurred while ordering products in cart", e);
-            return false;
         }
     }
     // 상품을 주문하기 전에 확인하기
@@ -342,7 +351,7 @@ public class OrderServiceImpl implements OrderService {
 
     // 주문 진행
     public void saveOrderedData(OrderedPurchaserProfileRequest profileRequest,
-                                int totalAmount, User user, List<OrderedProductOptionRequest> orderedProductOptionRequestList) {
+                                int totalAmount, String tid, User user, List<OrderedProductOptionRequest> orderedProductOptionRequestList) {
 
         final String purchaserName = profileRequest.getOrderedPurchaserName();
         final String purchaserContactNumber = profileRequest.getOrderedPurchaserContactNumber();
@@ -359,6 +368,7 @@ public class OrderServiceImpl implements OrderService {
 
         ProductOrder order = ProductOrder.builder()
                 .user(user)
+                .tid(tid)
                 .orderStatus(OrderStatus.SUCCESS_PAYMENT)
                 .amount(new OrderAmount(totalAmount, 0))
                 .orderedTime(LocalDate.now())
