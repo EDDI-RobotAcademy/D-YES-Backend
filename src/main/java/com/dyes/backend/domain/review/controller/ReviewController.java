@@ -1,6 +1,7 @@
 package com.dyes.backend.domain.review.controller;
 
 import com.dyes.backend.domain.review.controller.form.ReviewOrderedCheckRequestForm;
+import com.dyes.backend.domain.review.controller.form.ReviewRegisterRequestForm;
 import com.dyes.backend.domain.review.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
@@ -20,5 +21,9 @@ public class ReviewController {
     @PostMapping("/check")
     public boolean beforeRegisterReviewCheck (@RequestBody ReviewOrderedCheckRequestForm requestForm) {
         return reviewService.beforeMakeReview(requestForm);
+    }
+    @PostMapping("/register")
+    public boolean registerReviewRequest(@RequestBody ReviewRegisterRequestForm requestForm) {
+        return reviewService.registerReview(requestForm);
     }
 }
