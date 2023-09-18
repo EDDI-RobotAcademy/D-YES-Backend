@@ -1,6 +1,5 @@
 package com.dyes.backend.domain.payment.entity;
 
-import com.dyes.backend.domain.product.entity.ProductOption;
 import com.dyes.backend.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -9,7 +8,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @Entity
 @Data
@@ -18,10 +16,10 @@ import java.util.List;
 @AllArgsConstructor
 public class RefundedPayment {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     private String aid;
     private String tid;
-    @OneToMany(fetch = FetchType.LAZY)
-    private List<ProductOption> productOptionList;
     private int approved_cancel_amount;
     private LocalDate canceled_at;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

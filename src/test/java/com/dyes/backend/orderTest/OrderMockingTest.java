@@ -9,7 +9,6 @@ import com.dyes.backend.domain.cart.service.CartService;
 import com.dyes.backend.domain.delivery.repository.DeliveryRepository;
 import com.dyes.backend.domain.farm.entity.Farm;
 import com.dyes.backend.domain.order.controller.form.OrderConfirmRequestForm;
-import com.dyes.backend.domain.order.controller.form.OrderProductRequestForm;
 import com.dyes.backend.domain.order.entity.OrderedProduct;
 import com.dyes.backend.domain.order.repository.OrderRepository;
 import com.dyes.backend.domain.order.repository.OrderedProductRepository;
@@ -23,9 +22,11 @@ import com.dyes.backend.domain.order.service.user.response.OrderConfirmProductRe
 import com.dyes.backend.domain.order.service.user.response.OrderConfirmUserResponse;
 import com.dyes.backend.domain.order.service.user.response.form.OrderConfirmResponseFormForUser;
 import com.dyes.backend.domain.payment.service.PaymentService;
+import com.dyes.backend.domain.payment.service.request.PaymentTemporarySaveRequest;
 import com.dyes.backend.domain.product.entity.*;
 import com.dyes.backend.domain.product.repository.ProductMainImageRepository;
 import com.dyes.backend.domain.product.repository.ProductOptionRepository;
+import com.dyes.backend.domain.product.repository.ProductRepository;
 import com.dyes.backend.domain.user.entity.*;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import com.dyes.backend.domain.user.repository.UserRepository;
@@ -42,7 +43,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
@@ -71,11 +71,13 @@ public class OrderMockingTest {
     @Mock
     private RedisService mockRedisService;
     @Mock
-    private UserRepository mockUserRepository;
-    @Mock
     private PaymentService mockPaymentService;
     @Mock
     private OrderedPurchaserProfileRepository mockOrderedPurchaserProfileRepository;
+    @Mock
+    private UserRepository mockUserRepository;
+    @Mock
+    private ProductRepository mockProductRepository;
     @InjectMocks
     private OrderServiceImpl mockOrderService;
     @BeforeEach
@@ -83,7 +85,6 @@ public class OrderMockingTest {
         MockitoAnnotations.initMocks(this);
         mockOrderService = new OrderServiceImpl(
                 mockOrderRepository,
-                mockCartRepository,
                 mockProductOptionRepository,
                 mockContainProductOptionRepository,
                 mockUserProfileRepository,
@@ -93,7 +94,9 @@ public class OrderMockingTest {
                 deliveryRepository,
                 mockCartService,
                 mockPaymentService,
-                mockAuthenticationService
+                mockAuthenticationService,
+                mockRedisService,
+                mockProductRepository
                 );
     }
     @Test
@@ -102,14 +105,13 @@ public class OrderMockingTest {
         final String userToken = "google 유저";
         final String accessToken = "엑세스 토큰";
         final int totalAmount = 1;
-        OrderProductRequestForm requestForm = new OrderProductRequestForm(
-                userToken,
-                new OrderedPurchaserProfileRequest("구매자 이름", "전화 번호", "이메일", "주소", "코드", "주소 디테일"),
-                List.of(new OrderedProductOptionRequest(1L, 1)), 1, "cart"
-        );
+        PaymentTemporarySaveRequest saveRequest = new PaymentTemporarySaveRequest(
+                userToken, new OrderedPurchaserProfileRequest("구매자 이름", "전화 번호", "이메일",
+                        "주소", "코드", "주소 디테일"),
+                List.of(new OrderedProductOptionRequest(1L, 1)), 1, "from", "tid", "part", "or");
         OrderedProduct orderedProduct = new OrderedProduct();
-        orderedProduct.setProductOptionId(requestForm.getOrderedProductOptionRequestList().get(0).getProductOptionId());
-        requestForm.setUserToken(userToken);
+        orderedProduct.setProductOptionId(saveRequest.getOrderedProductOptionRequestList().get(0).getProductOptionId());
+        saveRequest.setUserToken(userToken);
         when(mockRedisService.getAccessToken(userToken)).thenReturn(accessToken);
         User user = new User();
         when(mockUserRepository.findByAccessToken(accessToken)).thenReturn(Optional.of(user));
@@ -123,8 +125,7 @@ public class OrderMockingTest {
         containProductOption.setCart(cart);
         when(mockContainProductOptionRepository.findAllByCart(cart)).thenReturn(List.of(containProductOption));
 
-        boolean actual = mockOrderService.orderProductInCart(requestForm);
-        assertTrue(actual);
+        mockOrderService.orderProduct(saveRequest);
     }
     @Test
     @DisplayName("order mocking test: confirm order")

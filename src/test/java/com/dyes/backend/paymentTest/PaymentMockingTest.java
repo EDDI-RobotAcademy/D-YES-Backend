@@ -1,15 +1,15 @@
 package com.dyes.backend.paymentTest;
 
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
-import com.dyes.backend.domain.delivery.entity.Delivery;
 import com.dyes.backend.domain.order.controller.form.KakaoPaymentRefundRequestForm;
 import com.dyes.backend.domain.order.controller.form.KakaoPaymentRejectRequestForm;
 import com.dyes.backend.domain.order.entity.OrderAmount;
-import com.dyes.backend.domain.order.entity.OrderStatus;
 import com.dyes.backend.domain.order.entity.ProductOrder;
 import com.dyes.backend.domain.order.repository.OrderRepository;
+import com.dyes.backend.domain.order.repository.OrderedProductRepository;
 import com.dyes.backend.domain.order.service.user.request.*;
-import com.dyes.backend.domain.order.service.user.response.*;
+import com.dyes.backend.domain.order.service.user.response.KakaoPaymentRefundResponse;
+import com.dyes.backend.domain.order.service.user.response.KakaoRefundApprovedCancelAmountRequest;
 import com.dyes.backend.domain.payment.repository.PaymentRepository;
 import com.dyes.backend.domain.payment.repository.RefundedPaymentRepository;
 import com.dyes.backend.domain.payment.service.PaymentServiceImpl;
@@ -72,7 +72,8 @@ public class PaymentMockingTest {
     private OrderRepository mockOrderRepository;
     @Mock
     private RefundedPaymentRepository mockRefundedPaymentRepository;
-
+    @Mock
+    private OrderedProductRepository mockOrderedProductRepository;
     @InjectMocks
     private PaymentServiceImpl mockService;
 
@@ -87,7 +88,8 @@ public class PaymentMockingTest {
                 mockProductOptionRepository,
                 mockAuthenticationService,
                 mockOrderRepository,
-                mockRefundedPaymentRepository
+                mockRefundedPaymentRepository,
+                mockOrderedProductRepository
         );
     }
 
@@ -219,9 +221,8 @@ public class PaymentMockingTest {
                 );
         when(mockRestTemplate.postForObject(approveUrl, requestEntity, KakaoApproveResponse.class)).thenReturn(approveResponse);
 
-        boolean result = mockService.paymentApprovalRequest(request);
-        assertTrue(result);
-        verify(mockRedisService, times(1)).deletePaymentTemporarySaveData(user.getId());
+        PaymentTemporarySaveRequest result = mockService.paymentApprovalRequest(request);
+        assertTrue(result != null);
     }
     @Test
     @DisplayName("payment mocking test: kakao payment redirectview return")

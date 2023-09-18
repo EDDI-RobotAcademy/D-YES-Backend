@@ -1,9 +1,6 @@
 package com.dyes.backend.domain.order.controller;
 
-import com.dyes.backend.domain.order.controller.form.KakaoPaymentApprovalRequestForm;
-import com.dyes.backend.domain.order.controller.form.KakaoPaymentRejectRequestForm;
-import com.dyes.backend.domain.order.controller.form.OrderConfirmRequestForm;
-import com.dyes.backend.domain.order.controller.form.OrderProductRequestForm;
+import com.dyes.backend.domain.order.controller.form.*;
 import com.dyes.backend.domain.order.service.OrderService;
 import com.dyes.backend.domain.order.service.admin.response.form.OrderListResponseFormForAdmin;
 import com.dyes.backend.domain.order.service.user.response.form.OrderConfirmResponseFormForUser;
@@ -35,6 +32,11 @@ public class OrderController {
     @DeleteMapping("/payment/kakao/reject")
     public boolean rejectWithKakaoPayment(@RequestBody KakaoPaymentRejectRequestForm requestForm) {
         return orderService.rejectPurchaseWithKakao(requestForm);
+    }
+    @PostMapping("/payment/kakao/refund")
+    public boolean refundWithKakaoPayment(@RequestBody KakaoPaymentRefundRequestForm requestForm) {
+        log.info("KakaoPaymentRefundRequestForm: " + requestForm);
+        return orderService.refundPurchaseWithKakao(requestForm);
     }
 
     // 결제 전 주문 요청내역 확인
