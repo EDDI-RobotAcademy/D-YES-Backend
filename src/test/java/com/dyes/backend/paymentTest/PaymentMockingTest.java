@@ -262,8 +262,8 @@ public class PaymentMockingTest {
 
         when(mockRestTemplate.postForObject(eq(requestUrl), any(HttpEntity.class), eq(KakaoPaymentReadyResponse.class))).thenReturn(response);
 
-        RedirectView result = mockService.paymentTemporaryDataSaveAndReturnRedirectView(request);
-        assertTrue(result.getUrl().equals(response.getNext_redirect_pc_url()));
+        String result = mockService.paymentTemporaryDataSaveAndReturnRedirectView(request);
+        assertTrue(result.equals(response.getNext_redirect_pc_url()));
     }
     @Test
     @DisplayName("payment mocking test: kakao payment reject")
