@@ -11,7 +11,7 @@ import org.springframework.web.servlet.view.RedirectView;
 import java.util.List;
 
 public interface OrderService {
-    RedirectView purchaseReadyWithKakao(OrderProductRequestForm requestForm) throws JsonProcessingException;
+    String purchaseReadyWithKakao(OrderProductRequestForm requestForm) throws JsonProcessingException;
     boolean approvalPurchaseWithKakao (KakaoPaymentApprovalRequestForm requestForm) throws JsonProcessingException;
     boolean rejectPurchaseWithKakao (KakaoPaymentRejectRequestForm requestForm);
     boolean refundPurchaseWithKakao (KakaoPaymentRefundRequestForm requestForm);

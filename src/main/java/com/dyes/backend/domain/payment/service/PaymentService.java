@@ -13,7 +13,7 @@ import org.springframework.web.servlet.view.RedirectView;
 public interface PaymentService {
     KakaoPaymentReadyResponse paymentRequest(KakaoPaymentRequest request);
     PaymentTemporarySaveRequest paymentApprovalRequest(KakaoPaymentApprovalRequest request) throws JsonProcessingException;
-    RedirectView paymentTemporaryDataSaveAndReturnRedirectView (OrderProductRequest request) throws JsonProcessingException;
+    String paymentTemporaryDataSaveAndReturnRedirectView (OrderProductRequest request) throws JsonProcessingException;
     boolean paymentRejectWithKakao(KakaoPaymentRejectRequestForm requestForm);
     boolean paymentRefundRequest(KakaoPaymentRefundRequestForm requestForm);
 }
