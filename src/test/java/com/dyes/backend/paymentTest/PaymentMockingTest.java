@@ -6,6 +6,7 @@ import com.dyes.backend.domain.order.controller.form.KakaoPaymentRejectRequestFo
 import com.dyes.backend.domain.order.entity.OrderAmount;
 import com.dyes.backend.domain.order.entity.ProductOrder;
 import com.dyes.backend.domain.order.repository.OrderRepository;
+import com.dyes.backend.domain.order.repository.OrderedProductRepository;
 import com.dyes.backend.domain.order.service.user.request.*;
 import com.dyes.backend.domain.order.service.user.response.KakaoPaymentRefundResponse;
 import com.dyes.backend.domain.order.service.user.response.KakaoRefundApprovedCancelAmountRequest;
@@ -71,6 +72,8 @@ public class PaymentMockingTest {
     private OrderRepository mockOrderRepository;
     @Mock
     private RefundedPaymentRepository mockRefundedPaymentRepository;
+    @Mock
+    private OrderedProductRepository mockOrderedProductRepository;
     @InjectMocks
     private PaymentServiceImpl mockService;
 
@@ -85,7 +88,8 @@ public class PaymentMockingTest {
                 mockProductOptionRepository,
                 mockAuthenticationService,
                 mockOrderRepository,
-                mockRefundedPaymentRepository
+                mockRefundedPaymentRepository,
+                mockOrderedProductRepository
         );
     }
 

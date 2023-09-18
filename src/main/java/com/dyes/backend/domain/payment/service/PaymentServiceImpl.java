@@ -4,8 +4,11 @@ import com.dyes.backend.domain.authentication.service.AuthenticationService;
 import com.dyes.backend.domain.order.controller.form.KakaoPaymentRefundRequestForm;
 import com.dyes.backend.domain.order.controller.form.KakaoPaymentRejectRequestForm;
 import com.dyes.backend.domain.order.entity.OrderAmount;
+import com.dyes.backend.domain.order.entity.OrderedProduct;
+import com.dyes.backend.domain.order.entity.OrderedProductStatus;
 import com.dyes.backend.domain.order.entity.ProductOrder;
 import com.dyes.backend.domain.order.repository.OrderRepository;
+import com.dyes.backend.domain.order.repository.OrderedProductRepository;
 import com.dyes.backend.domain.order.service.user.request.KakaoPaymentRefundProductOptionRequest;
 import com.dyes.backend.domain.order.service.user.request.KakaoPaymentRefundRequest;
 import com.dyes.backend.domain.order.service.user.request.OrderProductRequest;
@@ -60,6 +63,7 @@ public class PaymentServiceImpl implements PaymentService{
     final private AuthenticationService authenticationService;
     final private OrderRepository orderRepository;
     final private RefundedPaymentRepository refundedPaymentRepository;
+    final private OrderedProductRepository orderedProductRepository;
     public KakaoPaymentReadyResponse paymentRequest(KakaoPaymentRequest request) {
         log.info("paymentRequest start");
         try{
@@ -71,7 +75,7 @@ public class PaymentServiceImpl implements PaymentService{
             final String itemName = request.getItem_name();
             final String quantity = String.valueOf(request.getQuantity());
             final String totalAmount = String.valueOf(request.getTotal_amount());
-            final String vatAmount = String.valueOf(0);
+            final String vatAmount = String.valueOf(request.getTotal_amount()/11);
             final String approvalUrl = kakaoPaymentSecretsProvider.getKakaoPaymentApprovalUrl();
             final String cancelUrl = kakaoPaymentSecretsProvider.getKakaoPaymentCancelUrl();
             final String failUrl = kakaoPaymentSecretsProvider.getKakaoPaymentFailUrl();
@@ -156,6 +160,8 @@ public class PaymentServiceImpl implements PaymentService{
     }
 
     public boolean paymentRefundRequest(KakaoPaymentRefundRequestForm requestForm) {
+        log.info("paymentRefundRequest start");
+
         KakaoPaymentRefundRequest request = new KakaoPaymentRefundRequest(requestForm.getUserToken(), requestForm.getOrderId());
         List<KakaoPaymentRefundProductOptionRequest> requestList = requestForm.getRequestList();
 
@@ -167,13 +173,11 @@ public class PaymentServiceImpl implements PaymentService{
             if (user == null) {
                 return false;
             }
-            log.info("user: " + user.getId());
             Optional<ProductOrder> maybeOrder = orderRepository.findById(orderId);
             if (maybeOrder.isEmpty()) {
                 return false;
             }
             ProductOrder order = maybeOrder.get();
-            log.info("order: " + order.getId());
 
             final String cid = kakaoPaymentSecretsProvider.getCid();
             final String tid = order.getTid();
@@ -189,10 +193,8 @@ public class PaymentServiceImpl implements PaymentService{
                     return false;
                 }
                 ProductOption productOption = maybeProductOption.get();
-                log.info("productOption: " + productOption.getOptionName());
 
                 cancelAmount += productOption.getOptionPrice().intValue();
-                log.info("cancelAmount: " + cancelAmount);
 
                 refundProductOptionList.add(productOption);
             }
@@ -201,7 +203,7 @@ public class PaymentServiceImpl implements PaymentService{
             parameters.add("cid", cid);
             parameters.add("tid", tid);
             parameters.add("cancel_amount", String.valueOf(cancelAmount));
-            parameters.add("cancel_tax_free_amount", String.valueOf(cancelAmount));
+            parameters.add("cancel_tax_free_amount", "0");
             HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(parameters, this.getHeaders());
 
             try {
@@ -213,7 +215,7 @@ public class PaymentServiceImpl implements PaymentService{
                     Integer existingAmount = orderAmount.getTotalAmount();
                     Integer existingRefundAmount = orderAmount.getRefundedAmount();
                     orderAmount.setTotalAmount(existingAmount - cancelAmount);
-                    orderAmount.setTotalAmount(existingRefundAmount + cancelAmount);
+                    orderAmount.setRefundedAmount(existingRefundAmount + cancelAmount);
                     order.setAmount(orderAmount);
 
                     if (response.getStatus().equals(CANCEL_PAYMENT)) {
@@ -230,11 +232,23 @@ public class PaymentServiceImpl implements PaymentService{
                             .user(user)
                             .approved_cancel_amount(response.getApproved_cancel_amount().getTotal())
                             .canceled_at(response.getCanceled_at())
-                            .productOptionList(refundProductOptionList)
                             .build();
-                    
+
+                    List<OrderedProduct> productList = orderedProductRepository.findAllByProductOrder(order);
+                        for (KakaoPaymentRefundProductOptionRequest optionRequest : requestList){
+                            Long productOptionId = optionRequest.getProductOptionId();
+                            for (OrderedProduct orderedProduct : productList) {
+                                if(orderedProduct.getProductOptionId().equals(productOptionId) && orderedProduct.getOrderedProductStatus() != OrderedProductStatus.REFUNDED){
+
+                                    orderedProduct.setOrderedProductStatus(OrderedProductStatus.REFUNDED);
+                                    orderedProductRepository.save(orderedProduct);
+                                    }
+                            }
+                        }
+
                     orderRepository.save(order);
                     refundedPaymentRepository.save(refundedPayment);
+                    log.info("paymentRefundRequest end");
                     return true;
                 }
             } catch (HttpClientErrorException | HttpServerErrorException | NullPointerException e) {

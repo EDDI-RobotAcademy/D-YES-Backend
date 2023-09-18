@@ -8,10 +8,7 @@ import com.dyes.backend.domain.cart.service.CartService;
 import com.dyes.backend.domain.delivery.entity.Delivery;
 import com.dyes.backend.domain.delivery.entity.DeliveryStatus;
 import com.dyes.backend.domain.delivery.repository.DeliveryRepository;
-import com.dyes.backend.domain.order.controller.form.KakaoPaymentApprovalRequestForm;
-import com.dyes.backend.domain.order.controller.form.KakaoPaymentRejectRequestForm;
-import com.dyes.backend.domain.order.controller.form.OrderConfirmRequestForm;
-import com.dyes.backend.domain.order.controller.form.OrderProductRequestForm;
+import com.dyes.backend.domain.order.controller.form.*;
 import com.dyes.backend.domain.order.entity.*;
 import com.dyes.backend.domain.order.repository.OrderRepository;
 import com.dyes.backend.domain.order.repository.OrderedProductRepository;
@@ -102,6 +99,11 @@ public class OrderServiceImpl implements OrderService {
     }
     public boolean rejectPurchaseWithKakao (KakaoPaymentRejectRequestForm requestForm) {
         boolean result = paymentService.paymentRejectWithKakao(requestForm);
+        return result;
+    }
+    public boolean refundPurchaseWithKakao (KakaoPaymentRefundRequestForm requestForm) {
+        log.info("KakaoPaymentRefundRequestForm: " + requestForm);
+        boolean result = paymentService.paymentRefundRequest(requestForm);
         return result;
     }
     // 상품 주문
@@ -390,6 +392,7 @@ public class OrderServiceImpl implements OrderService {
                         .productOrder(order)
                         .productOptionId(optionRequest.getProductOptionId())
                         .productOptionCount(optionRequest.getProductOptionCount())
+                        .orderedProductStatus(OrderedProductStatus.PURCHASED)
                         .build();
 
                 orderedProductRepository.save(orderedProduct);
