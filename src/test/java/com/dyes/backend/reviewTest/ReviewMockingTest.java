@@ -16,7 +16,11 @@ import com.dyes.backend.domain.review.repository.ReviewRepository;
 import com.dyes.backend.domain.review.service.ReviewServiceImpl;
 import com.dyes.backend.domain.review.service.request.ReviewOrderedCheckRequest;
 import com.dyes.backend.domain.review.service.request.ReviewRegisterRequest;
+import com.dyes.backend.domain.review.service.response.ReviewRequestResponse;
+import com.dyes.backend.domain.review.service.response.form.ReviewRequestResponseForm;
 import com.dyes.backend.domain.user.entity.User;
+import com.dyes.backend.domain.user.entity.UserProfile;
+import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -47,6 +51,8 @@ public class ReviewMockingTest {
     private ReviewRepository mockReviewRepository;
     @Mock
     private ReviewContentRepository mockReviewContentRepository;
+    @Mock
+    private UserProfileRepository mockUserProfileRepository;
     @InjectMocks
     private ReviewServiceImpl mockService;
 
@@ -59,7 +65,8 @@ public class ReviewMockingTest {
                 mockOrderedProductRepository,
                 mockProductRepository,
                 mockReviewRepository,
-                mockReviewContentRepository
+                mockReviewContentRepository,
+                mockUserProfileRepository
         );
     }
 
@@ -88,7 +95,7 @@ public class ReviewMockingTest {
     }
     @Test
     @DisplayName("review mocking test: register review")
-    private void 사용자가_리뷰를_등록합니다 () {
+    public void 사용자가_리뷰를_등록합니다 () {
         final String userToken = "유저 토큰";
         final Long productId = 1L;
         final String title = "제목";
@@ -99,6 +106,8 @@ public class ReviewMockingTest {
 
         User user = new User();
         when(mockAuthenticationService.findUserByUserToken(userToken)).thenReturn(user);
+        UserProfile userProfile = new UserProfile();
+        when(mockUserProfileRepository.findByUser(user)).thenReturn(Optional.of(userProfile));
         Product product = new Product();
         product.setId(1L);
         when(mockProductRepository.findById(productId)).thenReturn(Optional.of(product));
@@ -114,5 +123,29 @@ public class ReviewMockingTest {
 
         boolean result = mockService.registerReview(requestForm);
         assertTrue(result);
+    }
+    @Test
+    @DisplayName("review mocking test: read review")
+    public void 사용자가_리뷰를_읽을_수_있습니다 () {
+        final Long reviewId = 1L;
+        final String title = "title";
+        final String content = "content";
+        final LocalDate createDate = LocalDate.now();
+        final LocalDate modifyDate = LocalDate.now();
+        final String nickName = "nickName";
+
+        Review review = new Review();
+        ReviewContent reviewContent = new ReviewContent();
+        reviewContent.setReviewContent(content);
+        review.setTitle(title);
+        review.setReviewContent(reviewContent);
+        review.setUserNickName(nickName);
+        review.setCreateDate(createDate);
+        review.setModifyDate(createDate);
+
+        when(mockReviewRepository.findByIdWithContent(reviewId)).thenReturn(Optional.of(review));
+
+        ReviewRequestResponseForm result = mockService.readReview(reviewId);
+        assertTrue(result != null);
     }
 }

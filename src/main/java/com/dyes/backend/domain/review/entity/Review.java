@@ -20,6 +20,7 @@ public class Review {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String title;
+    private String userNickName;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "review_content_id")
     private ReviewContent ReviewContent;
@@ -30,5 +31,5 @@ public class Review {
     @JoinColumn(name = "product_id")
     private Product product;
     private LocalDate createDate;
-
+    private LocalDate modifyDate;
 }
