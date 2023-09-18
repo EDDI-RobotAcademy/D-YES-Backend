@@ -333,7 +333,7 @@ public class PaymentServiceImpl implements PaymentService{
             return false;
         }
     }
-    public RedirectView paymentTemporaryDataSaveAndReturnRedirectView (OrderProductRequest request){
+    public String paymentTemporaryDataSaveAndReturnRedirectView (OrderProductRequest request){
         try {
             User user = authenticationService.findUserByUserToken(request.getUserToken());
 
@@ -377,7 +377,7 @@ public class PaymentServiceImpl implements PaymentService{
             redisService.paymentTemporarySaveData(user.getId(), saveRequest);
             log.info("saveRequest: " + saveRequest);
 
-            RedirectView redirectView = new RedirectView(response.getNext_redirect_pc_url());
+            String redirectView = response.getNext_redirect_pc_url();
             return redirectView;
         } catch (Exception e) {
             log.error("Failed connect to server: {}", e.getMessage(), e);

@@ -69,7 +69,7 @@ public class OrderServiceImpl implements OrderService {
     final private RedisService redisService;
     final private ProductRepository productRepository;
 
-    public RedirectView purchaseReadyWithKakao(OrderProductRequestForm requestForm) throws JsonProcessingException {
+    public String purchaseReadyWithKakao(OrderProductRequestForm requestForm) throws JsonProcessingException {
         log.info("purchaseKakao start");
 
         OrderProductRequest request = new OrderProductRequest(
@@ -79,7 +79,7 @@ public class OrderServiceImpl implements OrderService {
                 requestForm.getTotalAmount(),
                 requestForm.getFrom()
                 );
-        RedirectView redirectUrl = paymentService.paymentTemporaryDataSaveAndReturnRedirectView(request);
+        String redirectUrl = paymentService.paymentTemporaryDataSaveAndReturnRedirectView(request);
 
         return redirectUrl;
     }
