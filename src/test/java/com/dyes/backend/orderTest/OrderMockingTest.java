@@ -26,6 +26,7 @@ import com.dyes.backend.domain.payment.service.request.PaymentTemporarySaveReque
 import com.dyes.backend.domain.product.entity.*;
 import com.dyes.backend.domain.product.repository.ProductMainImageRepository;
 import com.dyes.backend.domain.product.repository.ProductOptionRepository;
+import com.dyes.backend.domain.product.repository.ProductRepository;
 import com.dyes.backend.domain.user.entity.*;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import com.dyes.backend.domain.user.repository.UserRepository;
@@ -75,6 +76,8 @@ public class OrderMockingTest {
     private OrderedPurchaserProfileRepository mockOrderedPurchaserProfileRepository;
     @Mock
     private UserRepository mockUserRepository;
+    @Mock
+    private ProductRepository mockProductRepository;
     @InjectMocks
     private OrderServiceImpl mockOrderService;
     @BeforeEach
@@ -92,7 +95,8 @@ public class OrderMockingTest {
                 mockCartService,
                 mockPaymentService,
                 mockAuthenticationService,
-                mockRedisService
+                mockRedisService,
+                mockProductRepository
                 );
     }
     @Test

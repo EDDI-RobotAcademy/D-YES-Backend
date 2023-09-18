@@ -16,6 +16,8 @@ public interface OrderRepository extends JpaRepository<ProductOrder, Long> {
     @Query("select po FROM ProductOrder po join fetch po.user u join fetch po.delivery where u = :user")
     List<ProductOrder> findAllByUserWithUserAndDelivery(User user);
 
+    List<ProductOrder> findAllByUser(User user);
+
     @Query("select po FROM ProductOrder po join fetch po.delivery where po.id = :productOrderId")
     Optional<ProductOrder> findByStringIdWithDelivery(@Param("productOrderId") String productOrderId);
 }
