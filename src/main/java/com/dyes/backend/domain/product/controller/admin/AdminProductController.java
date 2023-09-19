@@ -66,4 +66,11 @@ public class AdminProductController {
     public ProductSummaryReadResponseFormForAdmin readProductSummaryForAdmin(@PathVariable("productId") Long productId) {
         return adminProductService.readProductSummaryForAdmin(productId);
     }
+
+    // 8. 신규 상품 목록 조회
+    @GetMapping("/admin/new-list")
+    public List<ProductListResponseFormForAdmin> getNewProductListForAdmin() {
+        return adminProductService.getNewProductListForAdmin();
+    }
+
 }
