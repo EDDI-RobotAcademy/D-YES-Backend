@@ -9,6 +9,8 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Slf4j
 @ToString
 @RestController
@@ -24,8 +26,8 @@ public class ReviewController {
     public boolean registerReviewRequest(@RequestBody ReviewRegisterRequestForm requestForm) {
         return reviewService.registerReview(requestForm);
     }
-    @GetMapping("read/{reviewId}")
-    public ReviewRequestResponseForm readReviewRequest(@PathVariable("reviewId") Long reviewId) {
-        return reviewService.readReview(reviewId);
+    @GetMapping("list/{productId}")
+    public List<ReviewRequestResponseForm> readReviewRequest(@PathVariable("productId") Long productId) {
+        return reviewService.listReview(productId);
     }
 }

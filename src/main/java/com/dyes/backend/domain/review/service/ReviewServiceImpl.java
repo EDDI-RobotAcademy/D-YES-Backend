@@ -6,23 +6,19 @@ import com.dyes.backend.domain.order.entity.ProductOrder;
 import com.dyes.backend.domain.order.repository.OrderRepository;
 import com.dyes.backend.domain.order.repository.OrderedProductRepository;
 import com.dyes.backend.domain.product.entity.Product;
+import com.dyes.backend.domain.product.entity.ProductOption;
+import com.dyes.backend.domain.product.repository.ProductOptionRepository;
 import com.dyes.backend.domain.product.repository.ProductRepository;
 import com.dyes.backend.domain.review.controller.form.ReviewOrderedCheckRequestForm;
 import com.dyes.backend.domain.review.controller.form.ReviewRegisterRequestForm;
 import com.dyes.backend.domain.review.entity.Review;
-import com.dyes.backend.domain.review.entity.ReviewContent;
-import com.dyes.backend.domain.review.entity.ReviewDetailImages;
-import com.dyes.backend.domain.review.entity.ReviewMainImage;
-import com.dyes.backend.domain.review.repository.ReviewContentRepository;
-import com.dyes.backend.domain.review.repository.ReviewDetailImagesRepository;
-import com.dyes.backend.domain.review.repository.ReviewMainImageRepository;
+import com.dyes.backend.domain.review.entity.ReviewImages;
+import com.dyes.backend.domain.review.repository.ReviewImagesRepository;
 import com.dyes.backend.domain.review.repository.ReviewRepository;
-import com.dyes.backend.domain.review.service.request.ReviewDetailImagesRegisterRequest;
-import com.dyes.backend.domain.review.service.request.ReviewMainImageRegisterRequest;
+import com.dyes.backend.domain.review.service.request.ReviewImagesRegisterRequest;
 import com.dyes.backend.domain.review.service.request.ReviewOrderedCheckRequest;
 import com.dyes.backend.domain.review.service.request.ReviewRegisterRequest;
-import com.dyes.backend.domain.review.service.response.ReviewRequestDetailImagesResponse;
-import com.dyes.backend.domain.review.service.response.ReviewRequestMainImageResponse;
+import com.dyes.backend.domain.review.service.response.ReviewRequestImagesResponse;
 import com.dyes.backend.domain.review.service.response.ReviewRequestResponse;
 import com.dyes.backend.domain.review.service.response.form.ReviewRequestResponseForm;
 import com.dyes.backend.domain.user.entity.User;
@@ -46,10 +42,9 @@ public class ReviewServiceImpl implements ReviewService{
     final private OrderedProductRepository orderedProductRepository;
     final private ProductRepository productRepository;
     final private ReviewRepository reviewRepository;
-    final private ReviewContentRepository reviewContentRepository;
     final private UserProfileRepository userProfileRepository;
-    final private ReviewMainImageRepository reviewMainImageRepository;
-    final private ReviewDetailImagesRepository reviewDetailImagesRepository;
+    final private ReviewImagesRepository reviewImagesRepository;
+    final private ProductOptionRepository productOptionRepository;
     public boolean beforeMakeReview(ReviewOrderedCheckRequestForm requestForm) {
         log.info("beforeMakeReview start");
         ReviewOrderedCheckRequest request = new ReviewOrderedCheckRequest(requestForm.getUserToken(), requestForm.getProductId());
@@ -61,20 +56,13 @@ public class ReviewServiceImpl implements ReviewService{
             if (user == null) {
                 return false;
             }
-            log.info("user: " + user.getId());
 
             List<ProductOrder> orderList = orderRepository.findAllByUser(user);
-
             for(ProductOrder order : orderList) {
-                log.info("order: " + order.getId());
-
                 List<OrderedProduct> orderedProductList = orderedProductRepository.findAllByProductOrder(order);
                 for(OrderedProduct orderedProduct : orderedProductList) {
-                    log.info("orderedProduct: " + orderedProduct.getId());
                     Long productIdInOrderedProduct = orderedProduct.getProductOptionId();
-
                     Product product = productRepository.findById(productIdInOrderedProduct).get();
-                    log.info("product: " + product.getProductName());
 
                     if (product.getId().equals(productId)) {
                         log.info("beforeMakeReview end");
@@ -90,112 +78,110 @@ public class ReviewServiceImpl implements ReviewService{
     public boolean registerReview(ReviewRegisterRequestForm requestForm) {
         log.info("registerReview start");
 
-        ReviewRegisterRequest request = new ReviewRegisterRequest(requestForm.getUserToken(), requestForm.getProductId(),
-                requestForm.getTitle(), requestForm.getContent());
-        ReviewMainImageRegisterRequest mainImageRegisterRequest = requestForm.getMainImageRegisterRequest();
-        List<ReviewDetailImagesRegisterRequest> detailImagesRegisterRequestList = requestForm.getDetailImagesRegisterRequestList();
+        ReviewRegisterRequest request = new ReviewRegisterRequest(requestForm.getUserToken(), requestForm.getOrderId(), requestForm.getProductOptionId(), requestForm.getContent(), requestForm.getRating());
+        List<ReviewImagesRegisterRequest> imagesRegisterRequestList = requestForm.getImagesRegisterRequestList();
 
         final String userToken = request.getUserToken();
-        final Long productId = request.getProductId();
-        final String title = request.getTitle();
+        final Long orderId = request.getOrderId();
+        final Long productOptionId = request.getProductOptionId();
         final String content = request.getContent();
+        final Integer rating = request.getRating();
 
         try {
             User user = authenticationService.findUserByUserToken(userToken);
             if (user == null) {
                 return false;
             }
+
             Optional<UserProfile> maybeUserProfile = userProfileRepository.findByUser(user);
             if (maybeUserProfile.isEmpty()){
                 return false;
             }
             UserProfile userProfile = maybeUserProfile.get();
-            Optional<Product> maybeProduct = productRepository.findById(productId);
-            if (maybeProduct.isEmpty()) {
+
+            Optional<ProductOrder> maybeOrder = orderRepository.findById(orderId);
+            if (maybeOrder.isEmpty()) {
                 return false;
             }
-            Product product = maybeProduct.get();
+            ProductOrder order = maybeOrder.get();
 
-            ReviewContent reviewContent = new ReviewContent();
-            reviewContent.setReviewContent(content);
-            reviewContentRepository.save(reviewContent);
+            Optional<ProductOption> maybeProductOption = productOptionRepository.findByIdWithProduct(productOptionId);
+            if (maybeProductOption.isEmpty()) {
+                return false;
+            }
+            ProductOption productOption = maybeProductOption.get();
 
             Review review = Review.builder()
-                    .title(title)
-                    .ReviewContent(reviewContent)
                     .user(user)
+                    .Content(content)
+                    .productName(productOption.getProduct().getProductName())
+                    .optionName(productOption.getOptionName())
                     .userNickName(userProfile.getNickName())
-                    .product(product)
-                    .createDate(LocalDate.now())
-                    .modifyDate(LocalDate.now())
+                    .product(productOption.getProduct())
+                    .reviewDate(LocalDate.now())
+                    .purchaseDate(order.getOrderedTime())
+                    .rating(rating)
                     .build();
             reviewRepository.save(review);
             log.info("registerReview end");
 
-            ReviewMainImage mainImage = ReviewMainImage.builder()
-                    .mainImg(mainImageRegisterRequest.getMainImg())
-                    .review(review)
-                    .build();
-
-            reviewMainImageRepository.save(mainImage);
-
-            for (ReviewDetailImagesRegisterRequest detailImagesRegisterRequest : detailImagesRegisterRequestList) {
-                ReviewDetailImages detailImages = ReviewDetailImages.builder()
-                        .detailImgs(detailImagesRegisterRequest.getDetailImgs())
+            for (ReviewImagesRegisterRequest imagesRegisterRequest : imagesRegisterRequestList) {
+                ReviewImages images = ReviewImages.builder()
+                        .img(imagesRegisterRequest.getReviewImages())
                         .review(review)
                         .build();
-                reviewDetailImagesRepository.save(detailImages);
+                reviewImagesRepository.save(images);
             }
-
             return true;
         } catch (Exception e) {
             log.error("Failed connect to server: {}", e.getMessage(), e);
             return false;
         }
     }
-    public ReviewRequestResponseForm readReview(Long reviewId) {
+    public List<ReviewRequestResponseForm> listReview(Long productId) {
+        log.info("listReview start");
 
-        Optional<Review> maybeReview = reviewRepository.findByIdWithContent(reviewId);
+        List<ReviewRequestResponseForm> responseFormList = new ArrayList<>();
+
+        Optional<Product> maybeProduct = productRepository.findById(productId);
+        if (maybeProduct.isEmpty()){
+            return null;
+        }
+        Product product = maybeProduct.get();
+
+        List<Review> reviewList = reviewRepository.findAllByProduct(product);
         try {
-            if (maybeReview.isEmpty()) {
-                return null;
-            }
-            Review review = maybeReview.get();
-            ReviewMainImage mainImage = reviewMainImageRepository.findByReview(review);
-            List<ReviewDetailImages> detailImages = reviewDetailImagesRepository.findAllByReview(review);
+            for (Review review : reviewList) {
+                List<ReviewImages> imagesList = reviewImagesRepository.findAllByReview(review);
 
-            ReviewRequestResponse response = ReviewRequestResponse.builder()
-                    .title(review.getTitle())
-                    .content(review.getReviewContent().getReviewContent())
-                    .createDate(review.getCreateDate())
-                    .modifyDate(review.getModifyDate())
-                    .userNickName(review.getUserNickName())
-                    .build();
-
-            ReviewRequestMainImageResponse mainImageResponse = ReviewRequestMainImageResponse.builder()
-                    .mainImg(mainImage.getMainImg())
-                    .build();
-
-            List<ReviewRequestDetailImagesResponse> reviewRequestDetailImagesResponses = new ArrayList<>();
-            for (ReviewDetailImages reviewDetailImages : detailImages) {
-                ReviewRequestDetailImagesResponse detailImagesResponse = ReviewRequestDetailImagesResponse.builder()
-                        .detailImages(reviewDetailImages.getDetailImgs())
+                ReviewRequestResponse response = ReviewRequestResponse.builder()
+                        .userNickName(review.getUserNickName())
+                        .productName(review.getProductName())
+                        .optionName(review.getOptionName())
+                        .content(review.getContent())
+                        .rating(review.getRating())
+                        .createDate(review.getReviewDate())
+                        .purchaseDate(review.getPurchaseDate())
                         .build();
-                reviewRequestDetailImagesResponses.add(detailImagesResponse);
+
+                List<ReviewRequestImagesResponse> imagesResponseList = new ArrayList<>();
+                for (ReviewImages reviewImages : imagesList) {
+                    ReviewRequestImagesResponse imagesResponse = ReviewRequestImagesResponse.builder()
+                            .id(reviewImages.getId())
+                            .img(reviewImages.getImg())
+                            .build();
+                    imagesResponseList.add(imagesResponse);
+                }
+
+                ReviewRequestResponseForm responseForm = ReviewRequestResponseForm.builder()
+                        .reviewRequestResponse(response)
+                        .imagesResponseList(imagesResponseList)
+                        .build();
+
+                responseFormList.add(responseForm);
             }
-
-
-            ReviewRequestResponseForm responseForm = ReviewRequestResponseForm.builder()
-                    .title(response.getTitle())
-                    .content(response.getContent())
-                    .mainImageResponse(mainImageResponse)
-                    .detailImagesResponseList(reviewRequestDetailImagesResponses)
-                    .createDate(response.getCreateDate())
-                    .modifyDate(response.getModifyDate())
-                    .userNickName(response.getUserNickName())
-                    .build();
-
-            return responseForm;
+            log.info("listReview end");
+            return responseFormList;
         } catch (Exception e) {
             log.error("Failed connect to server: {}", e.getMessage(), e);
             return null;

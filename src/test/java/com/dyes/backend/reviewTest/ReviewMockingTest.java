@@ -6,23 +6,19 @@ import com.dyes.backend.domain.order.entity.ProductOrder;
 import com.dyes.backend.domain.order.repository.OrderRepository;
 import com.dyes.backend.domain.order.repository.OrderedProductRepository;
 import com.dyes.backend.domain.product.entity.Product;
+import com.dyes.backend.domain.product.entity.ProductOption;
+import com.dyes.backend.domain.product.repository.ProductOptionRepository;
 import com.dyes.backend.domain.product.repository.ProductRepository;
 import com.dyes.backend.domain.review.controller.form.ReviewOrderedCheckRequestForm;
 import com.dyes.backend.domain.review.controller.form.ReviewRegisterRequestForm;
 import com.dyes.backend.domain.review.entity.Review;
-import com.dyes.backend.domain.review.entity.ReviewContent;
-import com.dyes.backend.domain.review.entity.ReviewDetailImages;
-import com.dyes.backend.domain.review.entity.ReviewMainImage;
-import com.dyes.backend.domain.review.repository.ReviewContentRepository;
-import com.dyes.backend.domain.review.repository.ReviewDetailImagesRepository;
-import com.dyes.backend.domain.review.repository.ReviewMainImageRepository;
+import com.dyes.backend.domain.review.entity.ReviewImages;
+import com.dyes.backend.domain.review.repository.ReviewImagesRepository;
 import com.dyes.backend.domain.review.repository.ReviewRepository;
 import com.dyes.backend.domain.review.service.ReviewServiceImpl;
-import com.dyes.backend.domain.review.service.request.ReviewDetailImagesRegisterRequest;
-import com.dyes.backend.domain.review.service.request.ReviewMainImageRegisterRequest;
+import com.dyes.backend.domain.review.service.request.ReviewImagesRegisterRequest;
 import com.dyes.backend.domain.review.service.request.ReviewOrderedCheckRequest;
 import com.dyes.backend.domain.review.service.request.ReviewRegisterRequest;
-import com.dyes.backend.domain.review.service.response.ReviewRequestResponse;
 import com.dyes.backend.domain.review.service.response.form.ReviewRequestResponseForm;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserProfile;
@@ -35,7 +31,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -56,13 +51,11 @@ public class ReviewMockingTest {
     @Mock
     private ReviewRepository mockReviewRepository;
     @Mock
-    private ReviewContentRepository mockReviewContentRepository;
-    @Mock
     private UserProfileRepository mockUserProfileRepository;
     @Mock
-    private ReviewMainImageRepository mockReviewMainImageRepository;
+    private ReviewImagesRepository mockReviewImagesRepository;
     @Mock
-    private ReviewDetailImagesRepository mockReviewDetailImagesRepository;
+    private ProductOptionRepository mockProductOptionRepository;
     @InjectMocks
     private ReviewServiceImpl mockService;
 
@@ -75,10 +68,9 @@ public class ReviewMockingTest {
                 mockOrderedProductRepository,
                 mockProductRepository,
                 mockReviewRepository,
-                mockReviewContentRepository,
                 mockUserProfileRepository,
-                mockReviewMainImageRepository,
-                mockReviewDetailImagesRepository
+                mockReviewImagesRepository,
+                mockProductOptionRepository
         );
     }
 
@@ -109,29 +101,29 @@ public class ReviewMockingTest {
     @DisplayName("review mocking test: register review")
     public void 사용자가_리뷰를_등록합니다 () {
         final String userToken = "유저 토큰";
-        final Long productId = 1L;
-        final String title = "제목";
+        final Long orderId = 1L;
+        final Long productOptionId = 1L;
         final String content = "내용";
+        final Integer rating = 1;
+        ReviewImagesRegisterRequest imagesRegisterRequest = new ReviewImagesRegisterRequest();
 
-        ReviewRegisterRequestForm requestForm = new ReviewRegisterRequestForm(userToken, productId, title, content, new ReviewMainImageRegisterRequest(), List.of(new ReviewDetailImagesRegisterRequest()));
-        ReviewRegisterRequest request = new ReviewRegisterRequest(requestForm.getUserToken(), requestForm.getProductId(), requestForm.getTitle(), requestForm.getContent());
+        ReviewRegisterRequestForm requestForm = new ReviewRegisterRequestForm(userToken, orderId, productOptionId, content, rating, List.of(imagesRegisterRequest));
+        ReviewRegisterRequest request = new ReviewRegisterRequest(
+                requestForm.getUserToken(), requestForm.getOrderId(),
+                requestForm.getProductOptionId(), requestForm.getContent(),
+                requestForm.getRating()
+        );
 
         User user = new User();
         when(mockAuthenticationService.findUserByUserToken(userToken)).thenReturn(user);
         UserProfile userProfile = new UserProfile();
         when(mockUserProfileRepository.findByUser(user)).thenReturn(Optional.of(userProfile));
+        ProductOrder order = new ProductOrder();
+        when(mockOrderRepository.findById(orderId)).thenReturn(Optional.of(order));
         Product product = new Product();
-        product.setId(1L);
-        when(mockProductRepository.findById(productId)).thenReturn(Optional.of(product));
-        ReviewContent reviewContent = new ReviewContent();
-        reviewContent.setReviewContent(content);
-        Review review = Review.builder()
-                .title(title)
-                .ReviewContent(reviewContent)
-                .user(user)
-                .product(product)
-                .createDate(LocalDate.now())
-                .build();
+        ProductOption productOption = new ProductOption();
+        productOption.setProduct(product);
+        when(mockProductOptionRepository.findByIdWithProduct(productOptionId)).thenReturn(Optional.of(productOption));
 
         boolean result = mockService.registerReview(requestForm);
         assertTrue(result);
@@ -139,33 +131,16 @@ public class ReviewMockingTest {
     @Test
     @DisplayName("review mocking test: read review")
     public void 사용자가_리뷰를_읽을_수_있습니다 () {
-        final Long reviewId = 1L;
-        final String title = "title";
-        final String content = "content";
-        final LocalDate createDate = LocalDate.now();
-        final LocalDate modifyDate = LocalDate.now();
-        final String nickName = "nickName";
+        final Long productId = 1L;
 
+        Product product = new Product();
+        when(mockProductRepository.findById(productId)).thenReturn(Optional.of(product));
         Review review = new Review();
-        ReviewContent reviewContent = new ReviewContent();
-        reviewContent.setReviewContent(content);
-        review.setTitle(title);
-        review.setReviewContent(reviewContent);
-        review.setUserNickName(nickName);
-        review.setCreateDate(createDate);
-        review.setModifyDate(modifyDate);
+        when(mockReviewRepository.findAllByProduct(product)).thenReturn(List.of(review));
+        ReviewImages reviewImages = new ReviewImages();
+        when(mockReviewImagesRepository.findAllByReview(review)).thenReturn(List.of(reviewImages));
 
-        when(mockReviewRepository.findByIdWithContent(reviewId)).thenReturn(Optional.of(review));
-
-        ReviewMainImage reviewMainImage = new ReviewMainImage();
-        reviewMainImage.setMainImg("main image");
-        when(mockReviewMainImageRepository.findByReview(review)).thenReturn(reviewMainImage);
-
-        ReviewDetailImages reviewDetailImages = new ReviewDetailImages();
-        reviewDetailImages.setDetailImgs("detail images");
-        when(mockReviewDetailImagesRepository.findAllByReview(review)).thenReturn(List.of(reviewDetailImages));
-
-        ReviewRequestResponseForm result = mockService.readReview(reviewId);
+        List<ReviewRequestResponseForm> result = mockService.listReview(productId);
         assertTrue(result != null);
     }
 }

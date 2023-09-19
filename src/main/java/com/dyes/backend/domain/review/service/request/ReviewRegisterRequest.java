@@ -9,7 +9,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ReviewRegisterRequest {
     private String userToken;
-    private Long productId;
-    private String title;
+    private Long orderId;
+    private Long productOptionId;
     private String content;
+    private Integer rating;
 }
