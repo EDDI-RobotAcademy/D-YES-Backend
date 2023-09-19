@@ -577,4 +577,54 @@ public class AdminProductServiceImpl implements AdminProductService {
             return null;
         }
     }
+
+    // 신규 상품 목록 조회
+    @Override
+    public List<ProductListResponseFormForAdmin> getNewProductListForAdmin() {
+        log.info("Reading new product list");
+
+        List<ProductListResponseFormForAdmin> productListResponseFormListForAdmin = new ArrayList<>();
+
+        // 상품 목록 조회 진행
+        try {
+            // product 조인 패치 없이 최신순으로 List 조회 및 정렬
+            List<ProductManagement> productManagementList = productManagementRepository.findAllByOrderByCreatedDateAsc();
+            for(ProductManagement productManagement : productManagementList) {
+                Long productManagementId = productManagement.getId();
+
+                // 가져온 productManagementId로 순차적으로 product를 들고올 수 있도록 조인 패치
+                List<ProductManagement> productManagementListWithProductAndFarm
+                        = productManagementRepository.findByIdWithProductAndFarm(productManagementId);
+                for(ProductManagement productManagementWithProductAndFarm : productManagementListWithProductAndFarm) {
+                    Product product = productManagementWithProductAndFarm.getProduct();
+                    List<ProductOptionListResponseForAdmin> adminProductOptionListResponseList = new ArrayList<>();
+
+                    List<ProductOption> productOptionList = productOptionRepository.findByProduct(product);
+                    for (ProductOption productOption : productOptionList) {
+                        ProductOptionListResponseForAdmin adminProductOptionListResponse
+                                = new ProductOptionListResponseForAdmin().productOptionListResponseForAdmin(productOption);
+
+                        adminProductOptionListResponseList.add(adminProductOptionListResponse);
+                    }
+
+                    Farm farm = product.getFarm();
+                    ProductListResponseFormForAdmin productListResponseFormForAdmin
+                            = new ProductListResponseFormForAdmin(
+                            product.getId(),
+                            product.getProductName(),
+                            product.getProductSaleStatus(),
+                            adminProductOptionListResponseList,
+                            farm.getFarmName());
+                    productListResponseFormListForAdmin.add(productListResponseFormForAdmin);
+                }
+            }
+
+            log.info("New Product list read successful");
+            return productListResponseFormListForAdmin;
+
+        } catch (Exception e) {
+            log.error("Failed to read the new product list: {}", e.getMessage(), e);
+            return null;
+        }
+    }
 }

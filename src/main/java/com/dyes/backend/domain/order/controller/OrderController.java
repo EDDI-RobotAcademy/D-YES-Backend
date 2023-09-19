@@ -51,6 +51,12 @@ public class OrderController {
         return orderService.getOrderListForAdmin();
     }
 
+    // 관리자의 신규 주문 내역 확인
+    @GetMapping("/admin/new-list")
+    public List<OrderListResponseFormForAdmin> getAllNewOrderListForAdmin() {
+        return orderService.getAllNewOrderListForAdmin();
+    }
+
     // 사용자의 주문 내역 확인
     @GetMapping("/my-list")
     public List<OrderListResponseFormForUser> getMyOrderListForUser(@RequestParam("userToken") String userToken) {

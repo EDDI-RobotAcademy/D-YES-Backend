@@ -13,4 +13,7 @@ public enum ProduceType {
     CUCUMBER,
     CARROT,
     EGGPLANT,
+    ONION,
+    YOUNG_PUMPKIN,
+    WELSH_ONION
 }

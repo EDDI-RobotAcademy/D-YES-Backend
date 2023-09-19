@@ -1,11 +1,18 @@
 package com.dyes.backend.domain.product.service.user;
 
 import com.dyes.backend.domain.farm.entity.*;
-import com.dyes.backend.domain.farm.repository.*;
+import com.dyes.backend.domain.farm.repository.FarmCustomerServiceInfoRepository;
+import com.dyes.backend.domain.farm.repository.FarmIntroductionInfoRepository;
+import com.dyes.backend.domain.farm.repository.FarmRepresentativeInfoRepository;
 import com.dyes.backend.domain.farm.service.response.FarmInfoResponseForUser;
+import com.dyes.backend.domain.farmproducePriceForecast.entity.*;
+import com.dyes.backend.domain.farmproducePriceForecast.repository.*;
 import com.dyes.backend.domain.product.entity.*;
 import com.dyes.backend.domain.product.repository.*;
-import com.dyes.backend.domain.product.service.user.response.*;
+import com.dyes.backend.domain.product.service.user.response.ProductDetailImagesResponseForUser;
+import com.dyes.backend.domain.product.service.user.response.ProductMainImageResponseForUser;
+import com.dyes.backend.domain.product.service.user.response.ProductOptionResponseForUser;
+import com.dyes.backend.domain.product.service.user.response.ProductResponseForUser;
 import com.dyes.backend.domain.product.service.user.response.form.ProductListResponseFormForUser;
 import com.dyes.backend.domain.product.service.user.response.form.ProductReadResponseFormForUser;
 import com.dyes.backend.domain.product.service.user.response.form.RandomProductListResponseFormForUser;
@@ -16,7 +23,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 import static com.dyes.backend.utility.number.NumberUtils.findMinValue;
 
@@ -32,6 +43,14 @@ public class UserProductServiceImpl implements UserProductService {
     final private FarmCustomerServiceInfoRepository farmCustomerServiceInfoRepository;
     final private FarmIntroductionInfoRepository farmIntroductionInfoRepository;
     final private FarmRepresentativeInfoRepository farmRepresentativeInfoRepository;
+    final private CabbagePriceRepository cabbagePriceRepository;
+    final private CarrotPriceRepository carrotPriceRepository;
+    final private CucumberPriceRepository cucumberPriceRepository;
+    final private KimchiCabbagePriceRepository kimchiCabbagePriceRepository;
+    final private OnionPriceRepository onionPriceRepository;
+    final private PotatoPriceRepository potatoPriceRepository;
+    final private WelshOnionPriceRepository welshOnionPriceRepository;
+    final private YoungPumpkinPriceRepository youngPumpkinPriceRepository;
 
     // 상품 읽기
     @Override
@@ -236,7 +255,7 @@ public class UserProductServiceImpl implements UserProductService {
         try {
             Pageable pageable = PageRequest.of(0, 10);
             Page<ProductManagement> productManagementList = productManagementRepository.findNew10ByCreatedDate(pageable);
-            for(ProductManagement productManagement: productManagementList) {
+            for (ProductManagement productManagement : productManagementList) {
                 Product product = productManagement.getProduct();
                 ProductListResponseFormForUser productListResponseFormForUser = createUserProductListResponseForm(product);
                 productListResponseFormListForUser.add(productListResponseFormForUser);
@@ -275,6 +294,25 @@ public class UserProductServiceImpl implements UserProductService {
             productMainImage = maybeProductMainImage.get().getMainImg();
         }
 
+        LocalDate currentDate = LocalDate.now();
+        ProduceType produceType = product.getProduceType();
+        int roundedPriceChangePercentage = 0;
+        switch (produceType) {
+            case CABBAGE:
+            case CARROT:
+            case CUCUMBER:
+            case KIMCHI_CABBAGE:
+            case ONION:
+            case POTATO:
+            case WELSH_ONION:
+            case YOUNG_PUMPKIN:
+                roundedPriceChangePercentage = calculatePriceChangePercentage(currentDate, produceType);
+                break;
+            default:
+                roundedPriceChangePercentage = -999;
+                break;
+        }
+
         Farm farm = product.getFarm();
         FarmIntroductionInfo farmIntroductionInfo = farmIntroductionInfoRepository.findByFarm(farm);
         FarmRepresentativeInfo farmRepresentativeInfo = farmRepresentativeInfoRepository.findByFarm(farm);
@@ -288,7 +326,121 @@ public class UserProductServiceImpl implements UserProductService {
                 isSoldOut,
                 farm.getFarmName(),
                 farmIntroductionInfo.getMainImage(),
-                farmRepresentativeInfo.getRepresentativeName()
-        );
+                farmRepresentativeInfo.getRepresentativeName(),
+                roundedPriceChangePercentage);
+    }
+
+    private int calculatePriceChangePercentage(LocalDate currentDate, ProduceType produceType) {
+        List<Product> productList = productRepository.findAllByProduceType(produceType);
+        if (productList.size() > 0) {
+            double currentPriceValue = 0;
+            double twoWeeksLaterPriceValue = 0;
+
+            switch (produceType) {
+                case CABBAGE:
+                    Optional<CabbagePrice> maybeCabbagePrice = cabbagePriceRepository.findByDate(currentDate.toString());
+                    Optional<CabbagePrice> maybeCabbagePriceTwoWeeksLater = cabbagePriceRepository.findByDate((currentDate.plusDays(13)).toString());
+                    if (maybeCabbagePrice.isPresent() || maybeCabbagePriceTwoWeeksLater.isPresent()) {
+                        CabbagePrice currentPrice = maybeCabbagePrice.get();
+                        CabbagePrice twoWeeksLaterPrice = maybeCabbagePriceTwoWeeksLater.get();
+
+                        currentPriceValue = currentPrice.getPrice();
+                        twoWeeksLaterPriceValue = twoWeeksLaterPrice.getPrice();
+                    }
+                    break;
+                case CARROT:
+                    Optional<CarrotPrice> maybeCarrotPrice = carrotPriceRepository.findByDate(currentDate.toString());
+                    Optional<CarrotPrice> maybeCarrotPriceTwoWeeksLater = carrotPriceRepository.findByDate((currentDate.plusDays(13)).toString());
+                    if (maybeCarrotPrice.isPresent() || maybeCarrotPriceTwoWeeksLater.isPresent()) {
+                        CarrotPrice currentPrice = maybeCarrotPrice.get();
+                        CarrotPrice twoWeeksLaterPrice = maybeCarrotPriceTwoWeeksLater.get();
+
+                        currentPriceValue = currentPrice.getPrice();
+                        twoWeeksLaterPriceValue = twoWeeksLaterPrice.getPrice();
+                    }
+                    break;
+                case CUCUMBER:
+                    Optional<CucumberPrice> maybeCucumberPrice = cucumberPriceRepository.findByDate(currentDate.toString());
+                    Optional<CucumberPrice> maybeCucumberPriceTwoWeeksLater = cucumberPriceRepository.findByDate((currentDate.plusDays(13)).toString());
+                    if (maybeCucumberPrice.isPresent() || maybeCucumberPriceTwoWeeksLater.isPresent()) {
+                        CucumberPrice currentPrice = maybeCucumberPrice.get();
+                        CucumberPrice twoWeeksLaterPrice = maybeCucumberPriceTwoWeeksLater.get();
+
+                        currentPriceValue = currentPrice.getPrice();
+                        twoWeeksLaterPriceValue = twoWeeksLaterPrice.getPrice();
+                    }
+                    break;
+                case KIMCHI_CABBAGE:
+                    Optional<KimchiCabbagePrice> maybeKimchiCabbagePrice = kimchiCabbagePriceRepository.findByDate(currentDate.toString());
+                    Optional<KimchiCabbagePrice> maybeKimchiCabbagePriceTwoWeeksLater = kimchiCabbagePriceRepository.findByDate((currentDate.plusDays(13)).toString());
+                    if (maybeKimchiCabbagePrice.isPresent() || maybeKimchiCabbagePriceTwoWeeksLater.isPresent()) {
+                        KimchiCabbagePrice currentPrice = maybeKimchiCabbagePrice.get();
+                        KimchiCabbagePrice twoWeeksLaterPrice = maybeKimchiCabbagePriceTwoWeeksLater.get();
+
+                        currentPriceValue = currentPrice.getPrice();
+                        twoWeeksLaterPriceValue = twoWeeksLaterPrice.getPrice();
+                    }
+                    break;
+                case ONION:
+                    Optional<OnionPrice> maybeOnionPrice = onionPriceRepository.findByDate(currentDate.toString());
+                    Optional<OnionPrice> maybeOnionPriceTwoWeeksLater = onionPriceRepository.findByDate((currentDate.plusDays(13)).toString());
+                    if (maybeOnionPrice.isPresent() || maybeOnionPriceTwoWeeksLater.isPresent()) {
+                        OnionPrice currentPrice = maybeOnionPrice.get();
+                        OnionPrice twoWeeksLaterPrice = maybeOnionPriceTwoWeeksLater.get();
+
+                        currentPriceValue = currentPrice.getPrice();
+                        twoWeeksLaterPriceValue = twoWeeksLaterPrice.getPrice();
+                    }
+                    break;
+                case POTATO:
+                    Optional<PotatoPrice> maybePotatoPrice = potatoPriceRepository.findByDate(currentDate.toString());
+                    Optional<PotatoPrice> maybePotatoPriceTwoWeeksLater = potatoPriceRepository.findByDate((currentDate.plusDays(13)).toString());
+                    if (maybePotatoPrice.isPresent() || maybePotatoPriceTwoWeeksLater.isPresent()) {
+                        PotatoPrice currentPrice = maybePotatoPrice.get();
+                        PotatoPrice twoWeeksLaterPrice = maybePotatoPriceTwoWeeksLater.get();
+
+                        currentPriceValue = currentPrice.getPrice();
+                        twoWeeksLaterPriceValue = twoWeeksLaterPrice.getPrice();
+                    }
+                    break;
+                case WELSH_ONION:
+                    Optional<WelshOnionPrice> maybeWelshOnionPrice = welshOnionPriceRepository.findByDate(currentDate.toString());
+                    Optional<WelshOnionPrice> maybeWelshOnionPriceTwoWeeksLater = welshOnionPriceRepository.findByDate((currentDate.plusDays(13)).toString());
+                    if (maybeWelshOnionPrice.isPresent() || maybeWelshOnionPriceTwoWeeksLater.isPresent()) {
+                        WelshOnionPrice currentPrice = maybeWelshOnionPrice.get();
+                        WelshOnionPrice twoWeeksLaterPrice = maybeWelshOnionPriceTwoWeeksLater.get();
+
+                        currentPriceValue = currentPrice.getPrice();
+                        twoWeeksLaterPriceValue = twoWeeksLaterPrice.getPrice();
+                    }
+                    break;
+                case YOUNG_PUMPKIN:
+                    Optional<YoungPumpkinPrice> maybeYoungPumpkinPrice = youngPumpkinPriceRepository.findByDate(currentDate.toString());
+                    Optional<YoungPumpkinPrice> maybeYoungPumpkinPriceTwoWeeksLater = youngPumpkinPriceRepository.findByDate((currentDate.plusDays(13)).toString());
+                    if (maybeYoungPumpkinPrice.isPresent() || maybeYoungPumpkinPriceTwoWeeksLater.isPresent()) {
+                        YoungPumpkinPrice currentPrice = maybeYoungPumpkinPrice.get();
+                        YoungPumpkinPrice twoWeeksLaterPrice = maybeYoungPumpkinPriceTwoWeeksLater.get();
+
+                        currentPriceValue = currentPrice.getPrice();
+                        twoWeeksLaterPriceValue = twoWeeksLaterPrice.getPrice();
+                    }
+                    break;
+                default:
+                    break;
+            }
+            double priceChangePercentage = ((twoWeeksLaterPriceValue - currentPriceValue) / currentPriceValue) * 100;
+            int roundedPriceChangePercentage = (int) Math.floor(priceChangePercentage);
+            if (roundedPriceChangePercentage > 30) {
+                roundedPriceChangePercentage = 30;
+            } else if (roundedPriceChangePercentage < -30) {
+                roundedPriceChangePercentage = -30;
+            }
+
+            log.info("The percentage change in prices: " + roundedPriceChangePercentage + "%");
+
+            return roundedPriceChangePercentage;
+        }
+
+        return -999;
     }
 }

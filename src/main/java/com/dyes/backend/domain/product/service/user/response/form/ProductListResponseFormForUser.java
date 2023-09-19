@@ -18,4 +18,5 @@ public class ProductListResponseFormForUser {
     private String farmName;
     private String mainImage;
     private String representativeName;
+    private int roundedPriceChangePercentage;
 }

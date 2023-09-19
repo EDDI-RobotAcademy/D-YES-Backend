@@ -250,8 +250,10 @@ public class OrderServiceImpl implements OrderService {
                 List<OrderOptionListResponse> orderOptionList = new ArrayList<>();
                 Long productOptionId = orderedProduct.getProductOptionId();
                 int productOptionCount = orderedProduct.getProductOptionCount();
+                Long productId = orderedProduct.getProductId();
+                String productName = orderedProduct.getProductName();
 
-                Optional<ProductOption> maybeProductOption = productOptionRepository.findByIdWithProduct(productOptionId);
+                Optional<ProductOption> maybeProductOption = productOptionRepository.findById(productOptionId);
                 if (maybeProductOption.isEmpty()) {
                     log.info("ProductOption with product option ID '{}' not found", productOptionId);
                     return null;
@@ -259,13 +261,85 @@ public class OrderServiceImpl implements OrderService {
 
                 // 상품 정보 확인을 위해 가져옴
                 ProductOption productOption = maybeProductOption.get();
-                Product product = productOption.getProduct();
 
                 String optionName = productOption.getOptionName();
                 Long optionPrice = productOption.getOptionPrice();
                 Long totalOptionPrice = optionPrice * productOptionCount;
-                Long productId = product.getId();
-                String productName = product.getProductName();
+
+                totalPrice = totalPrice + totalOptionPrice;
+
+                OrderOptionListResponse orderOptionListResponse
+                        = new OrderOptionListResponse(productOptionId, optionName, productOptionCount);
+                orderOptionList.add(orderOptionListResponse);
+
+                OrderProductListResponse orderProductListResponse
+                        = new OrderProductListResponse(productId, productName, orderOptionList);
+                orderProductList.add(orderProductListResponse);
+            }
+
+            OrderDetailInfoResponse orderDetailInfoResponse
+                    = new OrderDetailInfoResponse(productOrderId, totalPrice, orderedTime, deliveryStatus);
+            OrderListResponseFormForAdmin orderListResponseFormForAdmin
+                    = new OrderListResponseFormForAdmin(orderUserInfoResponse, orderProductList, orderDetailInfoResponse);
+            orderListResponseFormForAdmins.add(orderListResponseFormForAdmin);
+        }
+        return orderListResponseFormForAdmins;
+    }
+
+    // 관리자의 신규 주문 내역 확인
+    @Override
+    public List<OrderListResponseFormForAdmin> getAllNewOrderListForAdmin() {
+        // 모든 주문 내역 가져오기
+        List<ProductOrder> orderList = orderRepository.findAllByOrderedTimeWithUser();
+
+        List<OrderListResponseFormForAdmin> orderListResponseFormForAdmins = new ArrayList<>();
+
+        for (ProductOrder order : orderList) {
+
+            // 주문자 정보 가져오기
+            User user = order.getUser();
+            String userId = user.getId();
+
+            Optional<OrderedPurchaserProfile> maybeOrderedPurchaserProfile = orderedPurchaserProfileRepository.findByProductOrder(order);
+            if (maybeOrderedPurchaserProfile.isEmpty()) {
+                log.info("Profile with order ID '{}' not found", order.getId());
+                return null;
+            }
+
+            OrderedPurchaserProfile purchaserProfile = maybeOrderedPurchaserProfile.get();
+            String contactNumber = purchaserProfile.getOrderedPurchaseContactNumber();
+            Address address = purchaserProfile.getOrderedPurchaseProfileAddress();
+
+            OrderUserInfoResponse orderUserInfoResponse = new OrderUserInfoResponse(userId, contactNumber, address);
+
+            // 주문한 상품 및 옵션 정보 가져오기
+            Long totalPrice = 0L;
+            Long productOrderId = order.getId();
+            Delivery delivery = order.getDelivery();
+            DeliveryStatus deliveryStatus = delivery.getDeliveryStatus();
+            LocalDate orderedTime = order.getOrderedTime();
+            List<OrderProductListResponse> orderProductList = new ArrayList<>();
+
+            List<OrderedProduct> orderedProducts = orderedProductRepository.findAllByProductOrder(order);
+            for (OrderedProduct orderedProduct : orderedProducts) {
+                List<OrderOptionListResponse> orderOptionList = new ArrayList<>();
+                Long productOptionId = orderedProduct.getProductOptionId();
+                int productOptionCount = orderedProduct.getProductOptionCount();
+                Long productId = orderedProduct.getProductId();
+                String productName = orderedProduct.getProductName();
+
+                Optional<ProductOption> maybeProductOption = productOptionRepository.findById(productOptionId);
+                if (maybeProductOption.isEmpty()) {
+                    log.info("ProductOption with product option ID '{}' not found", productOptionId);
+                    return null;
+                }
+
+                // 상품 정보 확인을 위해 가져옴
+                ProductOption productOption = maybeProductOption.get();
+
+                String optionName = productOption.getOptionName();
+                Long optionPrice = productOption.getOptionPrice();
+                Long totalOptionPrice = optionPrice * productOptionCount;
 
                 totalPrice = totalPrice + totalOptionPrice;
 
@@ -316,8 +390,10 @@ public class OrderServiceImpl implements OrderService {
                 List<OrderOptionListResponse> orderOptionList = new ArrayList<>();
                 Long productOptionId = orderedProduct.getProductOptionId();
                 int productOptionCount = orderedProduct.getProductOptionCount();
+                Long productId = orderedProduct.getProductId();
+                String productName = orderedProduct.getProductName();
 
-                Optional<ProductOption> maybeProductOption = productOptionRepository.findByIdWithProduct(productOptionId);
+                Optional<ProductOption> maybeProductOption = productOptionRepository.findById(productOptionId);
                 if (maybeProductOption.isEmpty()) {
                     log.info("ProductOption with product option ID '{}' not found", productOptionId);
                     return null;
@@ -330,8 +406,6 @@ public class OrderServiceImpl implements OrderService {
                 String optionName = productOption.getOptionName();
                 Long optionPrice = productOption.getOptionPrice();
                 Long totalOptionPrice = optionPrice * productOptionCount;
-                Long productId = product.getId();
-                String productName = product.getProductName();
 
                 totalPrice = totalPrice + totalOptionPrice;
 

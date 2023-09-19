@@ -24,4 +24,6 @@ public interface AdminProductService {
     List<ProductListResponseFormForAdmin> getProductListForAdmin();
 
     ProductSummaryReadResponseFormForAdmin readProductSummaryForAdmin(Long productId);
+
+    List<ProductListResponseFormForAdmin> getNewProductListForAdmin();
 }
