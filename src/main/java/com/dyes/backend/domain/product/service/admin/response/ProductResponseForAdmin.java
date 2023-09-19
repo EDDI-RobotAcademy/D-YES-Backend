@@ -1,5 +1,6 @@
 package com.dyes.backend.domain.product.service.admin.response;
 
+import com.dyes.backend.domain.farm.entity.ProduceType;
 import com.dyes.backend.domain.product.entity.CultivationMethod;
 import com.dyes.backend.domain.product.entity.Product;
 import com.dyes.backend.domain.product.entity.SaleStatus;
@@ -15,6 +16,7 @@ public class ProductResponseForAdmin {
     private String productName;
     private String productDescription;
     private CultivationMethod cultivationMethod;
+    private ProduceType produceType;
     private SaleStatus productSaleStatus;
 
     public ProductResponseForAdmin productResponseForAdmin(Product product) {
@@ -23,6 +25,7 @@ public class ProductResponseForAdmin {
                 product.getProductName(),
                 product.getProductDescription(),
                 product.getCultivationMethod(),
+                product.getProduceType(),
                 product.getProductSaleStatus());
     }
 }
