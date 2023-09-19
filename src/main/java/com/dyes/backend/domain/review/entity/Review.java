@@ -19,17 +19,16 @@ public class Review {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String title;
+    private String productName;
+    private String optionName;
     private String userNickName;
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "review_content_id")
-    private ReviewContent ReviewContent;
+    private String Content;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id")
     private User user;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_id")
     private Product product;
-    private LocalDate createDate;
-    private LocalDate modifyDate;
+    private LocalDate reviewDate;
+    private LocalDate purchaseDate;
 }

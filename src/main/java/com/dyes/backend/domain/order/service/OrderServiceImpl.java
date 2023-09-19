@@ -136,7 +136,7 @@ public class OrderServiceImpl implements OrderService {
             Cart cart = cartService.cartCheckFromUserToken(userToken);
 
             // 주문한 상품이 장바구니에 있으면 장바구니에서 목록 제거
-            if (saveRequest.getFrom().equals("cart")) {
+            if (saveRequest.getFrom().equals("CART")) {
                 // 장바구니에 담긴 상품 리스트 불러오기
                 List<ContainProductOption> productOptionList = containProductOptionRepository.findAllByCart(cart);
 

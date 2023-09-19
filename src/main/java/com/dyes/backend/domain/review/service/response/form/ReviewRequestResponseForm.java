@@ -1,7 +1,7 @@
 package com.dyes.backend.domain.review.service.response.form;
 
-import com.dyes.backend.domain.review.service.response.ReviewRequestDetailImagesResponse;
-import com.dyes.backend.domain.review.service.response.ReviewRequestMainImageResponse;
+import com.dyes.backend.domain.review.service.response.ReviewRequestImagesResponse;
+import com.dyes.backend.domain.review.service.response.ReviewRequestResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,11 +15,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReviewRequestResponseForm {
-    private String title;
-    private String content;
-    private String userNickName;
-    private LocalDate createDate;
-    private LocalDate modifyDate;
-    private ReviewRequestMainImageResponse mainImageResponse;
-    private List<ReviewRequestDetailImagesResponse> detailImagesResponseList;
+    private ReviewRequestResponse reviewRequestResponse;
+    private List<ReviewRequestImagesResponse> imagesResponseList;
 }

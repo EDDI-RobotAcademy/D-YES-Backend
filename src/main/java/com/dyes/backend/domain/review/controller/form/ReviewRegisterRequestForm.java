@@ -1,7 +1,6 @@
 package com.dyes.backend.domain.review.controller.form;
 
-import com.dyes.backend.domain.review.service.request.ReviewDetailImagesRegisterRequest;
-import com.dyes.backend.domain.review.service.request.ReviewMainImageRegisterRequest;
+import com.dyes.backend.domain.review.service.request.ReviewImagesRegisterRequest;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,9 +12,9 @@ import java.util.List;
 @AllArgsConstructor
 public class ReviewRegisterRequestForm {
     private String userToken;
-    private Long productId;
-    private String title;
+    private Long orderId;
+    private Long productOptionId;
     private String content;
-    private ReviewMainImageRegisterRequest mainImageRegisterRequest;
-    private List<ReviewDetailImagesRegisterRequest> detailImagesRegisterRequestList;
+    private Integer rating;
+    private List<ReviewImagesRegisterRequest> imagesRegisterRequestList;
 }

@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ReviewMainImageRegisterRequest {
-    private String mainImg;
-
+public class ReviewImagesRegisterRequest {
+    private String reviewImages;
 }

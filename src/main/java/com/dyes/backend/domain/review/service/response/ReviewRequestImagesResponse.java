@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ReviewRequestMainImageResponse {
-    private String mainImg;
+public class ReviewRequestImagesResponse {
+    private Long reviewImageId;
+    private String reviewImages;
 }

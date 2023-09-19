@@ -12,10 +12,11 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReviewRequestResponse {
-    private String title;
+    private String productName;
+    private String optionName;
     private String content;
     private String userNickName;
     private LocalDate createDate;
-    private LocalDate modifyDate;
-
+    private LocalDate purchaseDate;
+    private Integer rating;
 }
