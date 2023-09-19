@@ -340,7 +340,7 @@ public class UserProductServiceImpl implements UserProductService {
                 case CABBAGE:
                     Optional<CabbagePrice> maybeCabbagePrice = cabbagePriceRepository.findByDate(currentDate.toString());
                     Optional<CabbagePrice> maybeCabbagePriceTwoWeeksLater = cabbagePriceRepository.findByDate((currentDate.plusDays(13)).toString());
-                    if (maybeCabbagePrice.isPresent() || maybeCabbagePriceTwoWeeksLater.isPresent()) {
+                    if (maybeCabbagePrice.isPresent() && maybeCabbagePriceTwoWeeksLater.isPresent()) {
                         CabbagePrice currentPrice = maybeCabbagePrice.get();
                         CabbagePrice twoWeeksLaterPrice = maybeCabbagePriceTwoWeeksLater.get();
 
@@ -351,7 +351,7 @@ public class UserProductServiceImpl implements UserProductService {
                 case CARROT:
                     Optional<CarrotPrice> maybeCarrotPrice = carrotPriceRepository.findByDate(currentDate.toString());
                     Optional<CarrotPrice> maybeCarrotPriceTwoWeeksLater = carrotPriceRepository.findByDate((currentDate.plusDays(13)).toString());
-                    if (maybeCarrotPrice.isPresent() || maybeCarrotPriceTwoWeeksLater.isPresent()) {
+                    if (maybeCarrotPrice.isPresent() && maybeCarrotPriceTwoWeeksLater.isPresent()) {
                         CarrotPrice currentPrice = maybeCarrotPrice.get();
                         CarrotPrice twoWeeksLaterPrice = maybeCarrotPriceTwoWeeksLater.get();
 
@@ -362,7 +362,7 @@ public class UserProductServiceImpl implements UserProductService {
                 case CUCUMBER:
                     Optional<CucumberPrice> maybeCucumberPrice = cucumberPriceRepository.findByDate(currentDate.toString());
                     Optional<CucumberPrice> maybeCucumberPriceTwoWeeksLater = cucumberPriceRepository.findByDate((currentDate.plusDays(13)).toString());
-                    if (maybeCucumberPrice.isPresent() || maybeCucumberPriceTwoWeeksLater.isPresent()) {
+                    if (maybeCucumberPrice.isPresent() && maybeCucumberPriceTwoWeeksLater.isPresent()) {
                         CucumberPrice currentPrice = maybeCucumberPrice.get();
                         CucumberPrice twoWeeksLaterPrice = maybeCucumberPriceTwoWeeksLater.get();
 
@@ -373,7 +373,7 @@ public class UserProductServiceImpl implements UserProductService {
                 case KIMCHI_CABBAGE:
                     Optional<KimchiCabbagePrice> maybeKimchiCabbagePrice = kimchiCabbagePriceRepository.findByDate(currentDate.toString());
                     Optional<KimchiCabbagePrice> maybeKimchiCabbagePriceTwoWeeksLater = kimchiCabbagePriceRepository.findByDate((currentDate.plusDays(13)).toString());
-                    if (maybeKimchiCabbagePrice.isPresent() || maybeKimchiCabbagePriceTwoWeeksLater.isPresent()) {
+                    if (maybeKimchiCabbagePrice.isPresent() && maybeKimchiCabbagePriceTwoWeeksLater.isPresent()) {
                         KimchiCabbagePrice currentPrice = maybeKimchiCabbagePrice.get();
                         KimchiCabbagePrice twoWeeksLaterPrice = maybeKimchiCabbagePriceTwoWeeksLater.get();
 
@@ -384,7 +384,7 @@ public class UserProductServiceImpl implements UserProductService {
                 case ONION:
                     Optional<OnionPrice> maybeOnionPrice = onionPriceRepository.findByDate(currentDate.toString());
                     Optional<OnionPrice> maybeOnionPriceTwoWeeksLater = onionPriceRepository.findByDate((currentDate.plusDays(13)).toString());
-                    if (maybeOnionPrice.isPresent() || maybeOnionPriceTwoWeeksLater.isPresent()) {
+                    if (maybeOnionPrice.isPresent() && maybeOnionPriceTwoWeeksLater.isPresent()) {
                         OnionPrice currentPrice = maybeOnionPrice.get();
                         OnionPrice twoWeeksLaterPrice = maybeOnionPriceTwoWeeksLater.get();
 
@@ -395,7 +395,7 @@ public class UserProductServiceImpl implements UserProductService {
                 case POTATO:
                     Optional<PotatoPrice> maybePotatoPrice = potatoPriceRepository.findByDate(currentDate.toString());
                     Optional<PotatoPrice> maybePotatoPriceTwoWeeksLater = potatoPriceRepository.findByDate((currentDate.plusDays(13)).toString());
-                    if (maybePotatoPrice.isPresent() || maybePotatoPriceTwoWeeksLater.isPresent()) {
+                    if (maybePotatoPrice.isPresent() && maybePotatoPriceTwoWeeksLater.isPresent()) {
                         PotatoPrice currentPrice = maybePotatoPrice.get();
                         PotatoPrice twoWeeksLaterPrice = maybePotatoPriceTwoWeeksLater.get();
 
@@ -406,7 +406,7 @@ public class UserProductServiceImpl implements UserProductService {
                 case WELSH_ONION:
                     Optional<WelshOnionPrice> maybeWelshOnionPrice = welshOnionPriceRepository.findByDate(currentDate.toString());
                     Optional<WelshOnionPrice> maybeWelshOnionPriceTwoWeeksLater = welshOnionPriceRepository.findByDate((currentDate.plusDays(13)).toString());
-                    if (maybeWelshOnionPrice.isPresent() || maybeWelshOnionPriceTwoWeeksLater.isPresent()) {
+                    if (maybeWelshOnionPrice.isPresent() && maybeWelshOnionPriceTwoWeeksLater.isPresent()) {
                         WelshOnionPrice currentPrice = maybeWelshOnionPrice.get();
                         WelshOnionPrice twoWeeksLaterPrice = maybeWelshOnionPriceTwoWeeksLater.get();
 
@@ -417,7 +417,7 @@ public class UserProductServiceImpl implements UserProductService {
                 case YOUNG_PUMPKIN:
                     Optional<YoungPumpkinPrice> maybeYoungPumpkinPrice = youngPumpkinPriceRepository.findByDate(currentDate.toString());
                     Optional<YoungPumpkinPrice> maybeYoungPumpkinPriceTwoWeeksLater = youngPumpkinPriceRepository.findByDate((currentDate.plusDays(13)).toString());
-                    if (maybeYoungPumpkinPrice.isPresent() || maybeYoungPumpkinPriceTwoWeeksLater.isPresent()) {
+                    if (maybeYoungPumpkinPrice.isPresent() && maybeYoungPumpkinPriceTwoWeeksLater.isPresent()) {
                         YoungPumpkinPrice currentPrice = maybeYoungPumpkinPrice.get();
                         YoungPumpkinPrice twoWeeksLaterPrice = maybeYoungPumpkinPriceTwoWeeksLater.get();
 
