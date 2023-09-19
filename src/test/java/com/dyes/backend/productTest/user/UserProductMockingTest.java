@@ -3,6 +3,7 @@ package com.dyes.backend.productTest.user;
 import com.dyes.backend.domain.farm.entity.*;
 import com.dyes.backend.domain.farm.repository.*;
 import com.dyes.backend.domain.farm.service.response.FarmInfoResponseForUser;
+import com.dyes.backend.domain.farmproducePriceForecast.repository.*;
 import com.dyes.backend.domain.product.entity.*;
 import com.dyes.backend.domain.product.repository.*;
 import com.dyes.backend.domain.product.service.user.UserProductServiceImpl;
@@ -22,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static com.dyes.backend.domain.farm.entity.ProduceType.ONION;
 import static com.dyes.backend.domain.product.entity.CultivationMethod.*;
 import static com.dyes.backend.domain.product.entity.SaleStatus.AVAILABLE;
 import static com.dyes.backend.domain.product.entity.SaleStatus.UNAVAILABLE;
@@ -48,6 +50,22 @@ public class UserProductMockingTest {
     private FarmIntroductionInfoRepository mockFarmIntroductionInfoRepository;
     @Mock
     private FarmRepresentativeInfoRepository mockFarmRepresentativeInfoRepository;
+    @Mock
+    private CabbagePriceRepository cabbagePriceRepository;
+    @Mock
+    private CarrotPriceRepository carrotPriceRepository;
+    @Mock
+    private CucumberPriceRepository cucumberPriceRepository;
+    @Mock
+    private KimchiCabbagePriceRepository kimchiCabbagePriceRepository;
+    @Mock
+    private OnionPriceRepository onionPriceRepository;
+    @Mock
+    private PotatoPriceRepository potatoPriceRepository;
+    @Mock
+    private WelshOnionPriceRepository welshOnionPriceRepository;
+    @Mock
+    private YoungPumpkinPriceRepository youngPumpkinPriceRepository;
     @InjectMocks
     private UserProductServiceImpl userProductService;
 
@@ -63,7 +81,16 @@ public class UserProductMockingTest {
                 productManagementRepository,
                 mockFarmCustomerServiceInfoRepository,
                 mockFarmIntroductionInfoRepository,
-                mockFarmRepresentativeInfoRepository);
+                mockFarmRepresentativeInfoRepository,
+                cabbagePriceRepository,
+                carrotPriceRepository,
+                cucumberPriceRepository,
+                kimchiCabbagePriceRepository,
+                onionPriceRepository,
+                potatoPriceRepository,
+                welshOnionPriceRepository,
+                youngPumpkinPriceRepository
+                );
     }
 
     @Test
@@ -75,7 +102,7 @@ public class UserProductMockingTest {
         FarmCustomerServiceInfo farmCustomerServiceInfo = new FarmCustomerServiceInfo(1L, "070-1234-5678", new Address(), farm);
         FarmIntroductionInfo farmIntroductionInfo = new FarmIntroductionInfo(1L, "메인이미지", "한줄소개", new ArrayList<>(), farm);
 
-        Product product = new Product(productId, "상품 이름", "상세 설명", CultivationMethod.ORGANIC, AVAILABLE, farm);
+        Product product = new Product(productId, "상품 이름", "상세 설명", CultivationMethod.ORGANIC, ONION, AVAILABLE, farm);
         when(mockProductRepository.findById(productId)).thenReturn(Optional.of(product));
 
         List<ProductOption> productOption = new ArrayList<>();
@@ -129,6 +156,7 @@ public class UserProductMockingTest {
                 .productName("상품명1")
                 .productDescription("상품 설명1")
                 .cultivationMethod(ENVIRONMENT_FRIENDLY)
+                .produceType(ONION)
                 .productSaleStatus(AVAILABLE)
                 .farm(farm)
                 .build();
@@ -143,6 +171,7 @@ public class UserProductMockingTest {
                 .productName("상품명2")
                 .productDescription("상품 설명2")
                 .cultivationMethod(ENVIRONMENT_FRIENDLY)
+                .produceType(ONION)
                 .productSaleStatus(UNAVAILABLE)
                 .farm(farm)
                 .build();
@@ -232,6 +261,7 @@ public class UserProductMockingTest {
                 .productName("상품명1")
                 .productDescription("상품 설명1")
                 .cultivationMethod(ORGANIC)
+                .produceType(ONION)
                 .productSaleStatus(AVAILABLE)
                 .farm(farm)
                 .build();
@@ -246,6 +276,7 @@ public class UserProductMockingTest {
                 .productName("상품명2")
                 .productDescription("상품 설명2")
                 .cultivationMethod(ORGANIC)
+                .produceType(ONION)
                 .productSaleStatus(UNAVAILABLE)
                 .farm(farm)
                 .build();
@@ -347,6 +378,7 @@ public class UserProductMockingTest {
                 .productName("상품명1")
                 .productDescription("상품 설명1")
                 .cultivationMethod(ORGANIC)
+                .produceType(ONION)
                 .productSaleStatus(AVAILABLE)
                 .farm(farm)
                 .build();
@@ -361,6 +393,7 @@ public class UserProductMockingTest {
                 .productName("상품명2")
                 .productDescription("상품 설명2")
                 .cultivationMethod(ORGANIC)
+                .produceType(ONION)
                 .productSaleStatus(UNAVAILABLE)
                 .farm(farm)
                 .build();
