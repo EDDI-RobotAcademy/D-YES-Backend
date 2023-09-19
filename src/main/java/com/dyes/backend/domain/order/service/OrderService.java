@@ -18,5 +18,6 @@ public interface OrderService {
     void orderProduct(PaymentTemporarySaveRequest saveRequest);
     OrderConfirmResponseFormForUser orderConfirm(OrderConfirmRequestForm requestForm);
     List<OrderListResponseFormForAdmin> getOrderListForAdmin();
+    List<OrderListResponseFormForAdmin> getAllNewOrderListForAdmin();
     List<OrderListResponseFormForUser> getMyOrderListForUser(String userToken);
 }
