@@ -1,5 +1,6 @@
 package com.dyes.backend.domain.product.service.admin.request.register;
 
+import com.dyes.backend.domain.farm.entity.ProduceType;
 import com.dyes.backend.domain.product.entity.CultivationMethod;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,4 +13,5 @@ public class ProductRegisterRequest {
     private String productName;
     private String productDescription;
     private CultivationMethod cultivationMethod;
+    private ProduceType produceType;
 }

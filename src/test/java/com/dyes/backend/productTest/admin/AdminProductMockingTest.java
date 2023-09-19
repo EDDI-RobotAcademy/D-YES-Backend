@@ -43,6 +43,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import static com.dyes.backend.domain.farm.entity.ProduceType.ONION;
 import static com.dyes.backend.domain.product.entity.CultivationMethod.*;
 import static com.dyes.backend.domain.product.entity.SaleStatus.AVAILABLE;
 import static com.dyes.backend.domain.product.entity.SaleStatus.UNAVAILABLE;
@@ -113,12 +114,13 @@ public class AdminProductMockingTest {
         final Long value = 1L;
         final Unit unit = KG;
         final CultivationMethod cultivationMethod = ORGANIC;
+        final ProduceType produceType = ONION;
         final String mainImage = "메인 이미지";
         final String detailImages = "디테일 이미지1";
         final String userToken = "mainadmin-dskef3rkewj-welkjw";
         final String farmName = "투투농장";
 
-        ProductRegisterRequest productRegisterRequest = new ProductRegisterRequest(productName, productDescription, cultivationMethod);
+        ProductRegisterRequest productRegisterRequest = new ProductRegisterRequest(productName, productDescription, cultivationMethod, produceType);
         ProductOptionRegisterRequest productOptionRegisterRequest = new ProductOptionRegisterRequest(optionName, optionPrice, stock, value, unit);
         ProductMainImageRegisterRequest productMainImageRegisterRequest = new ProductMainImageRegisterRequest(mainImage);
         ProductDetailImagesRegisterRequest productDetailImagesRegisterRequest = new ProductDetailImagesRegisterRequest(detailImages);
@@ -398,7 +400,7 @@ public class AdminProductMockingTest {
     @DisplayName("product mocking test: admin product read")
     public void 관리자가_상품을_수정하기_전에_상품을_확인할_수_있습니다() {
         Farm farm = new Farm(1L, "투투농가");
-        Product product = new Product(1L, "상품 이름", "상세 설명", CultivationMethod.ORGANIC, AVAILABLE, farm);
+        Product product = new Product(1L, "상품 이름", "상세 설명", CultivationMethod.ORGANIC, ONION, AVAILABLE, farm);
         List<ProductOption> productOption = new ArrayList<>();
         productOption.add(new ProductOption(1L, "옵션 이름", 10000L, 100, new Amount(), product, AVAILABLE));
         ProductMainImage productMainImage = new ProductMainImage(product.getId(), "메인 이미지", product);
@@ -441,7 +443,7 @@ public class AdminProductMockingTest {
     @DisplayName("product mocking test: admin product read-summary")
     public void 관리자가_상품을_삭제하기_전에_상품_요약정보를_확인할_수_있습니다() {
         Farm farm = new Farm(1L, "투투농가");
-        Product product = new Product(1L, "상품 이름", "상세 설명", CultivationMethod.ORGANIC, AVAILABLE, farm);
+        Product product = new Product(1L, "상품 이름", "상세 설명", CultivationMethod.ORGANIC, ONION, AVAILABLE, farm);
         List<ProductOption> productOption = new ArrayList<>();
         productOption.add(new ProductOption(1L, "옵션 이름", 1L, 1, new Amount(), product, AVAILABLE));
 

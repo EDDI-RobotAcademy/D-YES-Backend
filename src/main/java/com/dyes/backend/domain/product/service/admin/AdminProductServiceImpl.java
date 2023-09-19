@@ -103,6 +103,7 @@ public class AdminProductServiceImpl implements AdminProductService {
                     .productName(productRequest.getProductName())
                     .productDescription(productRequest.getProductDescription())
                     .cultivationMethod(productRequest.getCultivationMethod())
+                    .produceType(productRequest.getProduceType())
                     .productSaleStatus(AVAILABLE)
                     .farm(farm)
                     .build();
