@@ -13,6 +13,8 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+import static com.dyes.backend.domain.farm.entity.ProduceType.*;
+
 @Service
 @Slf4j
 @ToString
@@ -57,6 +59,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
                     cabbagePrice = CabbagePrice.builder()
                             .date(formattedDate)
                             .price(price)
+                            .produceType(CABBAGE)
                             .build();
                 }
                 cabbagePriceRepository.save(cabbagePrice);
@@ -96,6 +99,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
                     carrotPrice = CarrotPrice.builder()
                             .date(formattedDate)
                             .price(price)
+                            .produceType(CARROT)
                             .build();
                 }
                 carrotPriceRepository.save(carrotPrice);
@@ -135,6 +139,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
                     cucumberPrice = CucumberPrice.builder()
                             .date(formattedDate)
                             .price(price)
+                            .produceType(CUCUMBER)
                             .build();
                 }
                 cucumberPriceRepository.save(cucumberPrice);
@@ -174,6 +179,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
                     kimchiCabbagePrice = KimchiCabbagePrice.builder()
                             .date(formattedDate)
                             .price(price)
+                            .produceType(KIMCHI_CABBAGE)
                             .build();
                 }
                 kimchiCabbagePriceRepository.save(kimchiCabbagePrice);
@@ -213,6 +219,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
                     onionPrice = OnionPrice.builder()
                             .date(formattedDate)
                             .price(price)
+                            .produceType(ONION)
                             .build();
                 }
                 onionPriceRepository.save(onionPrice);
@@ -252,6 +259,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
                     potatoPrice = PotatoPrice.builder()
                             .date(formattedDate)
                             .price(price)
+                            .produceType(POTATO)
                             .build();
                 }
                 potatoPriceRepository.save(potatoPrice);
@@ -291,6 +299,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
                     welshOnionPrice = WelshOnionPrice.builder()
                             .date(formattedDate)
                             .price(price)
+                            .produceType(WELSH_ONION)
                             .build();
                 }
                 welshOnionPriceRepository.save(welshOnionPrice);
@@ -330,6 +339,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
                     youngPumpkinPrice = YoungPumpkinPrice.builder()
                             .date(formattedDate)
                             .price(price)
+                            .produceType(YOUNG_PUMPKIN)
                             .build();
                 }
                 youngPumpkinPriceRepository.save(youngPumpkinPrice);

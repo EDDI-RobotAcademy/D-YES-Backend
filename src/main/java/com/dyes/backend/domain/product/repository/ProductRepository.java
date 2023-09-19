@@ -1,6 +1,7 @@
 package com.dyes.backend.domain.product.repository;
 
 import com.dyes.backend.domain.farm.entity.Farm;
+import com.dyes.backend.domain.farm.entity.ProduceType;
 import com.dyes.backend.domain.product.entity.CultivationMethod;
 import com.dyes.backend.domain.product.entity.Product;
 import io.lettuce.core.dynamic.annotation.Param;
@@ -28,4 +29,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("select p FROM Product p join fetch p.farm where p.cultivationMethod = :categoryName")
     List<Product> findAllWithFarmByCategory(@Param("categoryName") CultivationMethod categoryName);
+
+    Optional<Product> findByProduceType(ProduceType produceType);
+
+    List<Product> findAllByProduceType(ProduceType produceType);
 }
