@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReviewRequestImagesResponse {
-    private Long id;
-    private String img;
+    private Long reviewImageId;
+    private String reviewImages;
 }

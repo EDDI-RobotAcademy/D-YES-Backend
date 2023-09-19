@@ -13,7 +13,9 @@ import com.dyes.backend.domain.review.controller.form.ReviewOrderedCheckRequestF
 import com.dyes.backend.domain.review.controller.form.ReviewRegisterRequestForm;
 import com.dyes.backend.domain.review.entity.Review;
 import com.dyes.backend.domain.review.entity.ReviewImages;
+import com.dyes.backend.domain.review.entity.ReviewRating;
 import com.dyes.backend.domain.review.repository.ReviewImagesRepository;
+import com.dyes.backend.domain.review.repository.ReviewRatingRepository;
 import com.dyes.backend.domain.review.repository.ReviewRepository;
 import com.dyes.backend.domain.review.service.ReviewServiceImpl;
 import com.dyes.backend.domain.review.service.request.ReviewImagesRegisterRequest;
@@ -56,6 +58,8 @@ public class ReviewMockingTest {
     private ReviewImagesRepository mockReviewImagesRepository;
     @Mock
     private ProductOptionRepository mockProductOptionRepository;
+    @Mock
+    private ReviewRatingRepository mockReviewRatingRepository;
     @InjectMocks
     private ReviewServiceImpl mockService;
 
@@ -70,7 +74,8 @@ public class ReviewMockingTest {
                 mockReviewRepository,
                 mockUserProfileRepository,
                 mockReviewImagesRepository,
-                mockProductOptionRepository
+                mockProductOptionRepository,
+                mockReviewRatingRepository
         );
     }
 
@@ -110,8 +115,7 @@ public class ReviewMockingTest {
         ReviewRegisterRequestForm requestForm = new ReviewRegisterRequestForm(userToken, orderId, productOptionId, content, rating, List.of(imagesRegisterRequest));
         ReviewRegisterRequest request = new ReviewRegisterRequest(
                 requestForm.getUserToken(), requestForm.getOrderId(),
-                requestForm.getProductOptionId(), requestForm.getContent(),
-                requestForm.getRating()
+                requestForm.getProductOptionId(), requestForm.getContent(), requestForm.getRating()
         );
 
         User user = new User();
@@ -129,7 +133,7 @@ public class ReviewMockingTest {
         assertTrue(result);
     }
     @Test
-    @DisplayName("review mocking test: read review")
+    @DisplayName("review mocking test: list review")
     public void 사용자가_리뷰를_읽을_수_있습니다 () {
         final Long productId = 1L;
 
@@ -139,6 +143,8 @@ public class ReviewMockingTest {
         when(mockReviewRepository.findAllByProduct(product)).thenReturn(List.of(review));
         ReviewImages reviewImages = new ReviewImages();
         when(mockReviewImagesRepository.findAllByReview(review)).thenReturn(List.of(reviewImages));
+        ReviewRating reviewRating = new ReviewRating();
+        when(mockReviewRatingRepository.findByReview(review)).thenReturn(Optional.of(reviewRating));
 
         List<ReviewRequestResponseForm> result = mockService.listReview(productId);
         assertTrue(result != null);

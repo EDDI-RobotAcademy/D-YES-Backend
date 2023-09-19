@@ -13,7 +13,9 @@ import com.dyes.backend.domain.review.controller.form.ReviewOrderedCheckRequestF
 import com.dyes.backend.domain.review.controller.form.ReviewRegisterRequestForm;
 import com.dyes.backend.domain.review.entity.Review;
 import com.dyes.backend.domain.review.entity.ReviewImages;
+import com.dyes.backend.domain.review.entity.ReviewRating;
 import com.dyes.backend.domain.review.repository.ReviewImagesRepository;
+import com.dyes.backend.domain.review.repository.ReviewRatingRepository;
 import com.dyes.backend.domain.review.repository.ReviewRepository;
 import com.dyes.backend.domain.review.service.request.ReviewImagesRegisterRequest;
 import com.dyes.backend.domain.review.service.request.ReviewOrderedCheckRequest;
@@ -45,6 +47,7 @@ public class ReviewServiceImpl implements ReviewService{
     final private UserProfileRepository userProfileRepository;
     final private ReviewImagesRepository reviewImagesRepository;
     final private ProductOptionRepository productOptionRepository;
+    final private ReviewRatingRepository reviewRatingRepository;
     public boolean beforeMakeReview(ReviewOrderedCheckRequestForm requestForm) {
         log.info("beforeMakeReview start");
         ReviewOrderedCheckRequest request = new ReviewOrderedCheckRequest(requestForm.getUserToken(), requestForm.getProductId());
@@ -78,7 +81,8 @@ public class ReviewServiceImpl implements ReviewService{
     public boolean registerReview(ReviewRegisterRequestForm requestForm) {
         log.info("registerReview start");
 
-        ReviewRegisterRequest request = new ReviewRegisterRequest(requestForm.getUserToken(), requestForm.getOrderId(), requestForm.getProductOptionId(), requestForm.getContent(), requestForm.getRating());
+        ReviewRegisterRequest request = new ReviewRegisterRequest(
+                requestForm.getUserToken(), requestForm.getOrderId(), requestForm.getProductOptionId(), requestForm.getContent(), requestForm.getRating());
         List<ReviewImagesRegisterRequest> imagesRegisterRequestList = requestForm.getImagesRegisterRequestList();
 
         final String userToken = request.getUserToken();
@@ -120,9 +124,15 @@ public class ReviewServiceImpl implements ReviewService{
                     .product(productOption.getProduct())
                     .reviewDate(LocalDate.now())
                     .purchaseDate(order.getOrderedTime())
-                    .rating(rating)
                     .build();
             reviewRepository.save(review);
+
+            ReviewRating reviewRating = ReviewRating.builder()
+                    .rating(rating)
+                    .review(review)
+                    .product(productOption.getProduct())
+                    .build();
+            reviewRatingRepository.save(reviewRating);
             log.info("registerReview end");
 
             for (ReviewImagesRegisterRequest imagesRegisterRequest : imagesRegisterRequestList) {
@@ -153,13 +163,21 @@ public class ReviewServiceImpl implements ReviewService{
         try {
             for (Review review : reviewList) {
                 List<ReviewImages> imagesList = reviewImagesRepository.findAllByReview(review);
+                Optional<ReviewRating> maybeReviewRating = reviewRatingRepository.findByReview(review);
+
+                ReviewRating reviewRating = new ReviewRating();
+                if (maybeReviewRating.isEmpty()) {
+                    reviewRating.setRating(0);
+                } else {
+                    reviewRating = maybeReviewRating.get();
+                }
 
                 ReviewRequestResponse response = ReviewRequestResponse.builder()
                         .userNickName(review.getUserNickName())
                         .productName(review.getProductName())
                         .optionName(review.getOptionName())
                         .content(review.getContent())
-                        .rating(review.getRating())
+                        .rating(reviewRating.getRating())
                         .createDate(review.getReviewDate())
                         .purchaseDate(review.getPurchaseDate())
                         .build();
@@ -167,8 +185,8 @@ public class ReviewServiceImpl implements ReviewService{
                 List<ReviewRequestImagesResponse> imagesResponseList = new ArrayList<>();
                 for (ReviewImages reviewImages : imagesList) {
                     ReviewRequestImagesResponse imagesResponse = ReviewRequestImagesResponse.builder()
-                            .id(reviewImages.getId())
-                            .img(reviewImages.getImg())
+                            .reviewImageId(reviewImages.getId())
+                            .reviewImages(reviewImages.getImg())
                             .build();
                     imagesResponseList.add(imagesResponse);
                 }
