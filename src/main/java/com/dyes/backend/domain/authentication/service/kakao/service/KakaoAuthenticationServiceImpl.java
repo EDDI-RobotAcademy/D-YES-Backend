@@ -123,6 +123,8 @@ public class KakaoAuthenticationServiceImpl implements KakaoAuthenticationServic
     public KakaoAccessTokenResponseForm expiredKakaoAccessTokenRequester(User user) {
 
         String refreshToken = user.getRefreshToken();
+        log.info("기존 액세스 : " + user.getAccessToken());
+        log.info("기존 리프래쉬 : " + user.getRefreshToken());
 
         // 헤더 설정
         HttpHeaders httpHeaders = setHeaders();
@@ -142,15 +144,19 @@ public class KakaoAuthenticationServiceImpl implements KakaoAuthenticationServic
 
         final String renewAccessToken = kakaoAccessTokenResponseForm.getBody().getAccess_token();
         final String renewRefreshToken = kakaoAccessTokenResponseForm.getBody().getRefresh_token();
+        log.info("새로운 액세스 : " + renewAccessToken);
+        log.info("새로운 리프래쉬 : " + renewRefreshToken);
 
         user.setAccessToken(renewAccessToken);
 
         // refreshToken의 유효 기간이 1개월 미만인 경우 새로운 refreshToken을 받아오므로 새롭게 저장
-        if(renewAccessToken != null) {
+        if(renewRefreshToken != null) {
             log.info("RefreshToken successfully renewed");
             user.setRefreshToken(renewRefreshToken);
         }
         userRepository.save(user);
+        log.info("DB에 변경된 액세스 : " + user.getAccessToken());
+        log.info("DB에 변경된 리프래쉬 : " + user.getRefreshToken());
 
         return kakaoAccessTokenResponseForm.getBody();
     }
