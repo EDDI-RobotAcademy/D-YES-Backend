@@ -508,7 +508,9 @@ public class OrderServiceImpl implements OrderService {
     }
     public OrderDetailDataResponseForAdminForm orderDetailDataCombineForAdmin(Long orderId) {
         try {
-            Optional<ProductOrder> maybeOrder = orderRepository.findById(orderId);
+            log.info("orderDetailDataCombineForAdmin start");
+
+            Optional<ProductOrder> maybeOrder = orderRepository.findByStringIdWithDelivery(orderId);
             if (maybeOrder.isEmpty()){
                 log.info("no order data");
                 return null;
@@ -517,7 +519,7 @@ public class OrderServiceImpl implements OrderService {
 
             List<OrderedProduct> orderedProductList = orderedProductRepository.findAllByProductOrder(order);
 
-            Optional<Payment> maybePayment = paymentRepository.findByOrder(order);
+            Optional<Payment> maybePayment = paymentRepository.findByProductOrder(order);
             if (maybePayment.isEmpty()) {
                 log.info("no payment data");
                 return null;
@@ -533,7 +535,7 @@ public class OrderServiceImpl implements OrderService {
 
             OrderCombineOrderData orderData = OrderCombineOrderData.builder()
                     .id(order.getId())
-                    .status(order.getOrderStatus().toString())
+                    .status(order.getDelivery().getDeliveryStatus())
                     .build();
 
             List<OrderCombineOrderedProductData> productDataList = new ArrayList<>();
@@ -554,8 +556,8 @@ public class OrderServiceImpl implements OrderService {
 
             OrderCombinePaymentData paymentData = OrderCombinePaymentData.builder()
                     .totalPrice(payment.getAmount().getTotal())
-                    .deliveryFee(payment.getAmount().getTotal())
-                    .paymentPrice(payment.getAmount().getTotal())
+                    .deliveryFee(payment.getAmount().getTotal()/11)
+                    .paymentPrice(payment.getAmount().getTotal()-(payment.getAmount().getTotal()/11))
                     .paymentMethod(payment.getPayment_method_type())
                     .paymentDate(payment.getApproved_at())
                     .build();
@@ -575,6 +577,8 @@ public class OrderServiceImpl implements OrderService {
                     .productDataList(productDataList)
                     .profileData(profileData)
                     .build();
+
+            log.info("orderDetailDataCombineForAdmin end");
 
             return responseForm;
         } catch (Exception e) {
