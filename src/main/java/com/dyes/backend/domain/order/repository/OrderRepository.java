@@ -19,7 +19,7 @@ public interface OrderRepository extends JpaRepository<ProductOrder, Long> {
     List<ProductOrder> findAllByUser(User user);
 
     @Query("select po FROM ProductOrder po join fetch po.delivery where po.id = :productOrderId")
-    Optional<ProductOrder> findByStringIdWithDelivery(@Param("productOrderId") String productOrderId);
+    Optional<ProductOrder> findByStringIdWithDelivery(@Param("productOrderId") Long productOrderId);
 
     @Query("select po FROM ProductOrder po join fetch po.user join fetch po.delivery order by po.orderedTime ASC")
     List<ProductOrder> findAllByOrderedTimeWithUser();

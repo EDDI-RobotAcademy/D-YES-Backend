@@ -50,7 +50,7 @@ public class DeliveryServiceImpl implements DeliveryService {
         DeliveryStatusChangeRequest deliveryStatusChangeRequest = changeRequestForm.toDeliveryStatusChangeRequest();
 
         DeliveryStatus deliveryStatus = deliveryStatusChangeRequest.getDeliveryStatus();
-        String productOrderId = deliveryStatusChangeRequest.getProductOrderId();
+        Long productOrderId = deliveryStatusChangeRequest.getProductOrderId();
         LocalDate deliveryDate = deliveryStatusChangeRequest.getDeliveryDate();
 
         try {

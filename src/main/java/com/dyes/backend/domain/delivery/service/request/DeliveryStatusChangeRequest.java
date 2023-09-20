@@ -11,7 +11,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DeliveryStatusChangeRequest {
-    private String productOrderId;
+    private Long productOrderId;
 
     private DeliveryStatus deliveryStatus;
 

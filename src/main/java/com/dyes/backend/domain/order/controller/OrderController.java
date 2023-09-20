@@ -2,6 +2,7 @@ package com.dyes.backend.domain.order.controller;
 
 import com.dyes.backend.domain.order.controller.form.*;
 import com.dyes.backend.domain.order.service.OrderService;
+import com.dyes.backend.domain.order.service.admin.response.form.OrderDetailDataResponseForAdminForm;
 import com.dyes.backend.domain.order.service.admin.response.form.OrderListResponseFormForAdmin;
 import com.dyes.backend.domain.order.service.user.response.form.OrderConfirmResponseFormForUser;
 import com.dyes.backend.domain.order.service.user.response.form.OrderListResponseFormForUser;
@@ -9,7 +10,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.view.RedirectView;
 
 import java.util.List;
 
@@ -61,5 +61,9 @@ public class OrderController {
     @GetMapping("/my-list")
     public List<OrderListResponseFormForUser> getMyOrderListForUser(@RequestParam("userToken") String userToken) {
         return orderService.getMyOrderListForUser(userToken);
+    }
+    @GetMapping("/admin/combine-order-data")
+    public OrderDetailDataResponseForAdminForm getCombineOrderData(@RequestParam("orderId") Long orderId){
+        return orderService.orderDetailDataCombineForAdmin(orderId);
     }
 }

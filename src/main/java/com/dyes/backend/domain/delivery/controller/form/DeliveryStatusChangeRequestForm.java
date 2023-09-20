@@ -16,7 +16,7 @@ public class DeliveryStatusChangeRequestForm {
 
     // 관리자 여부 확인용
     private String userToken;
-    private String productOrderId;
+    private Long productOrderId;
     private DeliveryStatus deliveryStatus;
     private LocalDate deliveryDate;
 
