@@ -6,6 +6,8 @@ import com.dyes.backend.domain.cart.entity.ContainProductOption;
 import com.dyes.backend.domain.cart.repository.CartRepository;
 import com.dyes.backend.domain.cart.repository.ContainProductOptionRepository;
 import com.dyes.backend.domain.cart.service.CartService;
+import com.dyes.backend.domain.delivery.entity.Delivery;
+import com.dyes.backend.domain.delivery.entity.DeliveryStatus;
 import com.dyes.backend.domain.delivery.repository.DeliveryRepository;
 import com.dyes.backend.domain.farm.entity.Farm;
 import com.dyes.backend.domain.order.controller.form.OrderConfirmRequestForm;
@@ -46,6 +48,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -190,15 +193,15 @@ public class OrderMockingTest {
         final Long orderId = 1L;
 
         ProductOrder order = new ProductOrder();
-        order.setOrderStatus(OrderStatus.READY);
-        when(mockOrderRepository.findById(orderId)).thenReturn(Optional.of(order));
+        order.setDelivery(new Delivery(1L, DeliveryStatus.DELIVERED, LocalDate.now(), LocalDate.now()));
+        when(mockOrderRepository.findByStringIdWithDelivery(orderId)).thenReturn(Optional.of(order));
         OrderedProduct orderedProduct = new OrderedProduct();
         orderedProduct.setProductOrder(order);
         when(mockOrderedProductRepository.findAllByProductOrder(order)).thenReturn(List.of(orderedProduct));
         Payment payment = new Payment();
         PaymentAmount amount = new PaymentAmount();
         payment.setAmount(amount);
-        when(mockPaymentRepository.findByOrder(order)).thenReturn(Optional.of(payment));
+        when(mockPaymentRepository.findByProductOrder(order)).thenReturn(Optional.of(payment));
         OrderedPurchaserProfile orderedPurchaserProfile = new OrderedPurchaserProfile();
         Address address = new Address();
         orderedPurchaserProfile.setOrderedPurchaseProfileAddress(address);
