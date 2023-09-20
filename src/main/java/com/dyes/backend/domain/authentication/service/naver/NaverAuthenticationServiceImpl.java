@@ -166,7 +166,7 @@ public class NaverAuthenticationServiceImpl implements NaverAuthenticationServic
         ResponseEntity<NaverOauthAccessTokenResponse> accessTokenResponse = restTemplate.postForEntity(naverRefreshTokenRequestUrl, requestEntity, NaverOauthAccessTokenResponse.class);
         log.info("새로운 액세스 : " + accessTokenResponse.getBody().getAccessToken());
         log.info("새로운 리프래쉬 : " + accessTokenResponse.getBody().getRefreshToken());
-
+        log.info("accessTokenResponse확인용 : " + accessTokenResponse.getBody());
         if(accessTokenResponse.getStatusCode() == HttpStatus.OK){
             user.setAccessToken(accessTokenResponse.getBody().getAccessToken());
             userRepository.save(user);
