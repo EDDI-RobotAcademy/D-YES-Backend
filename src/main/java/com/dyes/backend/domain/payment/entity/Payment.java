@@ -1,5 +1,6 @@
 package com.dyes.backend.domain.payment.entity;
 
+import com.dyes.backend.domain.order.entity.ProductOrder;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,4 +30,7 @@ public class Payment {
     private int quantity;
     private LocalDate created_at;
     private LocalDate approved_at;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "product_order_id")
+    private ProductOrder productOrder;
 }

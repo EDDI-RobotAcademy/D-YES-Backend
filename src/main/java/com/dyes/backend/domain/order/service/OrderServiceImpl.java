@@ -23,6 +23,8 @@ import com.dyes.backend.domain.order.service.user.response.OrderConfirmUserRespo
 import com.dyes.backend.domain.order.service.user.response.OrderOptionListResponse;
 import com.dyes.backend.domain.order.service.user.response.form.OrderConfirmResponseFormForUser;
 import com.dyes.backend.domain.order.service.user.response.form.OrderListResponseFormForUser;
+import com.dyes.backend.domain.payment.entity.Payment;
+import com.dyes.backend.domain.payment.repository.PaymentRepository;
 import com.dyes.backend.domain.payment.service.PaymentService;
 import com.dyes.backend.domain.payment.service.request.KakaoPaymentApprovalRequest;
 import com.dyes.backend.domain.payment.service.request.PaymentTemporarySaveRequest;
@@ -68,6 +70,7 @@ public class OrderServiceImpl implements OrderService {
     final private AuthenticationService authenticationService;
     final private RedisService redisService;
     final private ProductRepository productRepository;
+    final private PaymentRepository paymentRepository;
 
     public String purchaseReadyWithKakao(OrderProductRequestForm requestForm) throws JsonProcessingException {
         log.info("purchaseKakao start");
@@ -454,6 +457,15 @@ public class OrderServiceImpl implements OrderService {
                 .build();
 
         orderRepository.save(order);
+
+        Optional<Payment> maybePayment = paymentRepository.findByTid(tid);
+        if(maybePayment.isEmpty()){
+            log.info("Can not find Payment data");
+            return;
+        }
+        Payment payment = maybePayment.get();
+        payment.setProductOrder(order);
+        paymentRepository.save(payment);
 
         // 주문 상품 저장
         for (OrderedProductOptionRequest optionRequest : orderedProductOptionRequestList) {
