@@ -510,6 +510,9 @@ public class UserServiceImpl implements UserService {
                 return null;
             } else if (maybeUserProfile.isPresent()) {
                 UserProfile userProfile = maybeUserProfile.get();
+                if(userProfile.getAddress().getAddress().isEmpty()) {
+                    return null;
+                }
                 AddressBook addressBook = AddressBook.builder()
                         .addressBookOption(DEFAULT_OPTION)
                         .contactNumber(userProfile.getContactNumber())
