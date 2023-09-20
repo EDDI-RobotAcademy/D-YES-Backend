@@ -24,6 +24,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -254,7 +255,10 @@ public class UserProductServiceImpl implements UserProductService {
         // 상품 목록 조회 진행
         try {
             Pageable pageable = PageRequest.of(0, 10);
-            Page<ProductManagement> productManagementList = productManagementRepository.findNew10ByCreatedDate(pageable);
+            LocalDate endDate = LocalDate.now();
+            LocalDate startDate = endDate.minus(7, ChronoUnit.DAYS);
+
+            Page<ProductManagement> productManagementList = productManagementRepository.findByCreatedDateBetween(startDate, endDate, pageable);
             for (ProductManagement productManagement : productManagementList) {
                 Product product = productManagement.getProduct();
                 ProductListResponseFormForUser productListResponseFormForUser = createUserProductListResponseForm(product);

@@ -510,6 +510,10 @@ public class UserServiceImpl implements UserService {
                 return null;
             } else if (maybeUserProfile.isPresent()) {
                 UserProfile userProfile = maybeUserProfile.get();
+                if(userProfile.getAddress().getAddress().isEmpty()) {
+                    log.info("No address is registered.");
+                    return null;
+                }
                 AddressBook addressBook = AddressBook.builder()
                         .addressBookOption(DEFAULT_OPTION)
                         .contactNumber(userProfile.getContactNumber())
@@ -552,7 +556,10 @@ public class UserServiceImpl implements UserService {
             return null;
         }
         UserAddressUpdateRequest userAddressUpdateRequest = requestForm.toUserAddressUpdateRequest();
-
+        if(userAddressUpdateRequest.getAddress().equals(null)) {
+            log.info("The address to be added to the address book is not available.");
+            return false;
+        }
         try {
             if(userAddressUpdateRequest.getAddressBookOption().equals(DEFAULT_OPTION)) {
                 Optional<AddressBook> maybeAddressBook = addressBookRepository.findByAddressBookOption(DEFAULT_OPTION);
