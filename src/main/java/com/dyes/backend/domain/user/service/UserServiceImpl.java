@@ -511,6 +511,7 @@ public class UserServiceImpl implements UserService {
             } else if (maybeUserProfile.isPresent()) {
                 UserProfile userProfile = maybeUserProfile.get();
                 if(userProfile.getAddress().getAddress().isEmpty()) {
+                    log.info("No address is registered.");
                     return null;
                 }
                 AddressBook addressBook = AddressBook.builder()
