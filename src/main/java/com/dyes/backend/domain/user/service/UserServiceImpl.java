@@ -510,7 +510,7 @@ public class UserServiceImpl implements UserService {
                 return null;
             } else if (maybeUserProfile.isPresent()) {
                 UserProfile userProfile = maybeUserProfile.get();
-                if(userProfile.getAddress().getAddress().equals(null)) {
+                if(userProfile.getAddress().equals(null)) {
                     log.info("No address is registered.");
                     return null;
                 }
