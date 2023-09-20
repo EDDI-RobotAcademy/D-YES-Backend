@@ -13,9 +13,8 @@ import com.dyes.backend.domain.order.entity.*;
 import com.dyes.backend.domain.order.repository.OrderRepository;
 import com.dyes.backend.domain.order.repository.OrderedProductRepository;
 import com.dyes.backend.domain.order.repository.OrderedPurchaserProfileRepository;
-import com.dyes.backend.domain.order.service.admin.response.OrderDetailInfoResponse;
-import com.dyes.backend.domain.order.service.admin.response.OrderProductListResponse;
-import com.dyes.backend.domain.order.service.admin.response.OrderUserInfoResponse;
+import com.dyes.backend.domain.order.service.admin.response.*;
+import com.dyes.backend.domain.order.service.admin.response.form.OrderDetailDataResponseForAdminForm;
 import com.dyes.backend.domain.order.service.admin.response.form.OrderListResponseFormForAdmin;
 import com.dyes.backend.domain.order.service.user.request.*;
 import com.dyes.backend.domain.order.service.user.response.OrderConfirmProductResponse;
@@ -43,7 +42,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.view.RedirectView;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -507,5 +505,81 @@ public class OrderServiceImpl implements OrderService {
                 .build();
 
         orderedPurchaserProfileRepository.save(purchaserProfile);
+    }
+    public OrderDetailDataResponseForAdminForm orderDetailDataCombineForAdmin(Long orderId) {
+        try {
+            Optional<ProductOrder> maybeOrder = orderRepository.findById(orderId);
+            if (maybeOrder.isEmpty()){
+                log.info("no order data");
+                return null;
+            }
+            ProductOrder order = maybeOrder.get();
+
+            List<OrderedProduct> orderedProductList = orderedProductRepository.findAllByProductOrder(order);
+
+            Optional<Payment> maybePayment = paymentRepository.findByOrder(order);
+            if (maybePayment.isEmpty()) {
+                log.info("no payment data");
+                return null;
+            }
+            Payment payment = maybePayment.get();
+
+            Optional<OrderedPurchaserProfile> maybeOrderedPurchaseProfile = orderedPurchaserProfileRepository.findByProductOrder(order);
+            if (maybeOrderedPurchaseProfile.isEmpty()) {
+                log.info("no purchaseProfile data");
+                return null;
+            }
+            OrderedPurchaserProfile profile = maybeOrderedPurchaseProfile.get();
+
+            OrderCombineOrderData orderData = OrderCombineOrderData.builder()
+                    .id(order.getId())
+                    .status(order.getOrderStatus().toString())
+                    .build();
+
+            List<OrderCombineOrderedProductData> productDataList = new ArrayList<>();
+
+            for (OrderedProduct orderedProduct : orderedProductList){
+                Optional<ProductOption> maybeProductOption = productOptionRepository.findById(orderedProduct.getProductOptionId());
+                if (maybeOrder.isPresent()){
+                    ProductOption productOption = maybeProductOption.get();
+                    OrderCombineOrderedProductData productData = OrderCombineOrderedProductData.builder()
+                            .optionName(productOption.getOptionName())
+                            .optionCount(orderedProduct.getProductOptionCount())
+                            .optionPrice(productOption.getOptionPrice())
+                            .productName(orderedProduct.getProductName())
+                            .build();
+                    productDataList.add(productData);
+                }
+            }
+
+            OrderCombinePaymentData paymentData = OrderCombinePaymentData.builder()
+                    .totalPrice(payment.getAmount().getTotal())
+                    .deliveryFee(payment.getAmount().getTotal())
+                    .paymentPrice(payment.getAmount().getTotal())
+                    .paymentMethod(payment.getPayment_method_type())
+                    .paymentDate(payment.getApproved_at())
+                    .build();
+
+            OrderCombineOrderedPurchaserProfileData profileData = OrderCombineOrderedPurchaserProfileData.builder()
+                    .orderedPurchaseName(profile.getOrderedPurchaseName())
+                    .orderedPurchaseContactNumber(profile.getOrderedPurchaseContactNumber())
+                    .orderedPurchaseEmail(profile.getOrderedPurchaseEmail())
+                    .address(profile.getOrderedPurchaseProfileAddress().getAddress())
+                    .zipCode(profile.getOrderedPurchaseProfileAddress().getZipCode())
+                    .addressDetail(profile.getOrderedPurchaseProfileAddress().getAddressDetail())
+                    .build();
+
+            OrderDetailDataResponseForAdminForm responseForm = OrderDetailDataResponseForAdminForm.builder()
+                    .orderData(orderData)
+                    .paymentData(paymentData)
+                    .productDataList(productDataList)
+                    .profileData(profileData)
+                    .build();
+
+            return responseForm;
+        } catch (Exception e) {
+            log.error("Error occurred while confirm products in cart", e);
+            return null;
+        }
     }
 }

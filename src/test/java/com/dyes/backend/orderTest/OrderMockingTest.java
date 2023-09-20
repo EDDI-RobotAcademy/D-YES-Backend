@@ -9,11 +9,15 @@ import com.dyes.backend.domain.cart.service.CartService;
 import com.dyes.backend.domain.delivery.repository.DeliveryRepository;
 import com.dyes.backend.domain.farm.entity.Farm;
 import com.dyes.backend.domain.order.controller.form.OrderConfirmRequestForm;
+import com.dyes.backend.domain.order.entity.OrderStatus;
 import com.dyes.backend.domain.order.entity.OrderedProduct;
+import com.dyes.backend.domain.order.entity.OrderedPurchaserProfile;
+import com.dyes.backend.domain.order.entity.ProductOrder;
 import com.dyes.backend.domain.order.repository.OrderRepository;
 import com.dyes.backend.domain.order.repository.OrderedProductRepository;
 import com.dyes.backend.domain.order.repository.OrderedPurchaserProfileRepository;
 import com.dyes.backend.domain.order.service.OrderServiceImpl;
+import com.dyes.backend.domain.order.service.admin.response.form.OrderDetailDataResponseForAdminForm;
 import com.dyes.backend.domain.order.service.user.request.OrderConfirmProductRequest;
 import com.dyes.backend.domain.order.service.user.request.OrderConfirmRequest;
 import com.dyes.backend.domain.order.service.user.request.OrderedProductOptionRequest;
@@ -21,6 +25,9 @@ import com.dyes.backend.domain.order.service.user.request.OrderedPurchaserProfil
 import com.dyes.backend.domain.order.service.user.response.OrderConfirmProductResponse;
 import com.dyes.backend.domain.order.service.user.response.OrderConfirmUserResponse;
 import com.dyes.backend.domain.order.service.user.response.form.OrderConfirmResponseFormForUser;
+import com.dyes.backend.domain.payment.entity.Payment;
+import com.dyes.backend.domain.payment.entity.PaymentAmount;
+import com.dyes.backend.domain.payment.repository.PaymentRepository;
 import com.dyes.backend.domain.payment.service.PaymentService;
 import com.dyes.backend.domain.payment.service.request.PaymentTemporarySaveRequest;
 import com.dyes.backend.domain.product.entity.*;
@@ -44,6 +51,7 @@ import java.util.Optional;
 
 import static com.dyes.backend.domain.farm.entity.ProduceType.ONION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
@@ -79,6 +87,8 @@ public class OrderMockingTest {
     private UserRepository mockUserRepository;
     @Mock
     private ProductRepository mockProductRepository;
+    @Mock
+    private PaymentRepository mockPaymentRepository;
     @InjectMocks
     private OrderServiceImpl mockOrderService;
     @BeforeEach
@@ -97,7 +107,8 @@ public class OrderMockingTest {
                 mockPaymentService,
                 mockAuthenticationService,
                 mockRedisService,
-                mockProductRepository
+                mockProductRepository,
+                mockPaymentRepository
                 );
     }
     @Test
@@ -172,5 +183,30 @@ public class OrderMockingTest {
         OrderConfirmResponseFormForUser actual = mockOrderService.orderConfirm(requestForm);
 
         assertEquals(responseForm.getUserResponse().getEmail(), actual.getUserResponse().getEmail());
+    }
+    @Test
+    @DisplayName("order mocking test: admin view order data")
+    public void 관리자가_주문의_상세_데이터를_볼_수_있습니다() {
+        final Long orderId = 1L;
+
+        ProductOrder order = new ProductOrder();
+        order.setOrderStatus(OrderStatus.READY);
+        when(mockOrderRepository.findById(orderId)).thenReturn(Optional.of(order));
+        OrderedProduct orderedProduct = new OrderedProduct();
+        orderedProduct.setProductOrder(order);
+        when(mockOrderedProductRepository.findAllByProductOrder(order)).thenReturn(List.of(orderedProduct));
+        Payment payment = new Payment();
+        PaymentAmount amount = new PaymentAmount();
+        payment.setAmount(amount);
+        when(mockPaymentRepository.findByOrder(order)).thenReturn(Optional.of(payment));
+        OrderedPurchaserProfile orderedPurchaserProfile = new OrderedPurchaserProfile();
+        Address address = new Address();
+        orderedPurchaserProfile.setOrderedPurchaseProfileAddress(address);
+        when(mockOrderedPurchaserProfileRepository.findByProductOrder(order)).thenReturn(Optional.of(orderedPurchaserProfile));
+        ProductOption productOption = new ProductOption();
+        when(mockProductOptionRepository.findById(orderedProduct.getProductOptionId())).thenReturn(Optional.of(productOption));
+
+        OrderDetailDataResponseForAdminForm result = mockOrderService.orderDetailDataCombineForAdmin(orderId);
+        assertTrue(result != null);
     }
 }

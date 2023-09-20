@@ -1,6 +1,7 @@
 package com.dyes.backend.domain.order.service;
 
 import com.dyes.backend.domain.order.controller.form.*;
+import com.dyes.backend.domain.order.service.admin.response.form.OrderDetailDataResponseForAdminForm;
 import com.dyes.backend.domain.order.service.admin.response.form.OrderListResponseFormForAdmin;
 import com.dyes.backend.domain.order.service.user.response.form.OrderConfirmResponseFormForUser;
 import com.dyes.backend.domain.order.service.user.response.form.OrderListResponseFormForUser;
@@ -20,4 +21,5 @@ public interface OrderService {
     List<OrderListResponseFormForAdmin> getOrderListForAdmin();
     List<OrderListResponseFormForAdmin> getAllNewOrderListForAdmin();
     List<OrderListResponseFormForUser> getMyOrderListForUser(String userToken);
+    OrderDetailDataResponseForAdminForm orderDetailDataCombineForAdmin(Long orderId);
 }
