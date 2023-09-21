@@ -43,6 +43,7 @@ jobs:
             echo "${{ secrets.DEPLOY_KAKAO_CONFIG }}" >> application.properties
             echo "${{ secrets.DEPLOY_NAVER_CONFIG }}" >> application.properties
             echo "${{ secrets.DEPLOY_KAKAO_PAYMENT_PROPERTIES }}" >> application.properties
+            echo "${{ secrets.DEPLOY_FASTAPI_CONFIG }}" >> application.properties
             ls
 
         - name: Grant Permission to gradlew
