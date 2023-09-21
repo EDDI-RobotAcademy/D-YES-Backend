@@ -1,6 +1,5 @@
-package com.dyes.backend.domain.order.service.admin.response;
+package com.dyes.backend.domain.order.service.user.response;
 
-import com.dyes.backend.domain.order.service.user.response.OrderOptionListResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,8 +11,9 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderProductListResponse {
+public class OrderProductListResponseForUser {
     private Long productId;
     private String productName;
     private List<OrderOptionListResponse> orderOptionList;
+    private Long reviewId;
 }

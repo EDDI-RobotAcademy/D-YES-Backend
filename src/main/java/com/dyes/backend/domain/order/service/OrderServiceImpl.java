@@ -20,6 +20,7 @@ import com.dyes.backend.domain.order.service.user.request.*;
 import com.dyes.backend.domain.order.service.user.response.OrderConfirmProductResponse;
 import com.dyes.backend.domain.order.service.user.response.OrderConfirmUserResponse;
 import com.dyes.backend.domain.order.service.user.response.OrderOptionListResponse;
+import com.dyes.backend.domain.order.service.user.response.OrderProductListResponseForUser;
 import com.dyes.backend.domain.order.service.user.response.form.OrderConfirmResponseFormForUser;
 import com.dyes.backend.domain.order.service.user.response.form.OrderListResponseFormForUser;
 import com.dyes.backend.domain.payment.entity.Payment;
@@ -277,7 +278,7 @@ public class OrderServiceImpl implements OrderService {
                 orderOptionList.add(orderOptionListResponse);
 
                 OrderProductListResponse orderProductListResponse
-                        = new OrderProductListResponse(productId, productName, orderOptionList, null);
+                        = new OrderProductListResponse(productId, productName, orderOptionList);
                 orderProductList.add(orderProductListResponse);
             }
 
@@ -352,7 +353,7 @@ public class OrderServiceImpl implements OrderService {
                 orderOptionList.add(orderOptionListResponse);
 
                 OrderProductListResponse orderProductListResponse
-                        = new OrderProductListResponse(productId, productName, orderOptionList, null);
+                        = new OrderProductListResponse(productId, productName, orderOptionList);
                 orderProductList.add(orderProductListResponse);
             }
 
@@ -390,7 +391,7 @@ public class OrderServiceImpl implements OrderService {
             Delivery delivery = order.getDelivery();
             DeliveryStatus deliveryStatus = delivery.getDeliveryStatus();
             LocalDate orderedTime = order.getOrderedTime();
-            List<OrderProductListResponse> orderProductList = new ArrayList<>();
+            List<OrderProductListResponseForUser> orderProductList = new ArrayList<>();
 
             List<OrderedProduct> orderedProducts = orderedProductRepository.findAllByProductOrder(order);
             for (OrderedProduct orderedProduct : orderedProducts) {
@@ -431,8 +432,8 @@ public class OrderServiceImpl implements OrderService {
                         = new OrderOptionListResponse(productOptionId, optionName, productOptionCount);
                 orderOptionList.add(orderOptionListResponse);
 
-                OrderProductListResponse orderProductListResponse
-                        = new OrderProductListResponse(productId, productName, orderOptionList, reviewId);
+                OrderProductListResponseForUser orderProductListResponse
+                        = new OrderProductListResponseForUser(productId, productName, orderOptionList, reviewId);
                 orderProductList.add(orderProductListResponse);
             }
 
