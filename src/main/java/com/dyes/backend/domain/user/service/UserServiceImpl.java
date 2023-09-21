@@ -15,6 +15,7 @@ import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import com.dyes.backend.domain.user.repository.UserRepository;
 import com.dyes.backend.domain.user.service.request.UserAddressModifyRequest;
 import com.dyes.backend.domain.user.service.request.UserAddressUpdateRequest;
+import com.dyes.backend.domain.user.service.request.UserAuthenticationRequest;
 import com.dyes.backend.domain.user.service.response.form.UserAddressBookResponseForm;
 import com.dyes.backend.domain.user.service.response.form.UserInfoResponseForm;
 import com.dyes.backend.domain.user.service.response.form.UserProfileResponseForm;
@@ -615,6 +616,37 @@ public class UserServiceImpl implements UserService {
             userInfoResponseFormList.add(userInfoResponseForm);
         }
         return userInfoResponseFormList;
+    }
+
+    // 사용자 주소록 삭제(배송지 정보)
+    @Override
+    public Boolean deleteAddressBook(Long addressBookId, AddressBookDeleteRequestForm deleteForm) {
+        log.info("Deleting addressBook with ID: {}", addressBookId);
+
+        UserAuthenticationRequest userAuthenticationRequest = deleteForm.toUserAuthenticationRequest();
+
+        final String userToken = userAuthenticationRequest.getUserToken();
+        final User user = authenticationService.findUserByUserToken(userToken);
+        if (user == null) {
+            return null;
+        }
+
+        // 주소록 삭제 진행
+        try {
+            List<AddressBook> addressBookList = addressBookRepository.findAllByUser(user);
+            for(AddressBook addressBook: addressBookList) {
+                if(addressBook.getId().equals(addressBookId)) {
+                    addressBookRepository.deleteById(addressBook.getId().toString());
+                    log.info("AddressBook deletion successful for addressBook with ID: {}", addressBook.getId());
+                    return true;
+                }
+            }
+            return true;
+
+        } catch (Exception e) {
+            log.error("Failed to delete the addressBook: {}", e.getMessage(), e);
+            return false;
+        }
     }
 
     // 회원 비활성화 및 프로필 삭제

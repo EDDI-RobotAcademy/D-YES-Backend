@@ -1,5 +1,6 @@
 package com.dyes.backend.domain.user.controller;
 
+import com.dyes.backend.domain.user.controller.form.AddressBookDeleteRequestForm;
 import com.dyes.backend.domain.user.controller.form.UserAddressModifyRequestForm;
 import com.dyes.backend.domain.user.controller.form.UserAddressUpdateRequestForm;
 import com.dyes.backend.domain.user.controller.form.UserProfileModifyRequestForm;
@@ -81,6 +82,15 @@ public class UserController {
     @PostMapping("/address-book/update")
     public Boolean updateAddressBook(@RequestBody UserAddressUpdateRequestForm requestForm) {
         return userService.updateAddressBook(requestForm);
+    }
+
+    // 사용자 주소록 삭제(배송지 정보)
+    @DeleteMapping("/address-book/{addressBookId}")
+    public Boolean deleteAddressBook(
+            @PathVariable("addressBookId") Long addressBookId,
+            @RequestBody AddressBookDeleteRequestForm deleteForm
+    ) {
+        return userService.deleteAddressBook(addressBookId, deleteForm);
     }
 
     // 관리자의 회원 목록 조회
