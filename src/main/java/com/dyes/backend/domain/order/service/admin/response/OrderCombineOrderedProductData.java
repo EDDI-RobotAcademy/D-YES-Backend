@@ -10,8 +10,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderCombineOrderedProductData {
+    private Long productId;
     private String productName;
-    private String optionName;
-    private Long optionPrice;
-    private Integer optionCount;
+    private String productOptionName;
+    private Long productOptionId;
+    private Long productOptionPrice;
+    private Integer productOptionCount;
 }

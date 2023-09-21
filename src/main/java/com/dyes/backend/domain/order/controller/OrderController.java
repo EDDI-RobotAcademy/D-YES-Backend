@@ -62,8 +62,8 @@ public class OrderController {
     public List<OrderListResponseFormForUser> getMyOrderListForUser(@RequestParam("userToken") String userToken) {
         return orderService.getMyOrderListForUser(userToken);
     }
-    @GetMapping("/admin/combine-order-data")
-    public OrderDetailDataResponseForAdminForm getCombineOrderData(@RequestParam("orderId") Long orderId){
-        return orderService.orderDetailDataCombineForAdmin(orderId);
+    @GetMapping("/admin/combine-order-data/{productOrderId}")
+    public OrderDetailDataResponseForAdminForm getCombineOrderData(@PathVariable("productOrderId") Long productOrderId){
+        return orderService.orderDetailDataCombineForAdmin(productOrderId);
     }
 }

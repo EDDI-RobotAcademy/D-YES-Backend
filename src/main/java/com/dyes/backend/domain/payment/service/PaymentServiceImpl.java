@@ -114,6 +114,10 @@ public class PaymentServiceImpl implements PaymentService{
 
         PaymentTemporarySaveRequest saveRequest = redisService.getPaymentTemporarySaveData(userId);
 
+        if (saveRequest == null) {
+            return null;
+        }
+
         final String pgToken = request.getPgToken();
         final String tid = saveRequest.getTid();
         final String cid = kakaoPaymentSecretsProvider.getCid();
