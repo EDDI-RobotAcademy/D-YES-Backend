@@ -9,10 +9,7 @@ import com.dyes.backend.domain.farmproducePriceForecast.entity.*;
 import com.dyes.backend.domain.farmproducePriceForecast.repository.*;
 import com.dyes.backend.domain.product.entity.*;
 import com.dyes.backend.domain.product.repository.*;
-import com.dyes.backend.domain.product.service.user.response.ProductDetailImagesResponseForUser;
-import com.dyes.backend.domain.product.service.user.response.ProductMainImageResponseForUser;
-import com.dyes.backend.domain.product.service.user.response.ProductOptionResponseForUser;
-import com.dyes.backend.domain.product.service.user.response.ProductResponseForUser;
+import com.dyes.backend.domain.product.service.user.response.*;
 import com.dyes.backend.domain.product.service.user.response.form.ProductListResponseFormForUser;
 import com.dyes.backend.domain.product.service.user.response.form.ProductReadResponseFormForUser;
 import com.dyes.backend.domain.product.service.user.response.form.ProductReviewResponseForUser;
@@ -350,17 +347,49 @@ public class UserProductServiceImpl implements UserProductService {
         FarmIntroductionInfo farmIntroductionInfo = farmIntroductionInfoRepository.findByFarm(farm);
         FarmRepresentativeInfo farmRepresentativeInfo = farmRepresentativeInfoRepository.findByFarm(farm);
 
+        List<Review> reviewList = reviewRepository.findAllByProduct(product);
+        int totalReviewCount = 0;
+        int averageRating = 0;
+        int totalRating = 0;
+        for(Review review : reviewList) {
+            totalReviewCount = totalReviewCount + 1;
+            Optional<ReviewRating> maybeReviewRating = reviewRatingRepository.findByReview(review);
+            if(maybeReviewRating.isPresent()) {
+                ReviewRating reviewRating = maybeReviewRating.get();
+                totalRating = totalRating + reviewRating.getRating();
+            }
+        }
+        if(totalReviewCount == 0) {
+            averageRating = totalRating;
+        } else {
+            averageRating = totalRating/totalReviewCount;
+        }
+
+        ProductResponseForListForUser productResponseForListForUser
+                = new ProductResponseForListForUser(product.getId(), product.getProductName(), product.getCultivationMethod());
+
+        ProductMainImageResponseForListForUser productMainImageResponseForListForUser
+                = new ProductMainImageResponseForListForUser(productMainImage);
+
+        ProductOptionResponseForListForUser productOptionResponseForListForUser
+                = new ProductOptionResponseForListForUser(minOptionPrice, isSoldOut);
+
+        FarmInfoResponseForListForUser farmInfoResponseForListForUser
+                = new FarmInfoResponseForListForUser(farm.getFarmName(), farmIntroductionInfo.getMainImage(), farmRepresentativeInfo.getRepresentativeName());
+
+        ProductReviewResponseForUser productReviewResponseForUser
+                = new ProductReviewResponseForUser(totalReviewCount, averageRating);
+
+        FarmProducePriceChangeInfoForListForUser farmProducePriceChangeInfoForListForUser
+                =  new FarmProducePriceChangeInfoForListForUser(roundedPriceChangePercentage);
+
         return new ProductListResponseFormForUser(
-                product.getId(),
-                product.getProductName(),
-                product.getCultivationMethod(),
-                productMainImage,
-                minOptionPrice,
-                isSoldOut,
-                farm.getFarmName(),
-                farmIntroductionInfo.getMainImage(),
-                farmRepresentativeInfo.getRepresentativeName(),
-                roundedPriceChangePercentage);
+                productResponseForListForUser,
+                productMainImageResponseForListForUser,
+                productOptionResponseForListForUser,
+                farmInfoResponseForListForUser,
+                productReviewResponseForUser,
+                farmProducePriceChangeInfoForListForUser);
     }
 
     private int calculatePriceChangePercentage(LocalDate currentDate, ProduceType produceType) {

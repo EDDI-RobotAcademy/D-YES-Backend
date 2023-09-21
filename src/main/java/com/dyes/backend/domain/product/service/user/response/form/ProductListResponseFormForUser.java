@@ -1,6 +1,6 @@
 package com.dyes.backend.domain.product.service.user.response.form;
 
-import com.dyes.backend.domain.product.entity.CultivationMethod;
+import com.dyes.backend.domain.product.service.user.response.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,14 +9,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductListResponseFormForUser {
-    private Long productId;
-    private String productName;
-    private CultivationMethod cultivationMethod;
-    private String productMainImage;
-    private Long minOptionPrice;
-    private Boolean isSoldOut;
-    private String farmName;
-    private String mainImage;
-    private String representativeName;
-    private int roundedPriceChangePercentage;
+    private ProductResponseForListForUser productResponseForListForUser;
+    private ProductMainImageResponseForListForUser productMainImageResponseForListForUser;
+    private ProductOptionResponseForListForUser productOptionResponseForListForUser;
+    private FarmInfoResponseForListForUser farmInfoResponseForListForUser;
+    private ProductReviewResponseForUser productReviewResponseForUser;
+    private FarmProducePriceChangeInfoForListForUser farmProducePriceChangeInfoForListForUser;
 }
