@@ -33,6 +33,8 @@ import com.dyes.backend.domain.product.entity.ProductOption;
 import com.dyes.backend.domain.product.repository.ProductMainImageRepository;
 import com.dyes.backend.domain.product.repository.ProductOptionRepository;
 import com.dyes.backend.domain.product.repository.ProductRepository;
+import com.dyes.backend.domain.review.entity.Review;
+import com.dyes.backend.domain.review.repository.ReviewRepository;
 import com.dyes.backend.domain.user.entity.Address;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserProfile;
@@ -69,6 +71,7 @@ public class OrderServiceImpl implements OrderService {
     final private RedisService redisService;
     final private ProductRepository productRepository;
     final private PaymentRepository paymentRepository;
+    final private ReviewRepository reviewRepository;
 
     public String purchaseReadyWithKakao(OrderProductRequestForm requestForm) throws JsonProcessingException {
         log.info("purchaseKakao start");
@@ -274,7 +277,7 @@ public class OrderServiceImpl implements OrderService {
                 orderOptionList.add(orderOptionListResponse);
 
                 OrderProductListResponse orderProductListResponse
-                        = new OrderProductListResponse(productId, productName, orderOptionList);
+                        = new OrderProductListResponse(productId, productName, orderOptionList, null);
                 orderProductList.add(orderProductListResponse);
             }
 
@@ -349,7 +352,7 @@ public class OrderServiceImpl implements OrderService {
                 orderOptionList.add(orderOptionListResponse);
 
                 OrderProductListResponse orderProductListResponse
-                        = new OrderProductListResponse(productId, productName, orderOptionList);
+                        = new OrderProductListResponse(productId, productName, orderOptionList, null);
                 orderProductList.add(orderProductListResponse);
             }
 
@@ -373,6 +376,9 @@ public class OrderServiceImpl implements OrderService {
 
         // 모든 주문 내역 가져오기
         List<ProductOrder> orderList = orderRepository.findAllByUserWithUserAndDelivery(user);
+
+        // 모든 리뷰 내역 가져오기
+        List<Review> reviewList = reviewRepository.findAllByUserWithProductAndOrder(user);
 
         List<OrderListResponseFormForUser> orderListResponseFormForUsers = new ArrayList<>();
 
@@ -404,6 +410,17 @@ public class OrderServiceImpl implements OrderService {
                 ProductOption productOption = maybeProductOption.get();
                 Product product = productOption.getProduct();
 
+                // 리뷰 내역에서 product로
+
+                Long reviewId = null;
+                for (Review review : reviewList) {
+                    if (review.getProductOrder().equals(order)){
+                        if (review.getProduct().equals(product)){
+                            reviewId = review.getId();
+                        }
+                    }
+                }
+
                 String optionName = productOption.getOptionName();
                 Long optionPrice = productOption.getOptionPrice();
                 Long totalOptionPrice = optionPrice * productOptionCount;
@@ -415,7 +432,7 @@ public class OrderServiceImpl implements OrderService {
                 orderOptionList.add(orderOptionListResponse);
 
                 OrderProductListResponse orderProductListResponse
-                        = new OrderProductListResponse(productId, productName, orderOptionList);
+                        = new OrderProductListResponse(productId, productName, orderOptionList, reviewId);
                 orderProductList.add(orderProductListResponse);
             }
 

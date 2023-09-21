@@ -1,5 +1,6 @@
 package com.dyes.backend.domain.review.entity;
 
+import com.dyes.backend.domain.order.entity.ProductOrder;
 import com.dyes.backend.domain.product.entity.Product;
 import com.dyes.backend.domain.user.entity.User;
 import jakarta.persistence.*;
@@ -31,4 +32,7 @@ public class Review {
     private Product product;
     private LocalDate reviewDate;
     private LocalDate purchaseDate;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_order_id")
+    private ProductOrder productOrder;
 }

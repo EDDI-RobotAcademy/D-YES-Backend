@@ -16,4 +16,5 @@ public class OrderProductListResponse {
     private Long productId;
     private String productName;
     private List<OrderOptionListResponse> orderOptionList;
+    private Long reviewId;
 }
