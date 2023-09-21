@@ -37,8 +37,10 @@ import com.dyes.backend.domain.product.repository.ProductRepository;
 import com.dyes.backend.domain.review.entity.Review;
 import com.dyes.backend.domain.review.repository.ReviewRepository;
 import com.dyes.backend.domain.user.entity.Address;
+import com.dyes.backend.domain.user.entity.AddressBook;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserProfile;
+import com.dyes.backend.domain.user.repository.AddressBookRepository;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import com.dyes.backend.utility.redis.RedisService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -53,6 +55,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static com.dyes.backend.domain.delivery.entity.DeliveryStatus.PREPARING;
+import static com.dyes.backend.domain.user.entity.AddressBookOption.DEFAULT_OPTION;
 
 @Service
 @Slf4j
@@ -62,6 +65,7 @@ public class OrderServiceImpl implements OrderService {
     final private ProductOptionRepository productOptionRepository;
     final private ContainProductOptionRepository containProductOptionRepository;
     final private UserProfileRepository userProfileRepository;
+    final private AddressBookRepository addressBookRepository;
     final private ProductMainImageRepository productMainImageRepository;
     final private OrderedProductRepository orderedProductRepository;
     final private OrderedPurchaserProfileRepository orderedPurchaserProfileRepository;
@@ -170,6 +174,17 @@ public class OrderServiceImpl implements OrderService {
                 return null;
             }
             UserProfile userProfile = userProfileRepository.findByUser(user).get();
+            List<AddressBook> addressBookList = addressBookRepository.findAllByUser(user);
+            String address = "";
+            String zipcode = "";
+            String addressDetail = "";
+            for(AddressBook addressBook : addressBookList) {
+                if(addressBook.getAddressBookOption().equals(DEFAULT_OPTION)){
+                    address = addressBook.getAddress().getAddress();
+                    zipcode = addressBook.getAddress().getZipCode();
+                    addressDetail = addressBook.getAddress().getAddressDetail();
+                }
+            }
 
             // 반환될 유저 정보
             OrderConfirmUserResponse userResponse = new OrderConfirmUserResponse();
@@ -178,9 +193,9 @@ public class OrderServiceImpl implements OrderService {
                 userResponse = OrderConfirmUserResponse.builder()
                         .email(userProfile.getEmail())
                         .contactNumber(userProfile.getContactNumber())
-                        .address(userProfile.getAddress().getAddress())
-                        .zipCode(userProfile.getAddress().getZipCode())
-                        .addressDetail(userProfile.getAddress().getAddressDetail())
+                        .address(address)
+                        .zipCode(zipcode)
+                        .addressDetail(addressDetail)
                         .build();
             } catch (NullPointerException e) {
                 log.error("please set your user profile");
@@ -412,11 +427,10 @@ public class OrderServiceImpl implements OrderService {
                 Product product = productOption.getProduct();
 
                 // 리뷰 내역에서 product로
-
                 Long reviewId = null;
                 for (Review review : reviewList) {
-                    if (review.getProductOrder().equals(order)){
-                        if (review.getProduct().equals(product)){
+                    if (review.getProductOrder().getId().equals(order.getId())){
+                        if (review.getProduct().getId().equals(product.getId())){
                             reviewId = review.getId();
                         }
                     }

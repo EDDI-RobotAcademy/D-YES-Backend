@@ -24,4 +24,6 @@ public interface UserService {
     List<UserAddressBookResponseForm> getAddressBook(String userToken);
     Boolean updateAddressBook(UserAddressUpdateRequestForm requestForm);
     List<UserInfoResponseForm> getUserList(String userToken);
+    Boolean deleteAddressBook(Long addressBookId, AddressBookDeleteRequestForm deleteForm);
+    Boolean changeAddressBookOption(UserAddressOptionChangeRequestForm requestForm);
 }

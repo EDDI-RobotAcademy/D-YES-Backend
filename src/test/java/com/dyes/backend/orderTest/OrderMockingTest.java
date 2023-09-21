@@ -37,6 +37,7 @@ import com.dyes.backend.domain.product.repository.ProductOptionRepository;
 import com.dyes.backend.domain.product.repository.ProductRepository;
 import com.dyes.backend.domain.review.repository.ReviewRepository;
 import com.dyes.backend.domain.user.entity.*;
+import com.dyes.backend.domain.user.repository.AddressBookRepository;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import com.dyes.backend.domain.user.repository.UserRepository;
 import com.dyes.backend.utility.redis.RedisService;
@@ -49,10 +50,12 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import static com.dyes.backend.domain.farm.entity.ProduceType.ONION;
+import static com.dyes.backend.domain.user.entity.AddressBookOption.DEFAULT_OPTION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
@@ -74,6 +77,8 @@ public class OrderMockingTest {
     private AuthenticationService mockAuthenticationService;
     @Mock
     private UserProfileRepository mockUserProfileRepository;
+    @Mock
+    private AddressBookRepository mockAddressBookRepository;
     @Mock
     private ProductMainImageRepository mockProductMainImageRepository;
     @Mock
@@ -104,6 +109,7 @@ public class OrderMockingTest {
                 mockProductOptionRepository,
                 mockContainProductOptionRepository,
                 mockUserProfileRepository,
+                mockAddressBookRepository,
                 mockProductMainImageRepository,
                 mockOrderedProductRepository,
                 mockOrderedPurchaserProfileRepository,
@@ -158,6 +164,11 @@ public class OrderMockingTest {
         UserProfile userProfile = new UserProfile("아이디", "닉네임", "이메일", "프로필 사진", "전화번호", new Address(), user);
         when(mockUserProfileRepository.findByUser(user)).thenReturn(Optional.of(userProfile));
 
+        AddressBook addressBook = new AddressBook(1L, DEFAULT_OPTION, "홍길동", "010-1111-1111", new Address(), user);
+        List<AddressBook> addressBookList = new ArrayList<>();
+        addressBookList.add(addressBook);
+        when(mockAddressBookRepository.findAllByUser(user)).thenReturn(addressBookList);
+
         Cart cart = new Cart(1L, user);
         when(mockCartRepository.findByUser(user)).thenReturn(Optional.of(cart));
         Product product = new Product(1L, "상품 이름", "상세 설명", CultivationMethod.ORGANIC, ONION, SaleStatus.AVAILABLE, new Farm());
@@ -171,9 +182,9 @@ public class OrderMockingTest {
         OrderConfirmUserResponse userResponse = OrderConfirmUserResponse.builder()
                 .email(userProfile.getEmail())
                 .contactNumber(userProfile.getContactNumber())
-                .address(userProfile.getAddress().getAddress())
-                .zipCode(userProfile.getAddress().getZipCode())
-                .addressDetail(userProfile.getAddress().getAddressDetail())
+                .address(addressBook.getAddress().getAddress())
+                .zipCode(addressBook.getAddress().getZipCode())
+                .addressDetail(addressBook.getAddress().getAddressDetail())
                 .build();
 
         OrderConfirmProductResponse productResponse = OrderConfirmProductResponse.builder()

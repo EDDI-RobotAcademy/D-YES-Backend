@@ -4,13 +4,20 @@ import com.dyes.backend.domain.farm.entity.*;
 import com.dyes.backend.domain.farm.repository.*;
 import com.dyes.backend.domain.farm.service.response.FarmInfoResponseForUser;
 import com.dyes.backend.domain.farmproducePriceForecast.repository.*;
+import com.dyes.backend.domain.order.entity.ProductOrder;
 import com.dyes.backend.domain.product.entity.*;
 import com.dyes.backend.domain.product.repository.*;
 import com.dyes.backend.domain.product.service.user.UserProductServiceImpl;
 import com.dyes.backend.domain.product.service.user.response.*;
 import com.dyes.backend.domain.product.service.user.response.form.ProductListResponseFormForUser;
 import com.dyes.backend.domain.product.service.user.response.form.ProductReadResponseFormForUser;
+import com.dyes.backend.domain.product.service.user.response.form.ProductReviewResponseForUser;
+import com.dyes.backend.domain.review.entity.Review;
+import com.dyes.backend.domain.review.entity.ReviewRating;
+import com.dyes.backend.domain.review.repository.ReviewRatingRepository;
+import com.dyes.backend.domain.review.repository.ReviewRepository;
 import com.dyes.backend.domain.user.entity.Address;
+import com.dyes.backend.domain.user.entity.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,6 +26,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -66,6 +74,10 @@ public class UserProductMockingTest {
     private WelshOnionPriceRepository welshOnionPriceRepository;
     @Mock
     private YoungPumpkinPriceRepository youngPumpkinPriceRepository;
+    @Mock
+    private ReviewRepository mockReviewRepository;
+    @Mock
+    private ReviewRatingRepository mockReviewRatingRepository;
     @InjectMocks
     private UserProductServiceImpl userProductService;
 
@@ -89,7 +101,9 @@ public class UserProductMockingTest {
                 onionPriceRepository,
                 potatoPriceRepository,
                 welshOnionPriceRepository,
-                youngPumpkinPriceRepository
+                youngPumpkinPriceRepository,
+                mockReviewRepository,
+                mockReviewRatingRepository
                 );
     }
 
@@ -101,8 +115,11 @@ public class UserProductMockingTest {
         Farm farm = new Farm(1L, "투투농가");
         FarmCustomerServiceInfo farmCustomerServiceInfo = new FarmCustomerServiceInfo(1L, "070-1234-5678", new Address(), farm);
         FarmIntroductionInfo farmIntroductionInfo = new FarmIntroductionInfo(1L, "메인이미지", "한줄소개", new ArrayList<>(), farm);
-
         Product product = new Product(productId, "상품 이름", "상세 설명", CultivationMethod.ORGANIC, ONION, AVAILABLE, farm);
+        Review review = new Review(1L, "상품 이름", "옵션 이름", "정다운", "리뷰 내용", new User(), product, LocalDate.now(), LocalDate.now(), new ProductOrder());
+        ReviewRating reviewRating = new ReviewRating(1L, 5, review, product);
+        List<Review> reviewList = new ArrayList<>();
+        reviewList.add(review);
         when(mockProductRepository.findById(productId)).thenReturn(Optional.of(product));
 
         List<ProductOption> productOption = new ArrayList<>();
@@ -117,19 +134,22 @@ public class UserProductMockingTest {
         when(mockProductDetailImagesRepository.findByProduct(product)).thenReturn(detailImages);
         when(mockFarmCustomerServiceInfoRepository.findByFarm(farm)).thenReturn(farmCustomerServiceInfo);
         when(mockFarmIntroductionInfoRepository.findByFarm(farm)).thenReturn(farmIntroductionInfo);
+        when(mockReviewRepository.findAllByProduct(product)).thenReturn(reviewList);
+        when(mockReviewRatingRepository.findByReview(review)).thenReturn(Optional.of(reviewRating));
 
         ProductResponseForUser productResponseForUser = new ProductResponseForUser().productResponse(product);
         List<ProductOptionResponseForUser> productOptionResponseForUser = new ProductOptionResponseForUser().productOptionResponseList(productOption);
         ProductMainImageResponseForUser productMainImageResponseForUser = new ProductMainImageResponseForUser(mainImage.getId(), mainImage.getMainImg());
         List<ProductDetailImagesResponseForUser> productDetailImagesResponseForUser = new ProductDetailImagesResponseForUser().productDetailImagesResponseList(detailImages);
         FarmInfoResponseForUser farmInfoResponseForUser = new FarmInfoResponseForUser().farmInfoResponse(farm, farmCustomerServiceInfo, farmIntroductionInfo);
-
+        ProductReviewResponseForUser productReviewResponseForUser = new ProductReviewResponseForUser(1, 5);
         ProductReadResponseFormForUser result = new ProductReadResponseFormForUser(
                 productResponseForUser,
                 productOptionResponseForUser,
                 productMainImageResponseForUser,
                 productDetailImagesResponseForUser,
-                farmInfoResponseForUser);
+                farmInfoResponseForUser,
+                productReviewResponseForUser);
 
         ProductReadResponseFormForUser actual = userProductService.readProductForUser(productId);
 
@@ -228,17 +248,17 @@ public class UserProductMockingTest {
 
         List<ProductListResponseFormForUser> result = userProductService.getProductListForUser();
 
-        assertEquals(result.get(0).getProductName(), "상품명1");
-        assertEquals(result.get(0).getProductId(), 1L);
-        assertEquals(result.get(0).getIsSoldOut(), false);
-        assertEquals(result.get(0).getMinOptionPrice(), 13000L);
-        assertEquals(result.get(0).getFarmName(), "투투농장");
+        assertEquals(result.get(0).getProductResponseForListForUser().getProductName(), "상품명1");
+        assertEquals(result.get(0).getProductResponseForListForUser().getProductId(), 1L);
+        assertEquals(result.get(0).getProductOptionResponseForListForUser().getIsSoldOut(), false);
+        assertEquals(result.get(0).getProductOptionResponseForListForUser().getMinOptionPrice(), 13000L);
+        assertEquals(result.get(0).getFarmInfoResponseForListForUser().getFarmName(), "투투농장");
 
-        assertEquals(result.get(1).getProductName(), "상품명2");
-        assertEquals(result.get(1).getProductId(), 2L);
-        assertEquals(result.get(1).getIsSoldOut(), false);
-        assertEquals(result.get(1).getMinOptionPrice(), 13000L);
-        assertEquals(result.get(0).getFarmName(), "투투농장");
+        assertEquals(result.get(1).getProductResponseForListForUser().getProductName(), "상품명2");
+        assertEquals(result.get(1).getProductResponseForListForUser().getProductId(), 2L);
+        assertEquals(result.get(1).getProductOptionResponseForListForUser().getIsSoldOut(), false);
+        assertEquals(result.get(1).getProductOptionResponseForListForUser().getMinOptionPrice(), 13000L);
+        assertEquals(result.get(0).getFarmInfoResponseForListForUser().getFarmName(), "투투농장");
     }
 
     @Test
@@ -334,17 +354,17 @@ public class UserProductMockingTest {
 
         List<ProductListResponseFormForUser> result = userProductService.getProductListByCategoryForUser("ORGANIC");
 
-        assertEquals(result.get(0).getProductName(), "상품명1");
-        assertEquals(result.get(0).getProductId(), 1L);
-        assertEquals(result.get(0).getIsSoldOut(), false);
-        assertEquals(result.get(0).getMinOptionPrice(), 13000L);
-        assertEquals(result.get(0).getFarmName(), "투투농장");
+        assertEquals(result.get(0).getProductResponseForListForUser().getProductName(), "상품명1");
+        assertEquals(result.get(0).getProductResponseForListForUser().getProductId(), 1L);
+        assertEquals(result.get(0).getProductOptionResponseForListForUser().getIsSoldOut(), false);
+        assertEquals(result.get(0).getProductOptionResponseForListForUser().getMinOptionPrice(), 13000L);
+        assertEquals(result.get(0).getFarmInfoResponseForListForUser().getFarmName(), "투투농장");
 
-        assertEquals(result.get(1).getProductName(), "상품명2");
-        assertEquals(result.get(1).getProductId(), 2L);
-        assertEquals(result.get(1).getIsSoldOut(), false);
-        assertEquals(result.get(1).getMinOptionPrice(), 13000L);
-        assertEquals(result.get(0).getFarmName(), "투투농장");
+        assertEquals(result.get(1).getProductResponseForListForUser().getProductName(), "상품명2");
+        assertEquals(result.get(1).getProductResponseForListForUser().getProductId(), 2L);
+        assertEquals(result.get(1).getProductOptionResponseForListForUser().getIsSoldOut(), false);
+        assertEquals(result.get(1).getProductOptionResponseForListForUser().getMinOptionPrice(), 13000L);
+        assertEquals(result.get(0).getFarmInfoResponseForListForUser().getFarmName(), "투투농장");
     }
 
     @Test
@@ -451,18 +471,18 @@ public class UserProductMockingTest {
 
         List<ProductListResponseFormForUser> result = userProductService.getProductListByRegionForUser(region);
 
-        assertEquals(result.get(0).getProductName(), "상품명1");
-        assertEquals(result.get(0).getProductId(), 1L);
-        assertEquals(result.get(0).getIsSoldOut(), false);
-        assertEquals(result.get(0).getMinOptionPrice(), 13000L);
-        assertEquals(result.get(0).getFarmName(), "투투농장");
-        assertEquals(result.get(0).getMainImage(), "농가 메인이미지");
+        assertEquals(result.get(0).getProductResponseForListForUser().getProductName(), "상품명1");
+        assertEquals(result.get(0).getProductResponseForListForUser().getProductId(), 1L);
+        assertEquals(result.get(0).getProductOptionResponseForListForUser().getIsSoldOut(), false);
+        assertEquals(result.get(0).getProductOptionResponseForListForUser().getMinOptionPrice(), 13000L);
+        assertEquals(result.get(0).getFarmInfoResponseForListForUser().getFarmName(), "투투농장");
+        assertEquals(result.get(0).getFarmInfoResponseForListForUser().getMainImage(), "농가 메인이미지");
 
-        assertEquals(result.get(1).getProductName(), "상품명2");
-        assertEquals(result.get(1).getProductId(), 2L);
-        assertEquals(result.get(1).getIsSoldOut(), false);
-        assertEquals(result.get(1).getMinOptionPrice(), 13000L);
-        assertEquals(result.get(1).getFarmName(), "투투농장");
-        assertEquals(result.get(1).getMainImage(), "농가 메인이미지");
+        assertEquals(result.get(1).getProductResponseForListForUser().getProductName(), "상품명2");
+        assertEquals(result.get(1).getProductResponseForListForUser().getProductId(), 2L);
+        assertEquals(result.get(1).getProductOptionResponseForListForUser().getIsSoldOut(), false);
+        assertEquals(result.get(1).getProductOptionResponseForListForUser().getMinOptionPrice(), 13000L);
+        assertEquals(result.get(1).getFarmInfoResponseForListForUser().getFarmName(), "투투농장");
+        assertEquals(result.get(1).getFarmInfoResponseForListForUser().getMainImage(), "농가 메인이미지");
     }
 }
