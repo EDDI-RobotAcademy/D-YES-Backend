@@ -17,4 +17,5 @@ public class ProductReadResponseFormForUser {
     private ProductMainImageResponseForUser mainImageResponseForUser;
     private List<ProductDetailImagesResponseForUser> detailImagesForUser;
     private FarmInfoResponseForUser farmInfoResponseForUser;
+    private ProductReviewResponseForUser productReviewResponseForUser;
 }
