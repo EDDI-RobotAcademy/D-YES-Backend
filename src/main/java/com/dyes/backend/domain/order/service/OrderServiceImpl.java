@@ -552,8 +552,9 @@ public class OrderServiceImpl implements OrderService {
             OrderedPurchaserProfile profile = maybeOrderedPurchaseProfile.get();
 
             OrderCombineOrderData orderData = OrderCombineOrderData.builder()
-                    .id(order.getId())
-                    .status(order.getDelivery().getDeliveryStatus())
+                    .productOrderId(order.getId())
+                    .deliveryStatus(order.getDelivery().getDeliveryStatus())
+                    .orderStatus(order.getOrderStatus())
                     .build();
 
             List<OrderCombineOrderedProductData> productDataList = new ArrayList<>();
@@ -563,9 +564,11 @@ public class OrderServiceImpl implements OrderService {
                 if (maybeOrder.isPresent()){
                     ProductOption productOption = maybeProductOption.get();
                     OrderCombineOrderedProductData productData = OrderCombineOrderedProductData.builder()
-                            .optionName(productOption.getOptionName())
-                            .optionCount(orderedProduct.getProductOptionCount())
-                            .optionPrice(productOption.getOptionPrice())
+                            .productId(orderedProduct.getProductId())
+                            .productOptionId(orderedProduct.getProductOptionId())
+                            .productOptionName(productOption.getOptionName())
+                            .productOptionCount(orderedProduct.getProductOptionCount())
+                            .productOptionPrice(productOption.getOptionPrice())
                             .productName(orderedProduct.getProductName())
                             .build();
                     productDataList.add(productData);
@@ -574,8 +577,8 @@ public class OrderServiceImpl implements OrderService {
 
             OrderCombinePaymentData paymentData = OrderCombinePaymentData.builder()
                     .totalPrice(payment.getAmount().getTotal())
-                    .deliveryFee(payment.getAmount().getTotal()/11)
-                    .paymentPrice(payment.getAmount().getTotal()-(payment.getAmount().getTotal()/11))
+                    .deliveryFee(0)
+                    .paymentPrice(0)
                     .paymentMethod(payment.getPayment_method_type())
                     .paymentDate(payment.getApproved_at())
                     .build();
