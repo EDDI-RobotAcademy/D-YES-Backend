@@ -14,6 +14,7 @@ import com.dyes.backend.domain.user.repository.AddressBookRepository;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import com.dyes.backend.domain.user.repository.UserRepository;
 import com.dyes.backend.domain.user.service.request.UserAddressModifyRequest;
+import com.dyes.backend.domain.user.service.request.UserAddressOptionChangeRequest;
 import com.dyes.backend.domain.user.service.request.UserAddressUpdateRequest;
 import com.dyes.backend.domain.user.service.request.UserAuthenticationRequest;
 import com.dyes.backend.domain.user.service.response.form.UserAddressBookResponseForm;
@@ -653,6 +654,43 @@ public class UserServiceImpl implements UserService {
             log.error("Failed to delete the addressBook: {}", e.getMessage(), e);
             return false;
         }
+    }
+
+    // 사용자 주소록에 있는 배송지 옵션 변경
+    @Override
+    public Boolean changeAddressBookOption(UserAddressOptionChangeRequestForm requestForm) {
+        log.info("Changing addressBook option with ID: {}", requestForm.getAddressBookId());
+
+        UserAuthenticationRequest userAuthenticationRequest = requestForm.toUserAuthenticationRequest();
+
+        final String userToken = userAuthenticationRequest.getUserToken();
+        final User user = authenticationService.findUserByUserToken(userToken);
+        if (user == null) {
+            return null;
+        }
+
+        UserAddressOptionChangeRequest userAddressOptionChangeRequest = requestForm.toUserAddressOptionChangeRequest();
+        Long addressBookId = userAddressOptionChangeRequest.getAddressBookId();
+        AddressBookOption addressBookOption = userAddressOptionChangeRequest.getAddressBookOption();
+
+        // 주소록에 있는 배송지 옵션 변경 진행
+        try {
+            List<AddressBook> addressBookList = addressBookRepository.findAllByUser(user);
+            for(AddressBook addressBook: addressBookList) {
+                if(addressBook.getId().equals(addressBookId)) {
+                    addressBook.setAddressBookOption(addressBookOption);
+                    addressBookRepository.save(addressBook);
+                    log.info("AddressBook Option change successful for addressBook with ID: {}", addressBook.getId());
+                    return true;
+                }
+            }
+            return true;
+
+        } catch (Exception e) {
+            log.error("Failed to change the addressBook option: {}", e.getMessage(), e);
+            return false;
+        }
+
     }
 
     // 회원 비활성화 및 프로필 삭제

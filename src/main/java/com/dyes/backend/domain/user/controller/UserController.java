@@ -1,9 +1,6 @@
 package com.dyes.backend.domain.user.controller;
 
-import com.dyes.backend.domain.user.controller.form.AddressBookDeleteRequestForm;
-import com.dyes.backend.domain.user.controller.form.UserAddressModifyRequestForm;
-import com.dyes.backend.domain.user.controller.form.UserAddressUpdateRequestForm;
-import com.dyes.backend.domain.user.controller.form.UserProfileModifyRequestForm;
+import com.dyes.backend.domain.user.controller.form.*;
 import com.dyes.backend.domain.user.service.UserService;
 import com.dyes.backend.domain.user.service.response.form.UserAddressBookResponseForm;
 import com.dyes.backend.domain.user.service.response.form.UserInfoResponseForm;
@@ -91,6 +88,12 @@ public class UserController {
             @RequestBody AddressBookDeleteRequestForm deleteForm
     ) {
         return userService.deleteAddressBook(addressBookId, deleteForm);
+    }
+
+    // 사용자 주소록에 있는 배송지 옵션 변경
+    @PutMapping("/address-book/change-option")
+    public Boolean changeAddressBookOption(@RequestBody UserAddressOptionChangeRequestForm requestForm) {
+        return userService.changeAddressBookOption(requestForm);
     }
 
     // 관리자의 회원 목록 조회
