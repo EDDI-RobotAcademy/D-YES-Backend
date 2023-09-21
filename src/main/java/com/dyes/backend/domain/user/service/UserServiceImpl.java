@@ -558,9 +558,15 @@ public class UserServiceImpl implements UserService {
         }
         UserAddressUpdateRequest userAddressUpdateRequest = requestForm.toUserAddressUpdateRequest();
         if(userAddressUpdateRequest.getAddress().equals(null)) {
-            log.info("The address to be added to the address book is not available.");
+            log.info("The address to be added to the address book is not available");
             return false;
         }
+        List<AddressBook> addressBookList = addressBookRepository.findAllByUser(user);
+        if(addressBookList.size() == 5) {
+            log.info("The maximum registration limit is 5. Unable to add to the address book");
+            return false;
+        }
+
         try {
             if(userAddressUpdateRequest.getAddressBookOption().equals(DEFAULT_OPTION)) {
                 Optional<AddressBook> maybeAddressBook = addressBookRepository.findByAddressBookOption(DEFAULT_OPTION);
