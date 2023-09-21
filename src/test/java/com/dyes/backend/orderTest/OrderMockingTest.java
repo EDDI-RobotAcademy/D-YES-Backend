@@ -11,7 +11,6 @@ import com.dyes.backend.domain.delivery.entity.DeliveryStatus;
 import com.dyes.backend.domain.delivery.repository.DeliveryRepository;
 import com.dyes.backend.domain.farm.entity.Farm;
 import com.dyes.backend.domain.order.controller.form.OrderConfirmRequestForm;
-import com.dyes.backend.domain.order.entity.OrderStatus;
 import com.dyes.backend.domain.order.entity.OrderedProduct;
 import com.dyes.backend.domain.order.entity.OrderedPurchaserProfile;
 import com.dyes.backend.domain.order.entity.ProductOrder;
@@ -36,6 +35,7 @@ import com.dyes.backend.domain.product.entity.*;
 import com.dyes.backend.domain.product.repository.ProductMainImageRepository;
 import com.dyes.backend.domain.product.repository.ProductOptionRepository;
 import com.dyes.backend.domain.product.repository.ProductRepository;
+import com.dyes.backend.domain.review.repository.ReviewRepository;
 import com.dyes.backend.domain.user.entity.*;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import com.dyes.backend.domain.user.repository.UserRepository;
@@ -92,6 +92,8 @@ public class OrderMockingTest {
     private ProductRepository mockProductRepository;
     @Mock
     private PaymentRepository mockPaymentRepository;
+    @Mock
+    private ReviewRepository mockReviewRepository;
     @InjectMocks
     private OrderServiceImpl mockOrderService;
     @BeforeEach
@@ -111,7 +113,8 @@ public class OrderMockingTest {
                 mockAuthenticationService,
                 mockRedisService,
                 mockProductRepository,
-                mockPaymentRepository
+                mockPaymentRepository,
+                mockReviewRepository
                 );
     }
     @Test
