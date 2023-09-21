@@ -427,11 +427,10 @@ public class OrderServiceImpl implements OrderService {
                 Product product = productOption.getProduct();
 
                 // 리뷰 내역에서 product로
-
                 Long reviewId = null;
                 for (Review review : reviewList) {
-                    if (review.getProductOrder().equals(order)){
-                        if (review.getProduct().equals(product)){
+                    if (review.getProductOrder().getId().equals(order.getId())){
+                        if (review.getProduct().getId().equals(product.getId())){
                             reviewId = review.getId();
                         }
                     }
