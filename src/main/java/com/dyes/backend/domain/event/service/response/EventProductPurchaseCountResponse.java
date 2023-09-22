@@ -1,4 +1,4 @@
-package com.dyes.backend.domain.event.service.request.register;
+package com.dyes.backend.domain.event.service.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class EventProductRegisterPurchaseCountRequest {
+public class EventProductPurchaseCountResponse {
     private Integer targetCount;
+    private Integer nowCount;
 }
