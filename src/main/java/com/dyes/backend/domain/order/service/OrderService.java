@@ -4,6 +4,7 @@ import com.dyes.backend.domain.order.controller.form.*;
 import com.dyes.backend.domain.order.service.admin.response.form.OrderDetailDataResponseForAdminForm;
 import com.dyes.backend.domain.order.service.admin.response.form.OrderListResponseFormForAdmin;
 import com.dyes.backend.domain.order.service.user.response.form.OrderConfirmResponseFormForUser;
+import com.dyes.backend.domain.order.service.user.response.form.OrderDetailDataResponseForUserForm;
 import com.dyes.backend.domain.order.service.user.response.form.OrderListResponseFormForUser;
 import com.dyes.backend.domain.payment.service.request.PaymentTemporarySaveRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -22,4 +23,5 @@ public interface OrderService {
     List<OrderListResponseFormForAdmin> getAllNewOrderListForAdmin();
     List<OrderListResponseFormForUser> getMyOrderListForUser(String userToken);
     OrderDetailDataResponseForAdminForm orderDetailDataCombineForAdmin(Long orderId);
+    OrderDetailDataResponseForUserForm orderDetailDataCombineForUser(Long orderId);
 }
