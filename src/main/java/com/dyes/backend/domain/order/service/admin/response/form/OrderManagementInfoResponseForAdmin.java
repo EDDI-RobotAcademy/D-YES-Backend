@@ -11,5 +11,5 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class OrderManagementInfoResponseForAdmin {
     private LocalDate orderedTime;
-    private int createdOrderCountCount;
+    private int createdOrderCount;
 }
