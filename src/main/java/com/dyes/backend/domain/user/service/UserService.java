@@ -4,6 +4,7 @@ import com.dyes.backend.domain.user.controller.form.*;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.service.response.form.UserAddressBookResponseForm;
 import com.dyes.backend.domain.user.service.response.form.UserInfoResponseForm;
+import com.dyes.backend.domain.user.service.response.form.UserInfoResponseFormForDashBoardForAdmin;
 import com.dyes.backend.domain.user.service.response.form.UserProfileResponseForm;
 import org.springframework.web.servlet.view.RedirectView;
 
@@ -26,4 +27,5 @@ public interface UserService {
     List<UserInfoResponseForm> getUserList(String userToken);
     Boolean deleteAddressBook(Long addressBookId, AddressBookDeleteRequestForm deleteForm);
     Boolean changeAddressBookOption(UserAddressOptionChangeRequestForm requestForm);
+    UserInfoResponseFormForDashBoardForAdmin getNewUserList();
 }
