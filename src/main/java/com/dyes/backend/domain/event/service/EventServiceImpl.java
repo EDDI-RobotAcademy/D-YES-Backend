@@ -120,10 +120,7 @@ public class EventServiceImpl implements EventService{
 
                     Integer reviewCount = 0;
                     Integer sumRating = 0;
-
-                    if (reviewList.size() == 0) {
-                        reviewCount = 1;
-                    }
+                    Integer averageRating = 0;
 
                     for (Review review : reviewList) {
                         Optional<ReviewRating> maybeRating = reviewRatingRepository.findByReview(review);
@@ -131,6 +128,12 @@ public class EventServiceImpl implements EventService{
                             sumRating += maybeRating.get().getRating();
                         }
                     }
+
+                    if (reviewList.size() != 0) {
+                        reviewCount = reviewList.size();
+                        averageRating = sumRating/reviewCount;
+                    }
+
                     boolean isSoldOut = false;
                     if (productOption.getOptionSaleStatus().equals(AVAILABLE)){
                         isSoldOut = true;
@@ -157,7 +160,7 @@ public class EventServiceImpl implements EventService{
                             farm.getFarmName(), farmIntroductionInfo.getMainImage(), farmRepresentativeInfo.getRepresentativeName()
                     );
                     ProductReviewResponseForUser reviewResponse = new ProductReviewResponseForUser(
-                            reviewCount, sumRating/reviewCount
+                            reviewCount, averageRating
                     );
                     EventProductDeadLineResponse deadLineResponse = new EventProductDeadLineResponse(deadLine.getStartLine(), deadLine.getDeadLine());
                     EventProductPurchaseCountResponse countResponse = new EventProductPurchaseCountResponse(count.getTargetCount(), count.getNowCount());
