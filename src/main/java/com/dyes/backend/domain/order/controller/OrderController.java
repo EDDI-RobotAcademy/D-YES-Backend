@@ -5,6 +5,7 @@ import com.dyes.backend.domain.order.service.OrderService;
 import com.dyes.backend.domain.order.service.admin.response.form.OrderDetailDataResponseForAdminForm;
 import com.dyes.backend.domain.order.service.admin.response.form.OrderListResponseFormForAdmin;
 import com.dyes.backend.domain.order.service.user.response.form.OrderConfirmResponseFormForUser;
+import com.dyes.backend.domain.order.service.user.response.form.OrderDetailDataResponseForUserForm;
 import com.dyes.backend.domain.order.service.user.response.form.OrderListResponseFormForUser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
@@ -65,5 +66,9 @@ public class OrderController {
     @GetMapping("/admin/combine-order-data/{productOrderId}")
     public OrderDetailDataResponseForAdminForm getCombineOrderData(@PathVariable("productOrderId") Long productOrderId){
         return orderService.orderDetailDataCombineForAdmin(productOrderId);
+    }
+    @GetMapping("/admin/combine-order-data/{productOrderId}")
+    public OrderDetailDataResponseForUserForm getCombineOrderDataForUser(@PathVariable("productOrderId") Long productOrderId){
+        return orderService.orderDetailDataCombineForUser(productOrderId);
     }
 }
