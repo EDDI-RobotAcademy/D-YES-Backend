@@ -349,7 +349,7 @@ public class UserProductServiceImpl implements UserProductService {
 
         List<Review> reviewList = reviewRepository.findAllByProduct(product);
         int totalReviewCount = 0;
-        int averageRating = 0;
+        double averageRating = 0;
         int totalRating = 0;
         for(Review review : reviewList) {
             totalReviewCount = totalReviewCount + 1;
