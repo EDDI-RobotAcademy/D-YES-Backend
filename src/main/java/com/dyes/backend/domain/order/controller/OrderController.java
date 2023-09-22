@@ -67,7 +67,7 @@ public class OrderController {
     public OrderDetailDataResponseForAdminForm getCombineOrderData(@PathVariable("productOrderId") Long productOrderId){
         return orderService.orderDetailDataCombineForAdmin(productOrderId);
     }
-    @GetMapping("/admin/combine-order-data/{productOrderId}")
+    @GetMapping("/user/combine-order-data/{productOrderId}")
     public OrderDetailDataResponseForUserForm getCombineOrderDataForUser(@PathVariable("productOrderId") Long productOrderId){
         return orderService.orderDetailDataCombineForUser(productOrderId);
     }
