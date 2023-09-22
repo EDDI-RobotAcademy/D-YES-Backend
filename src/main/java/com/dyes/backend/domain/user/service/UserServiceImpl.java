@@ -14,7 +14,9 @@ import com.dyes.backend.domain.user.repository.AddressBookRepository;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import com.dyes.backend.domain.user.repository.UserRepository;
 import com.dyes.backend.domain.user.service.request.UserAddressModifyRequest;
+import com.dyes.backend.domain.user.service.request.UserAddressOptionChangeRequest;
 import com.dyes.backend.domain.user.service.request.UserAddressUpdateRequest;
+import com.dyes.backend.domain.user.service.request.UserAuthenticationRequest;
 import com.dyes.backend.domain.user.service.response.form.UserAddressBookResponseForm;
 import com.dyes.backend.domain.user.service.response.form.UserInfoResponseForm;
 import com.dyes.backend.domain.user.service.response.form.UserProfileResponseForm;
@@ -510,7 +512,7 @@ public class UserServiceImpl implements UserService {
                 return null;
             } else if (maybeUserProfile.isPresent()) {
                 UserProfile userProfile = maybeUserProfile.get();
-                if(userProfile.getAddress().equals(null)) {
+                if(userProfile.getAddress().getAddress().equals(null) || userProfile.getAddress().getAddress().equals("")) {
                     log.info("No address is registered.");
                     return null;
                 }
@@ -557,9 +559,15 @@ public class UserServiceImpl implements UserService {
         }
         UserAddressUpdateRequest userAddressUpdateRequest = requestForm.toUserAddressUpdateRequest();
         if(userAddressUpdateRequest.getAddress().equals(null)) {
-            log.info("The address to be added to the address book is not available.");
+            log.info("The address to be added to the address book is not available");
             return false;
         }
+        List<AddressBook> addressBookList = addressBookRepository.findAllByUser(user);
+        if(addressBookList.size() == 5) {
+            log.info("The maximum registration limit is 5. Unable to add to the address book");
+            return false;
+        }
+
         try {
             if(userAddressUpdateRequest.getAddressBookOption().equals(DEFAULT_OPTION)) {
                 Optional<AddressBook> maybeAddressBook = addressBookRepository.findByAddressBookOption(DEFAULT_OPTION);
@@ -615,6 +623,82 @@ public class UserServiceImpl implements UserService {
             userInfoResponseFormList.add(userInfoResponseForm);
         }
         return userInfoResponseFormList;
+    }
+
+    // 사용자 주소록 삭제(배송지 정보)
+    @Override
+    public Boolean deleteAddressBook(Long addressBookId, AddressBookDeleteRequestForm deleteForm) {
+        log.info("Deleting addressBook with ID: {}", addressBookId);
+
+        UserAuthenticationRequest userAuthenticationRequest = deleteForm.toUserAuthenticationRequest();
+
+        final String userToken = userAuthenticationRequest.getUserToken();
+        final User user = authenticationService.findUserByUserToken(userToken);
+        if (user == null) {
+            return null;
+        }
+
+        // 주소록 삭제 진행
+        try {
+            List<AddressBook> addressBookList = addressBookRepository.findAllByUser(user);
+            for(AddressBook addressBook: addressBookList) {
+                if(addressBook.getId().equals(addressBookId)) {
+                    addressBookRepository.deleteById(addressBook.getId().toString());
+                    log.info("AddressBook deletion successful for addressBook with ID: {}", addressBook.getId());
+                    return true;
+                }
+            }
+            return true;
+
+        } catch (Exception e) {
+            log.error("Failed to delete the addressBook: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+
+    // 사용자 주소록에 있는 배송지 옵션 변경
+    @Override
+    public Boolean changeAddressBookOption(UserAddressOptionChangeRequestForm requestForm) {
+        log.info("Changing addressBook option with ID: {}", requestForm.getAddressBookId());
+
+        UserAuthenticationRequest userAuthenticationRequest = requestForm.toUserAuthenticationRequest();
+
+        final String userToken = userAuthenticationRequest.getUserToken();
+        final User user = authenticationService.findUserByUserToken(userToken);
+        if (user == null) {
+            return null;
+        }
+
+        UserAddressOptionChangeRequest userAddressOptionChangeRequest = requestForm.toUserAddressOptionChangeRequest();
+        Long addressBookId = userAddressOptionChangeRequest.getAddressBookId();
+        AddressBookOption addressBookOption = userAddressOptionChangeRequest.getAddressBookOption();
+
+        // 주소록에 있는 배송지 옵션 변경 진행
+        try {
+            List<AddressBook> addressBookList = addressBookRepository.findAllByUser(user);
+            for(AddressBook addressBook: addressBookList) {
+                if(addressBook.getId().equals(addressBookId)) {
+                    if(addressBookOption.equals(DEFAULT_OPTION)) {
+                        Optional<AddressBook> maybeAddressBook = addressBookRepository.findByAddressBookOption(DEFAULT_OPTION);
+                        if(maybeAddressBook.isPresent()) {
+                            AddressBook addressBookDefaultOption = maybeAddressBook.get();
+                            addressBookDefaultOption.setAddressBookOption(NON_DEFAULT_OPTION);
+                            addressBookRepository.save(addressBookDefaultOption);
+                        }
+                    }
+                    addressBook.setAddressBookOption(addressBookOption);
+                    addressBookRepository.save(addressBook);
+                    log.info("AddressBook Option change successful for addressBook with ID: {}", addressBook.getId());
+                    return true;
+                }
+            }
+            return true;
+
+        } catch (Exception e) {
+            log.error("Failed to change the addressBook option: {}", e.getMessage(), e);
+            return false;
+        }
+
     }
 
     // 회원 비활성화 및 프로필 삭제
