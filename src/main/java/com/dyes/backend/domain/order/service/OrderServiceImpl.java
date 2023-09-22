@@ -15,7 +15,9 @@ import com.dyes.backend.domain.order.repository.OrderedProductRepository;
 import com.dyes.backend.domain.order.repository.OrderedPurchaserProfileRepository;
 import com.dyes.backend.domain.order.service.admin.response.*;
 import com.dyes.backend.domain.order.service.admin.response.form.OrderDetailDataResponseForAdminForm;
+import com.dyes.backend.domain.order.service.admin.response.form.OrderInfoResponseFormForDashBoardForAdmin;
 import com.dyes.backend.domain.order.service.admin.response.form.OrderListResponseFormForAdmin;
+import com.dyes.backend.domain.order.service.admin.response.form.OrderManagementInfoResponseForAdmin;
 import com.dyes.backend.domain.order.service.user.request.*;
 import com.dyes.backend.domain.order.service.user.response.*;
 import com.dyes.backend.domain.order.service.user.response.form.OrderConfirmResponseFormForUser;
@@ -306,77 +308,85 @@ public class OrderServiceImpl implements OrderService {
 
     // 관리자의 신규 주문 내역 확인
     @Override
-    public List<OrderListResponseFormForAdmin> getAllNewOrderListForAdmin() {
-        // 모든 주문 내역 가져오기
-        List<ProductOrder> orderList = orderRepository.findAllByOrderedTimeWithUser();
+    public OrderInfoResponseFormForDashBoardForAdmin getAllNewOrderListForAdmin() {
+        log.info("Finding New Order start");
 
-        List<OrderListResponseFormForAdmin> orderListResponseFormForAdmins = new ArrayList<>();
+        // 최종적으로 반환할 ResponseForm에 들어갈 Response
+        List<OrderInfoResponseForAdmin> orderInfoResponseForAdminList = new ArrayList<>();
+        List<OrderManagementInfoResponseForAdmin> createdOrderCountList = new ArrayList<>();
 
-        for (ProductOrder order : orderList) {
+        // 이전 7일간의 내역을 조회
+        LocalDate today = LocalDate.now();
+        LocalDate sevenDaysAgo = today.minusDays(7);
 
-            // 주문자 정보 가져오기
-            User user = order.getUser();
-            String userId = user.getId();
-
-            Optional<OrderedPurchaserProfile> maybeOrderedPurchaserProfile = orderedPurchaserProfileRepository.findByProductOrder(order);
-            if (maybeOrderedPurchaserProfile.isEmpty()) {
-                log.info("Profile with order ID '{}' not found", order.getId());
-                return null;
-            }
-
-            OrderedPurchaserProfile purchaserProfile = maybeOrderedPurchaserProfile.get();
-            String contactNumber = purchaserProfile.getOrderedPurchaseContactNumber();
-            Address address = purchaserProfile.getOrderedPurchaseProfileAddress();
-
-            OrderUserInfoResponse orderUserInfoResponse = new OrderUserInfoResponse(userId, contactNumber, address);
-
-            // 주문한 상품 및 옵션 정보 가져오기
-            Long totalPrice = 0L;
-            Long productOrderId = order.getId();
-            Delivery delivery = order.getDelivery();
-            DeliveryStatus deliveryStatus = delivery.getDeliveryStatus();
-            LocalDate orderedTime = order.getOrderedTime();
-            List<OrderProductListResponse> orderProductList = new ArrayList<>();
-
-            List<OrderedProduct> orderedProducts = orderedProductRepository.findAllByProductOrder(order);
-            for (OrderedProduct orderedProduct : orderedProducts) {
-                List<OrderOptionListResponse> orderOptionList = new ArrayList<>();
-                Long productOptionId = orderedProduct.getProductOptionId();
-                int productOptionCount = orderedProduct.getProductOptionCount();
-                Long productId = orderedProduct.getProductId();
-                String productName = orderedProduct.getProductName();
-
-                Optional<ProductOption> maybeProductOption = productOptionRepository.findById(productOptionId);
-                if (maybeProductOption.isEmpty()) {
-                    log.info("ProductOption with product option ID '{}' not found", productOptionId);
-                    return null;
-                }
-
-                // 상품 정보 확인을 위해 가져옴
-                ProductOption productOption = maybeProductOption.get();
-
-                String optionName = productOption.getOptionName();
-                Long optionPrice = productOption.getOptionPrice();
-                Long totalOptionPrice = optionPrice * productOptionCount;
-
-                totalPrice = totalPrice + totalOptionPrice;
-
-                OrderOptionListResponse orderOptionListResponse
-                        = new OrderOptionListResponse(productOptionId, optionName, productOptionCount);
-                orderOptionList.add(orderOptionListResponse);
-
-                OrderProductListResponse orderProductListResponse
-                        = new OrderProductListResponse(productId, productName, orderOptionList);
-                orderProductList.add(orderProductListResponse);
-            }
-
-            OrderDetailInfoResponse orderDetailInfoResponse
-                    = new OrderDetailInfoResponse(productOrderId, totalPrice, orderedTime, deliveryStatus);
-            OrderListResponseFormForAdmin orderListResponseFormForAdmin
-                    = new OrderListResponseFormForAdmin(orderUserInfoResponse, orderProductList, orderDetailInfoResponse);
-            orderListResponseFormForAdmins.add(orderListResponseFormForAdmin);
+        List<ProductOrder> productOrderList
+                = orderRepository.findAllByOrderedTimeAfterOrderByOrderedTimeDesc(sevenDaysAgo);
+        if(productOrderList.size() == 0) {
+            log.info("No Orders found.");
+            return null;
         }
-        return orderListResponseFormForAdmins;
+        List<LocalDate> dateList = new ArrayList<>();
+        List<Integer> orderCountList = new ArrayList<>();
+        int registeredOrderCountToday = 0;
+        int registeredOrderCount1DayAgo = 0;
+        int registeredOrderCount2DaysAgo = 0;
+        int registeredOrderCount3DaysAgo = 0;
+        int registeredOrderCount4DaysAgo = 0;
+        int registeredOrderCount5DaysAgo = 0;
+        int registeredOrderCount6DaysAgo = 0;
+
+        // 상품 목록 조회 진행
+        for (ProductOrder productOrder : productOrderList) {
+            List<OrderedProduct> orderedProductList = orderedProductRepository.findAllByProductOrder(productOrder);
+            String representativeProductName= orderedProductList.get(0).getProductName();
+            if (productOrder.getOrderedTime().equals(today)) {
+                registeredOrderCountToday = registeredOrderCountToday + 1;
+            } else if (productOrder.getOrderedTime().equals(today.minusDays(1))) {
+                registeredOrderCount1DayAgo = registeredOrderCount1DayAgo + 1;
+            } else if (productOrder.getOrderedTime().equals(today.minusDays(2))) {
+                registeredOrderCount2DaysAgo = registeredOrderCount2DaysAgo + 1;
+            } else if (productOrder.getOrderedTime().equals(today.minusDays(3))) {
+                registeredOrderCount3DaysAgo = registeredOrderCount3DaysAgo + 1;
+            } else if (productOrder.getOrderedTime().equals(today.minusDays(4))) {
+                registeredOrderCount4DaysAgo = registeredOrderCount4DaysAgo + 1;
+            } else if (productOrder.getOrderedTime().equals(today.minusDays(5))) {
+                registeredOrderCount5DaysAgo = registeredOrderCount5DaysAgo + 1;
+            } else if (productOrder.getOrderedTime().equals(today.minusDays(6))) {
+                registeredOrderCount6DaysAgo = registeredOrderCount6DaysAgo + 1;
+            }
+
+            OrderInfoResponseForAdmin orderInfoResponseForAdmin
+                    = new OrderInfoResponseForAdmin(productOrder.getId(), representativeProductName, productOrder.getOrderStatus(), productOrder.getOrderedTime());
+            orderInfoResponseForAdminList.add(orderInfoResponseForAdmin);
+
+        }
+        dateList.add(today);
+        dateList.add(today.minusDays(1));
+        dateList.add(today.minusDays(2));
+        dateList.add(today.minusDays(3));
+        dateList.add(today.minusDays(4));
+        dateList.add(today.minusDays(5));
+        dateList.add(today.minusDays(6));
+
+        orderCountList.add(registeredOrderCountToday);
+        orderCountList.add(registeredOrderCount1DayAgo);
+        orderCountList.add(registeredOrderCount2DaysAgo);
+        orderCountList.add(registeredOrderCount3DaysAgo);
+        orderCountList.add(registeredOrderCount4DaysAgo);
+        orderCountList.add(registeredOrderCount5DaysAgo);
+        orderCountList.add(registeredOrderCount6DaysAgo);
+
+        for (int i = 0; i < 7; i++) {
+            OrderManagementInfoResponseForAdmin orderManagementInfoResponseForAdmin
+                    = new OrderManagementInfoResponseForAdmin(dateList.get(i), orderCountList.get(i));
+            createdOrderCountList.add(orderManagementInfoResponseForAdmin);
+        }
+
+        OrderInfoResponseFormForDashBoardForAdmin orderManagementInfoResponseForAdmin
+                = new OrderInfoResponseFormForDashBoardForAdmin(orderInfoResponseForAdminList, createdOrderCountList);
+
+        log.info("Finding New Orders successful");
+        return orderManagementInfoResponseForAdmin;
     }
 
     // 사용자의 주문 내역 확인

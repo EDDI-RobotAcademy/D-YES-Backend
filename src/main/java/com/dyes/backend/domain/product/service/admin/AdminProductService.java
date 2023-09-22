@@ -4,6 +4,7 @@ import com.dyes.backend.domain.product.controller.admin.form.ProductDeleteReques
 import com.dyes.backend.domain.product.controller.admin.form.ProductListDeleteRequestForm;
 import com.dyes.backend.domain.product.controller.admin.form.ProductModifyRequestForm;
 import com.dyes.backend.domain.product.controller.admin.form.ProductRegisterRequestForm;
+import com.dyes.backend.domain.product.service.admin.response.form.ProductInfoResponseFormForDashBoardForAdmin;
 import com.dyes.backend.domain.product.service.admin.response.form.ProductListResponseFormForAdmin;
 import com.dyes.backend.domain.product.service.admin.response.form.ProductReadResponseFormForAdmin;
 import com.dyes.backend.domain.product.service.admin.response.form.ProductSummaryReadResponseFormForAdmin;
@@ -25,5 +26,5 @@ public interface AdminProductService {
 
     ProductSummaryReadResponseFormForAdmin readProductSummaryForAdmin(Long productId);
 
-    List<ProductListResponseFormForAdmin> getNewProductListForAdmin();
+    ProductInfoResponseFormForDashBoardForAdmin getNewProductListForAdmin();
 }
