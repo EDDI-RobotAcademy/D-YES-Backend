@@ -1,6 +1,5 @@
 package com.dyes.backend.domain.recipe.entity;
 
-import com.dyes.backend.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,11 +18,9 @@ public class RecipeContent {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Lob
-    @Column(columnDefinition = "LONGTEXT")
     private List<String> recipeDetails;   // 조리법
 
-    private String recipeDescripton; // 레시피 설명
+    private String recipeDescription; // 레시피 설명
 
     private int cookingTime;        // 조리시간
 
