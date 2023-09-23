@@ -2,6 +2,7 @@ package com.dyes.backend.eventTest;
 
 import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.service.AdminService;
+import com.dyes.backend.domain.event.controller.form.EventProductReadResponseForm;
 import com.dyes.backend.domain.event.entity.EventDeadLine;
 import com.dyes.backend.domain.event.entity.EventProduct;
 import com.dyes.backend.domain.event.entity.EventPurchaseCount;
@@ -14,20 +15,20 @@ import com.dyes.backend.domain.event.service.request.register.EventProductRegist
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterRequest;
 import com.dyes.backend.domain.event.service.response.EventProductListResponse;
 import com.dyes.backend.domain.farm.entity.Farm;
+import com.dyes.backend.domain.farm.entity.FarmCustomerServiceInfo;
 import com.dyes.backend.domain.farm.entity.FarmIntroductionInfo;
 import com.dyes.backend.domain.farm.entity.FarmRepresentativeInfo;
+import com.dyes.backend.domain.farm.repository.FarmCustomerServiceInfoRepository;
 import com.dyes.backend.domain.farm.repository.FarmIntroductionInfoRepository;
 import com.dyes.backend.domain.farm.repository.FarmRepository;
 import com.dyes.backend.domain.farm.repository.FarmRepresentativeInfoRepository;
-import com.dyes.backend.domain.product.entity.Product;
-import com.dyes.backend.domain.product.entity.ProductMainImage;
-import com.dyes.backend.domain.product.entity.ProductOption;
-import com.dyes.backend.domain.product.entity.SaleStatus;
+import com.dyes.backend.domain.product.entity.*;
 import com.dyes.backend.domain.product.repository.*;
 import com.dyes.backend.domain.review.entity.Review;
 import com.dyes.backend.domain.review.entity.ReviewRating;
 import com.dyes.backend.domain.review.repository.ReviewRatingRepository;
 import com.dyes.backend.domain.review.repository.ReviewRepository;
+import com.dyes.backend.domain.user.entity.Address;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,6 +38,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -74,6 +76,8 @@ public class EventMockingTest {
     private ReviewRepository mockReviewRepository;
     @Mock
     private ReviewRatingRepository mockReviewRatingRepository;
+    @Mock
+    private FarmCustomerServiceInfoRepository mockFarmCustomerServiceInfoRepository;
 
     @InjectMocks
     private EventServiceImpl mockService;
@@ -96,7 +100,8 @@ public class EventMockingTest {
                 mockFarmIntroductionInfoRepository,
                 mockFarmRepresentativeInfoRepository,
                 mockReviewRepository,
-                mockReviewRatingRepository
+                mockReviewRatingRepository,
+                mockFarmCustomerServiceInfoRepository
         );
     }
     @Test
@@ -161,6 +166,78 @@ public class EventMockingTest {
         when(mockProductMainImageRepository.findByProduct(product)).thenReturn(Optional.of(mainImage));
 
         List<EventProductListResponse> result = mockService.eventProductList();
+        assertTrue(result != null);
+    }
+    @Test
+    @DisplayName("event mocking test: evnet product read")
+    public void 사용자가_공동구매_물품을_볼_수_있습니다() {
+        final Long eventProductId = 1L;
+
+        Farm farm = new Farm();
+        farm.setFarmName("1");
+
+        Product product = new Product();
+        product.setId(1L);
+        product.setProductName("1");
+        product.setProductDescription("1");
+        product.setCultivationMethod(CultivationMethod.ENVIRONMENT_FRIENDLY);
+        product.setFarm(farm);
+
+        ProductOption productOption = new ProductOption();
+        productOption.setId(1L);
+        productOption.setOptionName("1");
+        productOption.setOptionPrice(1L);
+        productOption.setStock(1);
+        productOption.setAmount(new Amount(1L, Unit.EA));
+        productOption.setProduct(product);
+        productOption.setOptionSaleStatus(SaleStatus.AVAILABLE);
+
+        EventDeadLine deadLine = new EventDeadLine();
+        deadLine.setDeadLine(LocalDate.now());
+        deadLine.setStartLine(LocalDate.now());
+        EventPurchaseCount count = new EventPurchaseCount();
+        count.setNowCount(1);
+        count.setTargetCount(1);
+
+        EventProduct eventProduct = new EventProduct();
+        eventProduct.setProductOption(productOption);
+        eventProduct.setEventDeadLine(deadLine);
+        eventProduct.setEventPurchaseCount(count);
+
+        when(mockEventProductRepository.findByIdProductOptionDeadLineCount(eventProductId)).thenReturn(Optional.of(eventProduct));
+
+        FarmIntroductionInfo farmIntroductionInfo = new FarmIntroductionInfo();
+        farmIntroductionInfo.setFarm(farm);
+        farmIntroductionInfo.setMainImage("1");
+        farmIntroductionInfo.setIntroduction("1");
+        farmIntroductionInfo.setProduceTypes(new ArrayList<>());
+        when(mockFarmIntroductionInfoRepository.findByFarm(farm)).thenReturn(farmIntroductionInfo);
+        FarmCustomerServiceInfo farmCustomerServiceInfo = new FarmCustomerServiceInfo();
+        farmCustomerServiceInfo.setFarm(farm);
+        farmCustomerServiceInfo.setCsContactNumber("1");
+        farmCustomerServiceInfo.setFarmAddress(new Address());
+        when(mockFarmCustomerServiceInfoRepository.findByFarm(farm)).thenReturn(farmCustomerServiceInfo);
+
+        Review review = new Review();
+        when(mockReviewRepository.findAllByProduct(product)).thenReturn(List.of(review));
+        ReviewRating reviewRating = new ReviewRating();
+        reviewRating.setReview(review);
+        when(mockReviewRatingRepository.findByReview(review)).thenReturn(Optional.of(reviewRating));
+
+        ProductMainImage mainImage = new ProductMainImage();
+        mainImage.setProduct(product);
+        mainImage.setId(1L);
+        mainImage.setMainImg("1");
+        when(mockProductMainImageRepository.findByProduct(product)).thenReturn(Optional.of(mainImage));
+
+        ProductDetailImages detailImages = new ProductDetailImages();
+        detailImages.setProduct(product);
+        detailImages.setId(1L);
+        detailImages.setDetailImgs("1");
+        when(mockProductDetailImagesRepository.findByProduct(product)).thenReturn(List.of(detailImages));
+
+        EventProductReadResponseForm result = mockService.eventProductRead(eventProductId);
+
         assertTrue(result != null);
     }
 }
