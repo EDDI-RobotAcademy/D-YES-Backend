@@ -15,4 +15,5 @@ public class ProductInfoResponseForAdmin {
     private String productName;
     private SaleStatus productSaleStatus;
     private LocalDate registrationDate;
+    private String farmName;
 }

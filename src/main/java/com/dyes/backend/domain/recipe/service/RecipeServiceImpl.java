@@ -33,15 +33,15 @@ public class RecipeServiceImpl implements RecipeService {
         String userToken = registerForm.getUserToken();
         User user = authenticationService.findUserByUserToken(userToken);
 
-        RecipeRegisterRequest recipeRegisterRequest = registerForm.getRecipeRegisterRequest();
-        RecipeContentRegisterRequest recipeContentRegisterRequest = registerForm.getRecipeContentRegisterRequest();
-        RecipeIngredientRegisterRequest recipeIngredientRegisterRequest = registerForm.getRecipeIngredientRegisterRequest();
-        RecipeMainImageRegisterRequest recipeMainImageRegisterRequest = registerForm.getRecipeMainImageRegisterRequest();
-
         if(user == null) {
             log.info("Unable to find user with user token: {}", userToken);
             return false;
         }
+
+        RecipeRegisterRequest recipeRegisterRequest = registerForm.getRecipeRegisterRequest();
+        RecipeContentRegisterRequest recipeContentRegisterRequest = registerForm.getRecipeContentRegisterRequest();
+        RecipeIngredientRegisterRequest recipeIngredientRegisterRequest = registerForm.getRecipeIngredientRegisterRequest();
+        RecipeMainImageRegisterRequest recipeMainImageRegisterRequest = registerForm.getRecipeMainImageRegisterRequest();
 
         try {
             Recipe recipe = Recipe.builder()
@@ -53,22 +53,26 @@ public class RecipeServiceImpl implements RecipeService {
 
             RecipeIngredient recipeIngredient = RecipeIngredient.builder()
                     .mainIngredient(recipeIngredientRegisterRequest.getMainIngredient())
-                    .otherIngredientList(recipeIngredientRegisterRequest.getOtherIngredientList())
+                    .otherIngredientList(recipeIngredientRegisterRequest.getOtherIngredient())
+                    .recipe(recipe)
                     .build();
 
             recipeIngredientRepository.save(recipeIngredient);
 
             RecipeContent recipeContent = RecipeContent.builder()
                     .recipeDetails(recipeContentRegisterRequest.getRecipeDetails())
-                    .recipeDescription(recipeContentRegisterRequest.getRecipeDiscription())
+                    .recipeDescription(recipeContentRegisterRequest.getRecipeDescription())
                     .cookingTime(recipeContentRegisterRequest.getCookingTime())
+                    .timeUnit(recipeContentRegisterRequest.getTimeUnit())
                     .difficulty(recipeContentRegisterRequest.getDifficulty())
+                    .recipe(recipe)
                     .build();
 
             recipeContentRepository.save(recipeContent);
 
             RecipeMainImage recipeMainImage = RecipeMainImage.builder()
                     .recipeMainImage(recipeMainImageRegisterRequest.getRecipeMainImage())
+                    .recipe(recipe)
                     .build();
 
             recipeMainImageRepository.save(recipeMainImage);
