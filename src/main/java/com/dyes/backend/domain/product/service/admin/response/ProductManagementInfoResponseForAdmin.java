@@ -11,5 +11,5 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class ProductManagementInfoResponseForAdmin {
     private LocalDate registrationDate;
-    private int registeredUserCount;
+    private int registeredProductCount;
 }
