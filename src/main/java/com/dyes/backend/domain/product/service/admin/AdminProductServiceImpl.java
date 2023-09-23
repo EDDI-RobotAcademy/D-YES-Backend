@@ -628,9 +628,9 @@ public class AdminProductServiceImpl implements AdminProductService {
             } else if (productManagement.getCreatedDate().equals(today.minusDays(6))) {
                 registeredProductCount6DaysAgo = registeredProductCount6DaysAgo + 1;
             }
-
+            Farm farm = product.getFarm();
             ProductInfoResponseForAdmin productInfoResponseForAdmin
-                    = new ProductInfoResponseForAdmin(product.getId(), product.getProductName(), product.getProductSaleStatus(), productManagement.getCreatedDate());
+                    = new ProductInfoResponseForAdmin(product.getId(), product.getProductName(), product.getProductSaleStatus(), productManagement.getCreatedDate(), farm.getFarmName());
             productInfoResponseForAdminList.add(productInfoResponseForAdmin);
 
         }

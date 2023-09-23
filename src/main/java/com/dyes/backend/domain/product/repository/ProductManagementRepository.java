@@ -14,6 +14,6 @@ public interface ProductManagementRepository extends JpaRepository<ProductManage
     @Query("select pm FROM ProductManagement pm join fetch pm.product p join fetch p.farm where pm.createdDate between :startDate and :endDate")
     Page<ProductManagement> findByCreatedDateBetween(LocalDate startDate, LocalDate endDate, Pageable pageable);
 
-    @Query("select pm FROM ProductManagement pm join fetch pm.product where pm.createdDate > :startDate ORDER BY pm.createdDate DESC")
+    @Query("select pm FROM ProductManagement pm join fetch pm.product p join fetch p.farm where pm.createdDate > :startDate ORDER BY pm.createdDate DESC")
     List<ProductManagement> findAllByCreatedDateAfterOrderByCreatedDateDesc(@Param("startDate") LocalDate startDate);
 }
