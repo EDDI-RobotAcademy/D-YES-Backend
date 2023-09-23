@@ -53,7 +53,7 @@ public class EventController {
     public EventProductReadResponseForm eventProductRead(@PathVariable Long eventProductId) {
         return eventService.eventProductRead(eventProductId);
     }
-    @PostMapping("/modify")
+    @PutMapping("/modify")
     public boolean eventProductModify(@RequestBody EventProductModifyRequestForm requestForm) {
         ProductModifyUserTokenAndEventProductIdRequest productModifyUserTokenAndEventProductIdRequest = requestForm.getProductModifyUserTokenAndEventProductIdRequest();
         ProductModifyRequest productModifyRequest = requestForm.getProductModifyRequest();
