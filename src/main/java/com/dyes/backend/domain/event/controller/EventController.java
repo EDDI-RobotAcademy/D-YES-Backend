@@ -1,10 +1,8 @@
 package com.dyes.backend.domain.event.controller;
 
-import com.dyes.backend.domain.event.controller.form.EventProductListResponseForm;
-import com.dyes.backend.domain.event.controller.form.EventProductModifyRequestForm;
-import com.dyes.backend.domain.event.controller.form.EventProductReadResponseForm;
-import com.dyes.backend.domain.event.controller.form.EventProductRegisterRequestForm;
+import com.dyes.backend.domain.event.controller.form.*;
 import com.dyes.backend.domain.event.service.EventService;
+import com.dyes.backend.domain.event.service.request.delete.EventProductDeleteRequest;
 import com.dyes.backend.domain.event.service.request.modify.EventProductModifyDeadLineRequest;
 import com.dyes.backend.domain.event.service.request.modify.EventProductModifyPurchaseCountRequest;
 import com.dyes.backend.domain.event.service.request.modify.ProductModifyUserTokenAndEventProductIdRequest;
@@ -69,6 +67,14 @@ public class EventController {
                 productModifyUserTokenAndEventProductIdRequest, productModifyRequest, productOptionModifyRequest,
                 productMainImageModifyRequest, productDetailImagesModifyRequest, eventProductModifyDeadLineRequest,
                 eventProductModifyPurchaseCountRequest);
+
+        return result;
+    }
+    @DeleteMapping("/delete")
+    public boolean eventProductModify(@RequestBody EventProductDeleteRequestForm requestForm) {
+        EventProductDeleteRequest request = requestForm.getEventProductDeleteRequest();
+
+        boolean result = eventService.eventProductDelete(request);
 
         return result;
     }

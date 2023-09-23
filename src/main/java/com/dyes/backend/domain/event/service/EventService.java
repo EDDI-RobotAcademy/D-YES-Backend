@@ -1,6 +1,7 @@
 package com.dyes.backend.domain.event.service;
 
 import com.dyes.backend.domain.event.controller.form.EventProductReadResponseForm;
+import com.dyes.backend.domain.event.service.request.delete.EventProductDeleteRequest;
 import com.dyes.backend.domain.event.service.request.modify.EventProductModifyDeadLineRequest;
 import com.dyes.backend.domain.event.service.request.modify.EventProductModifyPurchaseCountRequest;
 import com.dyes.backend.domain.event.service.request.modify.ProductModifyUserTokenAndEventProductIdRequest;
@@ -25,4 +26,5 @@ public interface EventService {
                                ProductModifyRequest productModifyRequest, ProductOptionModifyRequest productOptionModifyRequest,
                                ProductMainImageModifyRequest productMainImageModifyRequest, List<ProductDetailImagesModifyRequest> productDetailImagesModifyRequest,
                                EventProductModifyDeadLineRequest eventProductModifyDeadLineRequest, EventProductModifyPurchaseCountRequest eventProductModifyPurchaseCountRequest);
+    boolean eventProductDelete(EventProductDeleteRequest request);
 }

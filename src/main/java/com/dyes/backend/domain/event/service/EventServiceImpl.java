@@ -10,6 +10,7 @@ import com.dyes.backend.domain.event.entity.EventPurchaseCount;
 import com.dyes.backend.domain.event.repository.EventDeadLineRepository;
 import com.dyes.backend.domain.event.repository.EventProductRepository;
 import com.dyes.backend.domain.event.repository.EventPurchaseCountRepository;
+import com.dyes.backend.domain.event.service.request.delete.EventProductDeleteRequest;
 import com.dyes.backend.domain.event.service.request.modify.EventProductModifyDeadLineRequest;
 import com.dyes.backend.domain.event.service.request.modify.EventProductModifyPurchaseCountRequest;
 import com.dyes.backend.domain.event.service.request.modify.ProductModifyUserTokenAndEventProductIdRequest;
@@ -361,6 +362,71 @@ public class EventServiceImpl implements EventService{
 
         } catch (Exception e) {
             log.error("Failed to modify the product: {}", e.getMessage(), e);
+            return false;
+        }
+
+    }
+    public boolean eventProductDelete(EventProductDeleteRequest request) {
+        final String userToken = request.getUserToken();
+        final Long eventProductId = request.getEventProductId();
+
+        try {
+            Admin admin = adminService.findAdminByUserToken(userToken);
+
+            if (admin == null) {
+                log.info("Unable to find admin with user token: {}", userToken);
+                return false;
+            }
+
+            Optional<EventProduct> maybeEventProduct = eventProductRepository.findByIdProductOptionDeadLineCount(eventProductId);
+            if (maybeEventProduct.isEmpty()){
+                return false;
+            }
+
+            EventProduct eventProduct = maybeEventProduct.get();
+            Product product = eventProduct.getProductOption().getProduct();
+            ProductOption productOption = eventProduct.getProductOption();
+            EventPurchaseCount count = eventProduct.getEventPurchaseCount();
+            EventDeadLine deadLine = eventProduct.getEventDeadLine();
+
+
+            Optional<ProductMainImage> maybeMainImage = productMainImageRepository.findByProduct(product);
+            if (maybeMainImage.isPresent()){
+                ProductMainImage mainImage = maybeMainImage.get();
+                productMainImageRepository.delete(mainImage);
+            }
+
+
+            List<ProductDetailImages> productDetailImagesList = productDetailImagesRepository.findByProductWithProduct(product);
+            for (ProductDetailImages productDetailImages : productDetailImagesList) {
+                productDetailImagesRepository.delete(productDetailImages);
+            }
+
+            List<Review> reviewList = reviewRepository.findAllByProduct(product);
+            for (Review review : reviewList) {
+                Optional<ReviewRating> maybeRating = reviewRatingRepository.findByReview(review);
+                if (maybeRating.isPresent()) {
+                    reviewRatingRepository.delete(maybeRating.get());
+                }
+                reviewRepository.delete(review);
+            }
+
+            Optional<ProductManagement> maybeProductManagement = productManagementRepository.findByProduct(product);
+            if (maybeProductManagement.isPresent()){
+                productManagementRepository.delete(maybeProductManagement.get());
+            }
+
+            eventProductRepository.delete(eventProduct);
+
+            eventDeadLineRepository.delete(deadLine);
+            eventPurchaseCountRepository.delete(count);
+
+            productOptionRepository.delete(productOption);
+            productRepository.delete(product);
+
+            return true;
+        } catch (Exception e) {
+            log.error("Failed to delete the product: {}", e.getMessage(), e);
             return false;
         }
     }
