@@ -2,6 +2,7 @@ package com.dyes.backend.domain.event.service;
 
 import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.service.AdminService;
+import com.dyes.backend.domain.event.controller.form.EventProductReadResponseForm;
 import com.dyes.backend.domain.event.entity.EventDeadLine;
 import com.dyes.backend.domain.event.entity.EventProduct;
 import com.dyes.backend.domain.event.entity.EventPurchaseCount;
@@ -15,36 +16,31 @@ import com.dyes.backend.domain.event.service.response.EventProductDeadLineRespon
 import com.dyes.backend.domain.event.service.response.EventProductListResponse;
 import com.dyes.backend.domain.event.service.response.EventProductPurchaseCountResponse;
 import com.dyes.backend.domain.farm.entity.Farm;
+import com.dyes.backend.domain.farm.entity.FarmCustomerServiceInfo;
 import com.dyes.backend.domain.farm.entity.FarmIntroductionInfo;
 import com.dyes.backend.domain.farm.entity.FarmRepresentativeInfo;
+import com.dyes.backend.domain.farm.repository.FarmCustomerServiceInfoRepository;
 import com.dyes.backend.domain.farm.repository.FarmIntroductionInfoRepository;
 import com.dyes.backend.domain.farm.repository.FarmRepository;
 import com.dyes.backend.domain.farm.repository.FarmRepresentativeInfoRepository;
-import com.dyes.backend.domain.farm.service.request.FarmAuthenticationRequest;
-import com.dyes.backend.domain.product.controller.admin.form.ProductRegisterRequestForm;
+import com.dyes.backend.domain.farm.service.response.FarmInfoResponseForUser;
 import com.dyes.backend.domain.product.entity.*;
 import com.dyes.backend.domain.product.repository.*;
-import com.dyes.backend.domain.product.service.admin.request.register.ProductDetailImagesRegisterRequest;
-import com.dyes.backend.domain.product.service.admin.request.register.ProductMainImageRegisterRequest;
-import com.dyes.backend.domain.product.service.admin.request.register.ProductOptionRegisterRequest;
-import com.dyes.backend.domain.product.service.admin.request.register.ProductRegisterRequest;
-import com.dyes.backend.domain.product.service.user.response.FarmInfoResponseForListForUser;
-import com.dyes.backend.domain.product.service.user.response.ProductMainImageResponseForListForUser;
-import com.dyes.backend.domain.product.service.user.response.ProductOptionResponseForListForUser;
-import com.dyes.backend.domain.product.service.user.response.ProductResponseForListForUser;
+import com.dyes.backend.domain.product.service.user.response.*;
 import com.dyes.backend.domain.product.service.user.response.form.ProductReviewResponseForUser;
 import com.dyes.backend.domain.review.entity.Review;
 import com.dyes.backend.domain.review.entity.ReviewRating;
 import com.dyes.backend.domain.review.repository.ReviewRatingRepository;
 import com.dyes.backend.domain.review.repository.ReviewRepository;
-import com.dyes.backend.domain.user.service.request.UserAuthenticationRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 import static com.dyes.backend.domain.product.entity.SaleStatus.AVAILABLE;
 
@@ -67,6 +63,7 @@ public class EventServiceImpl implements EventService{
     final private FarmRepresentativeInfoRepository farmRepresentativeInfoRepository;
     final private ReviewRepository reviewRepository;
     final private ReviewRatingRepository reviewRatingRepository;
+    final private FarmCustomerServiceInfoRepository farmCustomerServiceInfoRepository;
 
     public boolean eventProductRegister(EventProductRegisterRequest productRequest,
                                         EventProductRegisterDeadLineRequest deadLineRequest,
@@ -100,7 +97,6 @@ public class EventServiceImpl implements EventService{
             return false;
         }
     }
-
     public List<EventProductListResponse> eventProductList() {
         try {
             List<EventProduct> eventProductList = eventProductRepository.findAllWithProductOptionDeadLineCount();
@@ -179,6 +175,96 @@ public class EventServiceImpl implements EventService{
                 }
             }
             return responseList;
+        } catch (Exception e) {
+            log.error("Failed to list the product: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+    public EventProductReadResponseForm eventProductRead(Long eventProductId) {
+        try {
+            Optional<EventProduct> maybeEventProduct = eventProductRepository.findByIdProductOptionDeadLineCount(eventProductId);
+            if (maybeEventProduct.isEmpty()) {
+                return null;
+            }
+            EventProduct eventProduct = maybeEventProduct.get();
+
+            Product product = eventProduct.getProductOption().getProduct();
+            ProductOption productOption = eventProduct.getProductOption();
+            Farm farm = eventProduct.getProductOption().getProduct().getFarm();
+            FarmIntroductionInfo farmIntroductionInfo = farmIntroductionInfoRepository.findByFarm(farm);
+            FarmCustomerServiceInfo farmCustomerServiceInfo = farmCustomerServiceInfoRepository.findByFarm(farm);
+
+            EventDeadLine deadLine = eventProduct.getEventDeadLine();
+            EventPurchaseCount count = eventProduct.getEventPurchaseCount();
+            List<Review> reviewList = reviewRepository.findAllByProduct(product);
+
+            Integer reviewCount = 0;
+            Integer sumRating = 0;
+            Integer averageRating = 0;
+
+            for (Review review : reviewList) {
+                Optional<ReviewRating> maybeRating = reviewRatingRepository.findByReview(review);
+                if (maybeRating.isEmpty()) {
+                    sumRating += maybeRating.get().getRating();
+                }
+            }
+
+            if (reviewList.size() != 0) {
+                reviewCount = reviewList.size();
+                averageRating = sumRating/reviewCount;
+            }
+
+            Optional<ProductMainImage> maybeMainImage = productMainImageRepository.findByProduct(product);
+            if (maybeMainImage.isEmpty()){
+                return null;
+            }
+            ProductMainImage mainImage = maybeMainImage.get();
+
+            List<ProductDetailImages> productDetailImagesList = productDetailImagesRepository.findByProduct(product);
+
+            ProductResponseForUser productResponseForUser = new ProductResponseForUser(
+                    product.getId(), product.getProductName(), product.getProductDescription(), product.getCultivationMethod()
+            );
+            ProductOptionResponseForUser productOptionResponseForUser = new ProductOptionResponseForUser(
+                    productOption.getId(),productOption.getOptionName(), productOption.getOptionPrice(),
+                    productOption.getStock(), productOption.getAmount().getValue(), productOption.getAmount().getUnit()
+            );
+            ProductMainImageResponseForUser productMainImageResponseForUser = new ProductMainImageResponseForUser(
+                    mainImage.getId(), mainImage.getMainImg()
+            );
+            List<ProductDetailImagesResponseForUser> detailImagesResponseForUserList = new ArrayList<>();
+            for (ProductDetailImages detailImages : productDetailImagesList){
+                ProductDetailImagesResponseForUser productDetailImagesResponseForUser = new ProductDetailImagesResponseForUser(
+                        detailImages.getId(), detailImages.getDetailImgs()
+                );
+                detailImagesResponseForUserList.add(productDetailImagesResponseForUser);
+            }
+            FarmInfoResponseForUser farmInfoResponseForUser = new FarmInfoResponseForUser(
+                    farm.getFarmName(), farmCustomerServiceInfo.getCsContactNumber(), farmCustomerServiceInfo.getFarmAddress(),
+                    farmIntroductionInfo.getMainImage(), farmIntroductionInfo.getIntroduction(), farmIntroductionInfo.getProduceTypes()
+            );
+            ProductReviewResponseForUser productReviewResponseForUser = new ProductReviewResponseForUser(
+                    reviewCount, averageRating
+            );
+            EventProductDeadLineResponse deadLineResponse = new EventProductDeadLineResponse(
+                    deadLine.getStartLine(), deadLine.getDeadLine()
+            );
+            EventProductPurchaseCountResponse countResponse = new EventProductPurchaseCountResponse(
+                    count.getTargetCount(), count.getNowCount()
+            );
+
+            EventProductReadResponseForm responseForm = EventProductReadResponseForm.builder()
+                    .productResponseForUser(productResponseForUser)
+                    .optionResponseForUser(productOptionResponseForUser)
+                    .mainImageResponseForUser(productMainImageResponseForUser)
+                    .detailImagesForUser(detailImagesResponseForUserList)
+                    .farmInfoResponseForUser(farmInfoResponseForUser)
+                    .productReviewResponseForUser(productReviewResponseForUser)
+                    .eventProductDeadLineResponse(deadLineResponse)
+                    .eventProductPurchaseCountResponse(countResponse)
+                    .build();
+
+            return responseForm;
         } catch (Exception e) {
             log.error("Failed to list the product: {}", e.getMessage(), e);
             return null;

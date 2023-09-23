@@ -1,6 +1,7 @@
 package com.dyes.backend.domain.event.controller;
 
 import com.dyes.backend.domain.event.controller.form.EventProductListResponseForm;
+import com.dyes.backend.domain.event.controller.form.EventProductReadResponseForm;
 import com.dyes.backend.domain.event.controller.form.EventProductRegisterRequestForm;
 import com.dyes.backend.domain.event.service.EventService;
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterDeadLineRequest;
@@ -39,5 +40,11 @@ public class EventController {
         EventProductListResponseForm responseForm = new EventProductListResponseForm(responseList);
 
         return responseForm;
+    }
+
+    // 공동 구매 상품의 내용 보기
+    @GetMapping("/read/{eventProductId}")
+    public EventProductReadResponseForm eventProductRead(@PathVariable Long eventProductId) {
+        return eventService.eventProductRead(eventProductId);
     }
 }

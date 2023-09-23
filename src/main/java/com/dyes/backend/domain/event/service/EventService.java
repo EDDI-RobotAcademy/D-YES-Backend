@@ -1,5 +1,6 @@
 package com.dyes.backend.domain.event.service;
 
+import com.dyes.backend.domain.event.controller.form.EventProductReadResponseForm;
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterDeadLineRequest;
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterPurchaseCountRequest;
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterRequest;
@@ -12,4 +13,5 @@ public interface EventService {
                                  EventProductRegisterDeadLineRequest deadLineRequest,
                                  EventProductRegisterPurchaseCountRequest countRequest);
     List<EventProductListResponse> eventProductList();
+    EventProductReadResponseForm eventProductRead(Long eventProductId);
 }
