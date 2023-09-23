@@ -2,6 +2,7 @@ package com.dyes.backend.eventTest;
 
 import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.service.AdminService;
+import com.dyes.backend.domain.event.controller.form.EventProductModifyRequestForm;
 import com.dyes.backend.domain.event.controller.form.EventProductReadResponseForm;
 import com.dyes.backend.domain.event.entity.EventDeadLine;
 import com.dyes.backend.domain.event.entity.EventProduct;
@@ -10,10 +11,15 @@ import com.dyes.backend.domain.event.repository.EventDeadLineRepository;
 import com.dyes.backend.domain.event.repository.EventProductRepository;
 import com.dyes.backend.domain.event.repository.EventPurchaseCountRepository;
 import com.dyes.backend.domain.event.service.EventServiceImpl;
+import com.dyes.backend.domain.event.service.request.modify.EventProductModifyDeadLineRequest;
+import com.dyes.backend.domain.event.service.request.modify.EventProductModifyPurchaseCountRequest;
+import com.dyes.backend.domain.event.service.request.modify.ProductModifyUserTokenAndEventProductIdRequest;
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterDeadLineRequest;
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterPurchaseCountRequest;
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterRequest;
+import com.dyes.backend.domain.event.service.response.EventProductDeadLineResponse;
 import com.dyes.backend.domain.event.service.response.EventProductListResponse;
+import com.dyes.backend.domain.event.service.response.EventProductPurchaseCountResponse;
 import com.dyes.backend.domain.farm.entity.Farm;
 import com.dyes.backend.domain.farm.entity.FarmCustomerServiceInfo;
 import com.dyes.backend.domain.farm.entity.FarmIntroductionInfo;
@@ -22,8 +28,18 @@ import com.dyes.backend.domain.farm.repository.FarmCustomerServiceInfoRepository
 import com.dyes.backend.domain.farm.repository.FarmIntroductionInfoRepository;
 import com.dyes.backend.domain.farm.repository.FarmRepository;
 import com.dyes.backend.domain.farm.repository.FarmRepresentativeInfoRepository;
+import com.dyes.backend.domain.farm.service.response.FarmInfoResponseForUser;
 import com.dyes.backend.domain.product.entity.*;
 import com.dyes.backend.domain.product.repository.*;
+import com.dyes.backend.domain.product.service.admin.request.modify.ProductDetailImagesModifyRequest;
+import com.dyes.backend.domain.product.service.admin.request.modify.ProductMainImageModifyRequest;
+import com.dyes.backend.domain.product.service.admin.request.modify.ProductModifyRequest;
+import com.dyes.backend.domain.product.service.admin.request.modify.ProductOptionModifyRequest;
+import com.dyes.backend.domain.product.service.user.response.ProductDetailImagesResponseForUser;
+import com.dyes.backend.domain.product.service.user.response.ProductMainImageResponseForUser;
+import com.dyes.backend.domain.product.service.user.response.ProductOptionResponseForUser;
+import com.dyes.backend.domain.product.service.user.response.ProductResponseForUser;
+import com.dyes.backend.domain.product.service.user.response.form.ProductReviewResponseForUser;
 import com.dyes.backend.domain.review.entity.Review;
 import com.dyes.backend.domain.review.entity.ReviewRating;
 import com.dyes.backend.domain.review.repository.ReviewRatingRepository;
@@ -239,5 +255,64 @@ public class EventMockingTest {
         EventProductReadResponseForm result = mockService.eventProductRead(eventProductId);
 
         assertTrue(result != null);
+    }
+    @Test
+    @DisplayName("event mocking test: evnet product modify")
+    public void 관리자가_공동구매_물품의_내용을_수정할_수_있습니다() {
+        final String userToken = "유저 토큰";
+        final Long eventProductId = 1L;
+        ProductModifyUserTokenAndEventProductIdRequest productModifyUserTokenAndEventProductIdRequest = new ProductModifyUserTokenAndEventProductIdRequest();
+        productModifyUserTokenAndEventProductIdRequest.setUserToken(userToken);
+        productModifyUserTokenAndEventProductIdRequest.setEventProductId(eventProductId);
+        ProductModifyRequest productModifyRequest = new ProductModifyRequest();
+        ProductOptionModifyRequest productOptionModifyRequest = new ProductOptionModifyRequest();
+        ProductMainImageModifyRequest productMainImageModifyRequest = new ProductMainImageModifyRequest();
+        List<ProductDetailImagesModifyRequest> productDetailImagesModifyRequest = new ArrayList<>();
+        EventProductModifyDeadLineRequest eventProductModifyDeadLineRequest = new EventProductModifyDeadLineRequest();
+        EventProductModifyPurchaseCountRequest eventProductModifyPurchaseCountRequest = new EventProductModifyPurchaseCountRequest();
+
+        Admin admin = new Admin();
+        when(mockAdminService.findAdminByUserToken(productModifyUserTokenAndEventProductIdRequest.getUserToken())).thenReturn(admin);
+
+        Farm farm = new Farm();
+
+        Product product = new Product();
+        product.setFarm(farm);
+
+        ProductOption productOption = new ProductOption();
+        productOption.setProduct(product);
+        productOption.setOptionSaleStatus(SaleStatus.AVAILABLE);
+
+        EventDeadLine deadLine = new EventDeadLine();
+        deadLine.setDeadLine(LocalDate.now());
+        deadLine.setStartLine(LocalDate.now());
+        EventPurchaseCount count = new EventPurchaseCount();
+        count.setNowCount(1);
+        count.setTargetCount(1);
+
+        EventProduct eventProduct = new EventProduct();
+        eventProduct.setProductOption(productOption);
+        eventProduct.setEventDeadLine(deadLine);
+        eventProduct.setEventPurchaseCount(count);
+        when(mockEventProductRepository.findByIdProductOptionDeadLineCount(productModifyUserTokenAndEventProductIdRequest.getEventProductId())).thenReturn(Optional.of(eventProduct));
+
+        ProductMainImage mainImage = new ProductMainImage();
+        mainImage.setProduct(product);
+        when(mockProductMainImageRepository.findByProduct(product)).thenReturn(Optional.of(mainImage));
+
+        ProductDetailImages detailImages = new ProductDetailImages();
+        detailImages.setProduct(product);
+        when(mockProductDetailImagesRepository.findByProduct(product)).thenReturn(List.of(detailImages));
+
+        EventProductModifyRequestForm requestForm = new EventProductModifyRequestForm();
+
+
+
+        boolean result = mockService.eventProductModify(
+                productModifyUserTokenAndEventProductIdRequest, productModifyRequest, productOptionModifyRequest,
+                productMainImageModifyRequest, productDetailImagesModifyRequest,
+                eventProductModifyDeadLineRequest, eventProductModifyPurchaseCountRequest
+                );
+        assertTrue(result);
     }
 }
