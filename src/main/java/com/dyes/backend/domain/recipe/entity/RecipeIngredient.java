@@ -21,4 +21,8 @@ public class RecipeIngredient {
     @Enumerated(EnumType.STRING)
     private MainIngredient mainIngredient;           // 주재료
     private List<String> otherIngredientList;        // 나머지 재료
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "recipe_id")
+    private Recipe recipe;
 }

@@ -28,4 +28,8 @@ public class RecipeContent {
 
     @Enumerated(EnumType.STRING)
     private Difficulty difficulty;  // 난이도
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "recipe_id")
+    private Recipe recipe;
 }
