@@ -5,10 +5,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class RecipeIngredientRegisterRequest {
     private MainIngredient mainIngredient;
-    private String otherIngredient;
+    private List<String> otherIngredient;
 }

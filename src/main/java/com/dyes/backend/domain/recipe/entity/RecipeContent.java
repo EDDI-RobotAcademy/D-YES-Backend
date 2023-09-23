@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Entity
 @Data
 @Builder
@@ -19,7 +21,7 @@ public class RecipeContent {
 
     @Lob
     @Column(columnDefinition = "LONGTEXT")
-    private String recipeDetails;   // 조리법
+    private List<String> recipeDetails;   // 조리법
 
     private String recipeDescripton; // 레시피 설명
 
