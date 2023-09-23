@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/recipe")
 public class RecipeController {
-    private RecipeService recipeService; // final로 선언하니 서비스에서 관계 문제가 나옴
+    final private RecipeService recipeService;
 
     @PostMapping("/register")
     public boolean registerRecipe(@RequestBody RecipeRegisterForm registerForm) {

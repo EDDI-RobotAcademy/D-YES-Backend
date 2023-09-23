@@ -21,6 +21,10 @@ public class RecipeContent {
     @Column(columnDefinition = "LONGTEXT")
     private String recipeDetails;   // 조리법
 
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String recipeDescripton; // 레시피 설명
+
     private int cookingTime;        // 조리시간
 
     @Enumerated(EnumType.STRING)

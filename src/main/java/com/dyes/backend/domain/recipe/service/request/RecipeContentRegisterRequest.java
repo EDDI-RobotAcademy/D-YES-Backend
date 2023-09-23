@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class RecipeContentRegisterRequest {
     private String recipeDetails;
+    private String recipeDiscription;
     private int cookingTime;
     private Difficulty difficulty;
 }

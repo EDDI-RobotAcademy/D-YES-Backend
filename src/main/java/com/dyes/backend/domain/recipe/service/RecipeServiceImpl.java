@@ -60,6 +60,7 @@ public class RecipeServiceImpl implements RecipeService {
 
             RecipeContent recipeContent = RecipeContent.builder()
                     .recipeDetails(recipeContentRegisterRequest.getRecipeDetails())
+                    .recipeDescription(recipeContentRegisterRequest.getRecipeDiscription())
                     .cookingTime(recipeContentRegisterRequest.getCookingTime())
                     .difficulty(recipeContentRegisterRequest.getDifficulty())
                     .build();
