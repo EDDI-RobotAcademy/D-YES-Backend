@@ -15,4 +15,5 @@ public class OrderInfoResponseForAdmin {
     private String productName;
     private OrderStatus orderStatus;
     private LocalDate orderedTime;
+    private int totalAmount;
 }

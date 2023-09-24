@@ -26,6 +26,7 @@ import com.dyes.backend.domain.product.service.admin.response.*;
 import com.dyes.backend.domain.product.service.admin.response.form.ProductListResponseFormForAdmin;
 import com.dyes.backend.domain.product.service.admin.response.form.ProductReadResponseFormForAdmin;
 import com.dyes.backend.domain.product.service.admin.response.form.ProductSummaryReadResponseFormForAdmin;
+import com.dyes.backend.domain.review.repository.ReviewRepository;
 import com.dyes.backend.domain.user.entity.Address;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.repository.UserRepository;
@@ -78,6 +79,8 @@ public class AdminProductMockingTest {
     @Mock
     private ContainProductOptionRepository mockContainProductOptionRepository;
     @Mock
+    private ReviewRepository mockReviewRepository;
+    @Mock
     private AdminService mockAdminService;
     @Mock
     private AuthenticationServiceImpl mockAuthenticationService;
@@ -100,6 +103,7 @@ public class AdminProductMockingTest {
                 mockFarmCustomerServiceInfoRepository,
                 mockFarmIntroductionInfoRepository,
                 mockContainProductOptionRepository,
+                mockReviewRepository,
                 mockAdminService);
     }
 

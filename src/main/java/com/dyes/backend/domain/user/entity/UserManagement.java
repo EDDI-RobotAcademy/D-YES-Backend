@@ -13,7 +13,7 @@ import java.time.LocalDate;
 @ToString(exclude = "user")
 public class UserManagement {
     @Id
-    private Long id;
+    private String id;
     private LocalDate registrationDate;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id")

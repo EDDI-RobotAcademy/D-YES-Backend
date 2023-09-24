@@ -356,7 +356,7 @@ public class OrderServiceImpl implements OrderService {
             }
 
             OrderInfoResponseForAdmin orderInfoResponseForAdmin
-                    = new OrderInfoResponseForAdmin(productOrder.getId(), representativeProductName, productOrder.getOrderStatus(), productOrder.getOrderedTime());
+                    = new OrderInfoResponseForAdmin(productOrder.getId(), representativeProductName, productOrder.getOrderStatus(), productOrder.getOrderedTime(), productOrder.getAmount().getTotalAmount());
             orderInfoResponseForAdminList.add(orderInfoResponseForAdmin);
 
         }

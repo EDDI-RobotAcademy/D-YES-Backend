@@ -20,4 +20,6 @@ public interface ProductManagementRepository extends JpaRepository<ProductManage
   
     @Query("select pm FROM ProductManagement pm join fetch pm.product p join fetch p.farm where pm.createdDate > :startDate ORDER BY pm.createdDate DESC")
     List<ProductManagement> findAllByCreatedDateAfterOrderByCreatedDateDesc(@Param("startDate") LocalDate startDate);
+
+    Optional<ProductManagement> findByProduct(Product product);
 }

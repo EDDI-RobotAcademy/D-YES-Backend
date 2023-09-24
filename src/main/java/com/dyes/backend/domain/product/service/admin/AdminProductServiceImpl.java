@@ -9,6 +9,9 @@ import com.dyes.backend.domain.farm.repository.*;
 import com.dyes.backend.domain.farm.service.request.FarmAuthenticationRequest;
 import com.dyes.backend.domain.farm.service.response.FarmInfoResponseForAdmin;
 import com.dyes.backend.domain.farm.service.response.FarmInfoSummaryResponseForAdmin;
+import com.dyes.backend.domain.order.entity.OrderedProduct;
+import com.dyes.backend.domain.order.repository.OrderRepository;
+import com.dyes.backend.domain.order.repository.OrderedProductRepository;
 import com.dyes.backend.domain.product.controller.admin.form.ProductDeleteRequestForm;
 import com.dyes.backend.domain.product.controller.admin.form.ProductListDeleteRequestForm;
 import com.dyes.backend.domain.product.controller.admin.form.ProductModifyRequestForm;
@@ -29,6 +32,8 @@ import com.dyes.backend.domain.product.service.admin.response.form.ProductInfoRe
 import com.dyes.backend.domain.product.service.admin.response.form.ProductListResponseFormForAdmin;
 import com.dyes.backend.domain.product.service.admin.response.form.ProductReadResponseFormForAdmin;
 import com.dyes.backend.domain.product.service.admin.response.form.ProductSummaryReadResponseFormForAdmin;
+import com.dyes.backend.domain.review.entity.Review;
+import com.dyes.backend.domain.review.repository.ReviewRepository;
 import com.dyes.backend.domain.user.service.request.UserAuthenticationRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +57,8 @@ public class AdminProductServiceImpl implements AdminProductService {
     final private FarmCustomerServiceInfoRepository farmCustomerServiceInfoRepository;
     final private FarmIntroductionInfoRepository farmIntroductionInfoRepository;
     final private ContainProductOptionRepository containProductOptionRepository;
+    final private ReviewRepository reviewRepository;
+    final private OrderedProductRepository orderedProductRepository;
     final private AdminService adminService;
 
     // 상품 등록
@@ -344,6 +351,12 @@ public class AdminProductServiceImpl implements AdminProductService {
 
         // 상품 삭제 진행
         try {
+            List<Review> reviewList = reviewRepository.findAllByProduct(deleteProduct);
+            Optional<OrderedProduct> maybeOrderedProduct = orderedProductRepository.findByProductId(deleteProduct.getId());
+            if(reviewList.size() > 0 || maybeOrderedProduct.isPresent()) {
+                log.info("Unable to delete the product: Reviews or order history are registered.");
+                return false;
+            }
             List<ProductOption> deleteProductOptionList = productOptionRepository.findByProductWithProduct(deleteProduct);
             for (ProductOption productOption : deleteProductOptionList) {
                 List<ContainProductOption> containProductOptionList = containProductOptionRepository.findAllByOptionId(productOption.getId());
@@ -361,14 +374,22 @@ public class AdminProductServiceImpl implements AdminProductService {
             Optional<ProductMainImage> maybeProductMainImage = productMainImageRepository.findByProductWithProduct(deleteProduct);
             if (maybeProductMainImage.isEmpty()) {
                 log.info("ProductMainImage for product with ID '{}' is empty", deleteProduct.getId());
-                return false;
+            } else if(maybeProductMainImage.isPresent()){
+                ProductMainImage deleteProductMainImage = maybeProductMainImage.get();
+                productMainImageRepository.delete(deleteProductMainImage);
             }
-            ProductMainImage deleteProductMainImage = maybeProductMainImage.get();
-            productMainImageRepository.delete(deleteProductMainImage);
 
             List<ProductDetailImages> deleteProductDetailImagesList = productDetailImagesRepository.findByProductWithProduct(deleteProduct);
             for (ProductDetailImages productDetailImages : deleteProductDetailImagesList) {
                 productDetailImagesRepository.delete(productDetailImages);
+            }
+
+            Optional<ProductManagement> maybeProductManagement = productManagementRepository.findByProduct(deleteProduct);
+            if(maybeProductManagement.isEmpty()) {
+                log.info("ProductManagement for product with ID '{}' is empty", deleteProduct.getId());
+            } else if(maybeProductMainImage.isPresent()){
+                ProductMainImage deleteProductMainImage = maybeProductMainImage.get();
+                productMainImageRepository.delete(deleteProductMainImage);
             }
 
             productRepository.delete(deleteProduct);
@@ -403,22 +424,46 @@ public class AdminProductServiceImpl implements AdminProductService {
         try {
             List<Product> productList = productRepository.findAllByIdWithFarm(productListDeleteRequest.getProductIdList());
             for (Product deleteProduct : productList) {
+                List<Review> reviewList = reviewRepository.findAllByProduct(deleteProduct);
+                Optional<OrderedProduct> maybeOrderedProduct = orderedProductRepository.findByProductId(deleteProduct.getId());
+                if(reviewList.size() > 0 || maybeOrderedProduct.isPresent()) {
+                    log.info("Unable to delete the product: Reviews or order history are registered.");
+                    return false;
+                }
+                List<ProductOption> deleteProductOptionList = productOptionRepository.findByProductWithProduct(deleteProduct);
+                for (ProductOption productOption : deleteProductOptionList) {
+                    List<ContainProductOption> containProductOptionList = containProductOptionRepository.findAllByOptionId(productOption.getId());
+                    if (containProductOptionList.size() > 0) {
+                        for (ContainProductOption containProductOption : containProductOptionList) {
+                            containProductOption.setOptionId(0L);
+                            containProductOptionRepository.save(containProductOption);
+                            log.info("Option with ID '{}' is included in the cart", productOption.getId());
+                        }
+                    }
+                    productOptionRepository.delete(productOption);
+                    log.info("Option with ID '{}' has been deleted.", productOption.getId());
+                }
+
                 Optional<ProductMainImage> maybeProductMainImage = productMainImageRepository.findByProductWithProduct(deleteProduct);
                 if (maybeProductMainImage.isEmpty()) {
                     log.info("ProductMainImage for product with ID '{}' is empty", deleteProduct.getId());
-                    return false;
+
+                } else if(maybeProductMainImage.isPresent()) {
+                    ProductMainImage deleteProductMainImage = maybeProductMainImage.get();
+                    productMainImageRepository.delete(deleteProductMainImage);
                 }
-                ProductMainImage deleteProductMainImage = maybeProductMainImage.get();
-                productMainImageRepository.delete(deleteProductMainImage);
 
                 List<ProductDetailImages> deleteProductDetailImagesList = productDetailImagesRepository.findByProductWithProduct(deleteProduct);
                 for (ProductDetailImages productDetailImages : deleteProductDetailImagesList) {
                     productDetailImagesRepository.delete(productDetailImages);
                 }
 
-                List<ProductOption> deleteProductOptionList = productOptionRepository.findByProductWithProduct(deleteProduct);
-                for (ProductOption productOption : deleteProductOptionList) {
-                    productOptionRepository.delete(productOption);
+                Optional<ProductManagement> maybeProductManagement = productManagementRepository.findByProduct(deleteProduct);
+                if(maybeProductManagement.isEmpty()) {
+                    log.info("ProductManagement for product with ID '{}' is empty", deleteProduct.getId());
+                } else if(maybeProductManagement.isPresent()) {
+                    ProductManagement productManagement = maybeProductManagement.get();
+                    productManagementRepository.delete(productManagement);
                 }
 
                 log.info("Product deletion successful for product with ID: {}", deleteProduct.getId());

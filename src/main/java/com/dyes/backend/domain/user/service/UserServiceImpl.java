@@ -205,6 +205,14 @@ public class UserServiceImpl implements UserService {
                     .profileImg(requestForm.getPicture())
                     .build();
             userProfileRepository.save(userProfile);
+
+            UserManagement userManagement = UserManagement.builder()
+                    .id(user.getId())
+                    .registrationDate(LocalDate.now())
+                    .user(user)
+                    .build();
+            userManagementRepository.save(userManagement);
+
             log.info("userLogInForGoogle Not Our User");
             log.info("userLogInForGoogle end");
 
@@ -271,6 +279,13 @@ public class UserServiceImpl implements UserService {
                     .profileImg(requestForm.getProfile_image())
                     .build();
             userProfileRepository.save(userProfile);
+
+            UserManagement userManagement = UserManagement.builder()
+                    .id(user.getId())
+                    .registrationDate(LocalDate.now())
+                    .user(user)
+                    .build();
+            userManagementRepository.save(userManagement);
             log.info("userRegisterAndLoginForNaver Not Our User");
             log.info("userRegisterAndLoginForNaver end");
 
@@ -338,6 +353,13 @@ public class UserServiceImpl implements UserService {
                     .build();
 
             userProfileRepository.save(userProfile);
+
+            UserManagement userManagement = UserManagement.builder()
+                    .id(user.getId())
+                    .registrationDate(LocalDate.now())
+                    .user(user)
+                    .build();
+            userManagementRepository.save(userManagement);
 
             String redirectUrl = kakaoOauthSecretsProvider.getKAKAO_REDIRECT_VIEW_URL();
             String mainPageUserInfo = userLogIn(user, "kakao");
@@ -615,16 +637,17 @@ public class UserServiceImpl implements UserService {
         List<UserInfoResponseForm> userInfoResponseFormList = new ArrayList<>();
         List<User> userList = userRepository.findAll();
         for (User user : userList) {
+            UserManagement userManagement = userManagementRepository.findByUser(user);
             Optional<Admin> maybeAdmin = adminRepository.findByUser(user);
             UserInfoResponseForm userInfoResponseForm;
 
             if (maybeAdmin.isPresent()) {
                 Admin isAdmin = maybeAdmin.get();
                 userInfoResponseForm
-                        = new UserInfoResponseForm(user.getId(), user.getUserType(), user.getActive(), isAdmin.getRoleType());
+                        = new UserInfoResponseForm(user.getId(), user.getUserType(), user.getActive(), isAdmin.getRoleType(), userManagement.getRegistrationDate());
             } else {
                 userInfoResponseForm
-                        = new UserInfoResponseForm(user.getId(), user.getUserType(), user.getActive());
+                        = new UserInfoResponseForm(user.getId(), user.getUserType(), user.getActive(), userManagement.getRegistrationDate());
             }
             userInfoResponseFormList.add(userInfoResponseForm);
         }
