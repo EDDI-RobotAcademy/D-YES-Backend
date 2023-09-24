@@ -9,6 +9,9 @@ import com.dyes.backend.domain.farm.repository.*;
 import com.dyes.backend.domain.farm.service.request.FarmAuthenticationRequest;
 import com.dyes.backend.domain.farm.service.response.FarmInfoResponseForAdmin;
 import com.dyes.backend.domain.farm.service.response.FarmInfoSummaryResponseForAdmin;
+import com.dyes.backend.domain.order.entity.OrderedProduct;
+import com.dyes.backend.domain.order.repository.OrderRepository;
+import com.dyes.backend.domain.order.repository.OrderedProductRepository;
 import com.dyes.backend.domain.product.controller.admin.form.ProductDeleteRequestForm;
 import com.dyes.backend.domain.product.controller.admin.form.ProductListDeleteRequestForm;
 import com.dyes.backend.domain.product.controller.admin.form.ProductModifyRequestForm;
@@ -55,6 +58,7 @@ public class AdminProductServiceImpl implements AdminProductService {
     final private FarmIntroductionInfoRepository farmIntroductionInfoRepository;
     final private ContainProductOptionRepository containProductOptionRepository;
     final private ReviewRepository reviewRepository;
+    final private OrderedProductRepository orderedProductRepository;
     final private AdminService adminService;
 
     // 상품 등록
@@ -348,8 +352,9 @@ public class AdminProductServiceImpl implements AdminProductService {
         // 상품 삭제 진행
         try {
             List<Review> reviewList = reviewRepository.findAllByProduct(deleteProduct);
-            if(reviewList.size() > 0) {
-                log.info("Unable to delete the product: Reviews are registered");
+            Optional<OrderedProduct> maybeOrderedProduct = orderedProductRepository.findByProductId(deleteProduct.getId());
+            if(reviewList.size() > 0 || maybeOrderedProduct.isPresent()) {
+                log.info("Unable to delete the product: Reviews or order history are registered.");
                 return false;
             }
             List<ProductOption> deleteProductOptionList = productOptionRepository.findByProductWithProduct(deleteProduct);
@@ -420,8 +425,9 @@ public class AdminProductServiceImpl implements AdminProductService {
             List<Product> productList = productRepository.findAllByIdWithFarm(productListDeleteRequest.getProductIdList());
             for (Product deleteProduct : productList) {
                 List<Review> reviewList = reviewRepository.findAllByProduct(deleteProduct);
-                if(reviewList.size() > 0) {
-                    log.info("Unable to delete the product: Reviews are registered");
+                Optional<OrderedProduct> maybeOrderedProduct = orderedProductRepository.findByProductId(deleteProduct.getId());
+                if(reviewList.size() > 0 || maybeOrderedProduct.isPresent()) {
+                    log.info("Unable to delete the product: Reviews or order history are registered.");
                     return false;
                 }
                 List<ProductOption> deleteProductOptionList = productOptionRepository.findByProductWithProduct(deleteProduct);
