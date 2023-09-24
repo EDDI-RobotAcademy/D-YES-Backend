@@ -369,9 +369,10 @@ public class AdminProductServiceImpl implements AdminProductService {
             Optional<ProductMainImage> maybeProductMainImage = productMainImageRepository.findByProductWithProduct(deleteProduct);
             if (maybeProductMainImage.isEmpty()) {
                 log.info("ProductMainImage for product with ID '{}' is empty", deleteProduct.getId());
+            } else if(maybeProductMainImage.isPresent()){
+                ProductMainImage deleteProductMainImage = maybeProductMainImage.get();
+                productMainImageRepository.delete(deleteProductMainImage);
             }
-            ProductMainImage deleteProductMainImage = maybeProductMainImage.get();
-            productMainImageRepository.delete(deleteProductMainImage);
 
             List<ProductDetailImages> deleteProductDetailImagesList = productDetailImagesRepository.findByProductWithProduct(deleteProduct);
             for (ProductDetailImages productDetailImages : deleteProductDetailImagesList) {
@@ -381,9 +382,10 @@ public class AdminProductServiceImpl implements AdminProductService {
             Optional<ProductManagement> maybeProductManagement = productManagementRepository.findByProduct(deleteProduct);
             if(maybeProductManagement.isEmpty()) {
                 log.info("ProductManagement for product with ID '{}' is empty", deleteProduct.getId());
+            } else if(maybeProductMainImage.isPresent()){
+                ProductMainImage deleteProductMainImage = maybeProductMainImage.get();
+                productMainImageRepository.delete(deleteProductMainImage);
             }
-            ProductManagement productManagement = maybeProductManagement.get();
-            productManagementRepository.delete(productManagement);
 
             productRepository.delete(deleteProduct);
             log.info("Product deletion successful for product with ID: {}", productId);
