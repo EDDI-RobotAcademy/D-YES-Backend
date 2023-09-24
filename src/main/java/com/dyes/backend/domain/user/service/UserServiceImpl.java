@@ -637,16 +637,17 @@ public class UserServiceImpl implements UserService {
         List<UserInfoResponseForm> userInfoResponseFormList = new ArrayList<>();
         List<User> userList = userRepository.findAll();
         for (User user : userList) {
+            UserManagement userManagement = userManagementRepository.findByUser(user);
             Optional<Admin> maybeAdmin = adminRepository.findByUser(user);
             UserInfoResponseForm userInfoResponseForm;
 
             if (maybeAdmin.isPresent()) {
                 Admin isAdmin = maybeAdmin.get();
                 userInfoResponseForm
-                        = new UserInfoResponseForm(user.getId(), user.getUserType(), user.getActive(), isAdmin.getRoleType());
+                        = new UserInfoResponseForm(user.getId(), user.getUserType(), user.getActive(), isAdmin.getRoleType(), userManagement.getRegistrationDate());
             } else {
                 userInfoResponseForm
-                        = new UserInfoResponseForm(user.getId(), user.getUserType(), user.getActive());
+                        = new UserInfoResponseForm(user.getId(), user.getUserType(), user.getActive(), userManagement.getRegistrationDate());
             }
             userInfoResponseFormList.add(userInfoResponseForm);
         }
