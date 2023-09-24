@@ -11,14 +11,18 @@ import com.dyes.backend.domain.authentication.service.naver.NaverAuthenticationS
 import com.dyes.backend.domain.user.controller.form.*;
 import com.dyes.backend.domain.user.entity.*;
 import com.dyes.backend.domain.user.repository.AddressBookRepository;
+import com.dyes.backend.domain.user.repository.UserManagementRepository;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import com.dyes.backend.domain.user.repository.UserRepository;
 import com.dyes.backend.domain.user.service.request.UserAddressModifyRequest;
 import com.dyes.backend.domain.user.service.request.UserAddressOptionChangeRequest;
 import com.dyes.backend.domain.user.service.request.UserAddressUpdateRequest;
 import com.dyes.backend.domain.user.service.request.UserAuthenticationRequest;
+import com.dyes.backend.domain.user.service.response.UserInfoResponseForAdmin;
+import com.dyes.backend.domain.user.service.response.UserManagementInfoResponseForAdmin;
 import com.dyes.backend.domain.user.service.response.form.UserAddressBookResponseForm;
 import com.dyes.backend.domain.user.service.response.form.UserInfoResponseForm;
+import com.dyes.backend.domain.user.service.response.form.UserInfoResponseFormForDashBoardForAdmin;
 import com.dyes.backend.domain.user.service.response.form.UserProfileResponseForm;
 import com.dyes.backend.utility.provider.GoogleOauthSecretsProvider;
 import com.dyes.backend.utility.provider.KakaoOauthSecretsProvider;
@@ -33,6 +37,7 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -56,6 +61,7 @@ public class UserServiceImpl implements UserService {
     final private AuthenticationService authenticationService;
     final private UserRepository userRepository;
     final private UserProfileRepository userProfileRepository;
+    final private UserManagementRepository userManagementRepository;
     final private AddressBookRepository addressBookRepository;
     final private AdminRepository adminRepository;
     final private RedisService redisService;
@@ -512,7 +518,7 @@ public class UserServiceImpl implements UserService {
                 return null;
             } else if (maybeUserProfile.isPresent()) {
                 UserProfile userProfile = maybeUserProfile.get();
-                if(userProfile.getAddress().getAddress().equals(null) || userProfile.getAddress().getAddress().equals("")) {
+                if (userProfile.getAddress().getAddress().equals(null) || userProfile.getAddress().getAddress().equals("")) {
                     log.info("No address is registered.");
                     return null;
                 }
@@ -558,20 +564,20 @@ public class UserServiceImpl implements UserService {
             return null;
         }
         UserAddressUpdateRequest userAddressUpdateRequest = requestForm.toUserAddressUpdateRequest();
-        if(userAddressUpdateRequest.getAddress().equals(null)) {
+        if (userAddressUpdateRequest.getAddress().equals(null)) {
             log.info("The address to be added to the address book is not available");
             return false;
         }
         List<AddressBook> addressBookList = addressBookRepository.findAllByUser(user);
-        if(addressBookList.size() == 5) {
+        if (addressBookList.size() == 5) {
             log.info("The maximum registration limit is 5. Unable to add to the address book");
             return false;
         }
 
         try {
-            if(userAddressUpdateRequest.getAddressBookOption().equals(DEFAULT_OPTION)) {
+            if (userAddressUpdateRequest.getAddressBookOption().equals(DEFAULT_OPTION)) {
                 Optional<AddressBook> maybeAddressBook = addressBookRepository.findByAddressBookOption(DEFAULT_OPTION);
-                if(maybeAddressBook.isPresent()) {
+                if (maybeAddressBook.isPresent()) {
                     AddressBook addressBook = maybeAddressBook.get();
                     addressBook.setAddressBookOption(NON_DEFAULT_OPTION);
                     addressBookRepository.save(addressBook);
@@ -641,8 +647,8 @@ public class UserServiceImpl implements UserService {
         // 주소록 삭제 진행
         try {
             List<AddressBook> addressBookList = addressBookRepository.findAllByUser(user);
-            for(AddressBook addressBook: addressBookList) {
-                if(addressBook.getId().equals(addressBookId)) {
+            for (AddressBook addressBook : addressBookList) {
+                if (addressBook.getId().equals(addressBookId)) {
                     addressBookRepository.deleteById(addressBook.getId().toString());
                     log.info("AddressBook deletion successful for addressBook with ID: {}", addressBook.getId());
                     return true;
@@ -676,11 +682,11 @@ public class UserServiceImpl implements UserService {
         // 주소록에 있는 배송지 옵션 변경 진행
         try {
             List<AddressBook> addressBookList = addressBookRepository.findAllByUser(user);
-            for(AddressBook addressBook: addressBookList) {
-                if(addressBook.getId().equals(addressBookId)) {
-                    if(addressBookOption.equals(DEFAULT_OPTION)) {
+            for (AddressBook addressBook : addressBookList) {
+                if (addressBook.getId().equals(addressBookId)) {
+                    if (addressBookOption.equals(DEFAULT_OPTION)) {
                         Optional<AddressBook> maybeAddressBook = addressBookRepository.findByAddressBookOption(DEFAULT_OPTION);
-                        if(maybeAddressBook.isPresent()) {
+                        if (maybeAddressBook.isPresent()) {
                             AddressBook addressBookDefaultOption = maybeAddressBook.get();
                             addressBookDefaultOption.setAddressBookOption(NON_DEFAULT_OPTION);
                             addressBookRepository.save(addressBookDefaultOption);
@@ -699,6 +705,88 @@ public class UserServiceImpl implements UserService {
             return false;
         }
 
+    }
+
+    // 관리자의 신규 회원 목록 조회(7일)
+    @Override
+    public UserInfoResponseFormForDashBoardForAdmin getNewUserList() {
+        log.info("Finding New registration User start");
+
+        // 최종적으로 반환할 ResponseForm에 들어갈 Response
+        List<UserManagementInfoResponseForAdmin> registeredUserCountList = new ArrayList<>();
+        List<UserInfoResponseForAdmin> userInfoResponseForAdminList = new ArrayList<>();
+
+        // 이전 7일간의 내역을 조회
+        LocalDate today = LocalDate.now();
+        LocalDate sevenDaysAgo = today.minusDays(7);
+
+        List<UserManagement> userManagementList
+                = userManagementRepository.findAllByRegistrationDateAfterOrderByRegistrationDateDesc(sevenDaysAgo);
+        if(userManagementList.size() == 0) {
+            log.info("No users found.");
+            return null;
+        }
+        List<LocalDate> dateList = new ArrayList<>();
+        List<Integer> userCountList = new ArrayList<>();
+        int registeredUserCountToday = 0;
+        int registeredUserCount1DayAgo = 0;
+        int registeredUserCount2DaysAgo = 0;
+        int registeredUserCount3DaysAgo = 0;
+        int registeredUserCount4DaysAgo = 0;
+        int registeredUserCount5DaysAgo = 0;
+        int registeredUserCount6DaysAgo = 0;
+
+        for (UserManagement userManagement : userManagementList) {
+            User user = userManagement.getUser();
+
+            if (userManagement.getRegistrationDate().equals(today)) {
+                registeredUserCountToday = registeredUserCountToday + 1;
+            } else if (userManagement.getRegistrationDate().equals(today.minusDays(1))) {
+                registeredUserCount1DayAgo = registeredUserCount1DayAgo + 1;
+            } else if (userManagement.getRegistrationDate().equals(today.minusDays(2))) {
+                registeredUserCount2DaysAgo = registeredUserCount2DaysAgo + 1;
+            } else if (userManagement.getRegistrationDate().equals(today.minusDays(3))) {
+                registeredUserCount3DaysAgo = registeredUserCount3DaysAgo + 1;
+            } else if (userManagement.getRegistrationDate().equals(today.minusDays(4))) {
+                registeredUserCount4DaysAgo = registeredUserCount4DaysAgo + 1;
+            } else if (userManagement.getRegistrationDate().equals(today.minusDays(5))) {
+                registeredUserCount5DaysAgo = registeredUserCount5DaysAgo + 1;
+            } else if (userManagement.getRegistrationDate().equals(today.minusDays(6))) {
+                registeredUserCount6DaysAgo = registeredUserCount6DaysAgo + 1;
+            }
+
+            UserInfoResponseForAdmin userInfoResponseForm
+                    = new UserInfoResponseForAdmin(user.getId(), user.getUserType(), user.getActive(), userManagement.getRegistrationDate());
+            userInfoResponseForAdminList.add(userInfoResponseForm);
+
+        }
+        dateList.add(today);
+        dateList.add(today.minusDays(1));
+        dateList.add(today.minusDays(2));
+        dateList.add(today.minusDays(3));
+        dateList.add(today.minusDays(4));
+        dateList.add(today.minusDays(5));
+        dateList.add(today.minusDays(6));
+
+        userCountList.add(registeredUserCountToday);
+        userCountList.add(registeredUserCount1DayAgo);
+        userCountList.add(registeredUserCount2DaysAgo);
+        userCountList.add(registeredUserCount3DaysAgo);
+        userCountList.add(registeredUserCount4DaysAgo);
+        userCountList.add(registeredUserCount5DaysAgo);
+        userCountList.add(registeredUserCount6DaysAgo);
+
+        for (int i = 0; i < 7; i++) {
+            UserManagementInfoResponseForAdmin userManagementInfoResponseForAdmin
+                    = new UserManagementInfoResponseForAdmin(dateList.get(i), userCountList.get(i));
+            registeredUserCountList.add(userManagementInfoResponseForAdmin);
+        }
+
+        UserInfoResponseFormForDashBoardForAdmin userInfoResponseFormForDashBoard
+                = new UserInfoResponseFormForDashBoardForAdmin(userInfoResponseForAdminList, registeredUserCountList);
+
+        log.info("Finding New registration User successful");
+        return userInfoResponseFormForDashBoard;
     }
 
     // 회원 비활성화 및 프로필 삭제

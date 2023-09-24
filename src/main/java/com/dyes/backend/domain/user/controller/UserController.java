@@ -4,6 +4,7 @@ import com.dyes.backend.domain.user.controller.form.*;
 import com.dyes.backend.domain.user.service.UserService;
 import com.dyes.backend.domain.user.service.response.form.UserAddressBookResponseForm;
 import com.dyes.backend.domain.user.service.response.form.UserInfoResponseForm;
+import com.dyes.backend.domain.user.service.response.form.UserInfoResponseFormForDashBoardForAdmin;
 import com.dyes.backend.domain.user.service.response.form.UserProfileResponseForm;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
@@ -101,5 +102,12 @@ public class UserController {
     public List<UserInfoResponseForm> getUserList(@RequestParam("userToken") String userToken) {
 
         return userService.getUserList(userToken);
+    }
+
+    // 관리자의 신규 회원 목록 조회(7일)
+    @GetMapping("/new-list")
+    public UserInfoResponseFormForDashBoardForAdmin getNewUserList() {
+
+        return userService.getNewUserList();
     }
 }

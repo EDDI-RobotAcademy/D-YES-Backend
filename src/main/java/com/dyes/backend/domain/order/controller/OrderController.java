@@ -3,6 +3,7 @@ package com.dyes.backend.domain.order.controller;
 import com.dyes.backend.domain.order.controller.form.*;
 import com.dyes.backend.domain.order.service.OrderService;
 import com.dyes.backend.domain.order.service.admin.response.form.OrderDetailDataResponseForAdminForm;
+import com.dyes.backend.domain.order.service.admin.response.form.OrderInfoResponseFormForDashBoardForAdmin;
 import com.dyes.backend.domain.order.service.admin.response.form.OrderListResponseFormForAdmin;
 import com.dyes.backend.domain.order.service.user.response.form.OrderConfirmResponseFormForUser;
 import com.dyes.backend.domain.order.service.user.response.form.OrderDetailDataResponseForUserForm;
@@ -54,7 +55,7 @@ public class OrderController {
 
     // 관리자의 신규 주문 내역 확인
     @GetMapping("/admin/new-list")
-    public List<OrderListResponseFormForAdmin> getAllNewOrderListForAdmin() {
+    public OrderInfoResponseFormForDashBoardForAdmin getAllNewOrderListForAdmin() {
         return orderService.getAllNewOrderListForAdmin();
     }
 

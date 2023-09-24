@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -15,10 +16,8 @@ public interface ProductManagementRepository extends JpaRepository<ProductManage
     @Query("select pm FROM ProductManagement pm join fetch pm.product p join fetch p.farm where pm.createdDate between :startDate and :endDate")
     Page<ProductManagement> findByCreatedDateBetween(LocalDate startDate, LocalDate endDate, Pageable pageable);
 
-    List<ProductManagement> findAllByOrderByCreatedDateAsc();
-
-    @Query("select pm FROM ProductManagement pm join fetch pm.product p join fetch p.farm where pm.id = :productManagementId")
-    List<ProductManagement> findByIdWithProductAndFarm(Long productManagementId);
-
     Optional<ProductManagement> findByProduct(Product product);
+  
+    @Query("select pm FROM ProductManagement pm join fetch pm.product p join fetch p.farm where pm.createdDate > :startDate ORDER BY pm.createdDate DESC")
+    List<ProductManagement> findAllByCreatedDateAfterOrderByCreatedDateDesc(@Param("startDate") LocalDate startDate);
 }

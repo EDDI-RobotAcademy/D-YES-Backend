@@ -25,6 +25,7 @@ import com.dyes.backend.domain.product.service.admin.request.register.ProductMai
 import com.dyes.backend.domain.product.service.admin.request.register.ProductOptionRegisterRequest;
 import com.dyes.backend.domain.product.service.admin.request.register.ProductRegisterRequest;
 import com.dyes.backend.domain.product.service.admin.response.*;
+import com.dyes.backend.domain.product.service.admin.response.form.ProductInfoResponseFormForDashBoardForAdmin;
 import com.dyes.backend.domain.product.service.admin.response.form.ProductListResponseFormForAdmin;
 import com.dyes.backend.domain.product.service.admin.response.form.ProductReadResponseFormForAdmin;
 import com.dyes.backend.domain.product.service.admin.response.form.ProductSummaryReadResponseFormForAdmin;
@@ -581,51 +582,84 @@ public class AdminProductServiceImpl implements AdminProductService {
 
     // 신규 상품 목록 조회
     @Override
-    public List<ProductListResponseFormForAdmin> getNewProductListForAdmin() {
-        log.info("Reading new product list");
+    public ProductInfoResponseFormForDashBoardForAdmin getNewProductListForAdmin() {
+        log.info("Finding New registration Product start");
 
-        List<ProductListResponseFormForAdmin> productListResponseFormListForAdmin = new ArrayList<>();
+        // 최종적으로 반환할 ResponseForm에 들어갈 Response
+        List<ProductManagementInfoResponseForAdmin> registeredProductCountList = new ArrayList<>();
+        List<ProductInfoResponseForAdmin> productInfoResponseForAdminList = new ArrayList<>();
 
-        // 상품 목록 조회 진행
-        try {
-            // product 조인 패치 없이 최신순으로 List 조회 및 정렬
-            List<ProductManagement> productManagementList = productManagementRepository.findAllByOrderByCreatedDateAsc();
-            for(ProductManagement productManagement : productManagementList) {
-                Long productManagementId = productManagement.getId();
+        // 이전 7일간의 내역을 조회
+        LocalDate today = LocalDate.now();
+        LocalDate sevenDaysAgo = today.minusDays(7);
 
-                // 가져온 productManagementId로 순차적으로 product를 들고올 수 있도록 조인 패치
-                List<ProductManagement> productManagementListWithProductAndFarm
-                        = productManagementRepository.findByIdWithProductAndFarm(productManagementId);
-                for(ProductManagement productManagementWithProductAndFarm : productManagementListWithProductAndFarm) {
-                    Product product = productManagementWithProductAndFarm.getProduct();
-                    List<ProductOptionListResponseForAdmin> adminProductOptionListResponseList = new ArrayList<>();
-
-                    List<ProductOption> productOptionList = productOptionRepository.findByProduct(product);
-                    for (ProductOption productOption : productOptionList) {
-                        ProductOptionListResponseForAdmin adminProductOptionListResponse
-                                = new ProductOptionListResponseForAdmin().productOptionListResponseForAdmin(productOption);
-
-                        adminProductOptionListResponseList.add(adminProductOptionListResponse);
-                    }
-
-                    Farm farm = product.getFarm();
-                    ProductListResponseFormForAdmin productListResponseFormForAdmin
-                            = new ProductListResponseFormForAdmin(
-                            product.getId(),
-                            product.getProductName(),
-                            product.getProductSaleStatus(),
-                            adminProductOptionListResponseList,
-                            farm.getFarmName());
-                    productListResponseFormListForAdmin.add(productListResponseFormForAdmin);
-                }
-            }
-
-            log.info("New Product list read successful");
-            return productListResponseFormListForAdmin;
-
-        } catch (Exception e) {
-            log.error("Failed to read the new product list: {}", e.getMessage(), e);
+        List<ProductManagement> productManagementList
+                = productManagementRepository.findAllByCreatedDateAfterOrderByCreatedDateDesc(sevenDaysAgo);
+        if(productManagementList.size() == 0) {
+            log.info("No Products found.");
             return null;
         }
+        List<LocalDate> dateList = new ArrayList<>();
+        List<Integer> productCountList = new ArrayList<>();
+        int registeredProductCountToday = 0;
+        int registeredProductCount1DayAgo = 0;
+        int registeredProductCount2DaysAgo = 0;
+        int registeredProductCount3DaysAgo = 0;
+        int registeredProductCount4DaysAgo = 0;
+        int registeredProductCount5DaysAgo = 0;
+        int registeredProductCount6DaysAgo = 0;
+
+        // 상품 목록 조회 진행
+        for (ProductManagement productManagement : productManagementList) {
+            Product product = productManagement.getProduct();
+
+            if (productManagement.getCreatedDate().equals(today)) {
+                registeredProductCountToday = registeredProductCountToday + 1;
+            } else if (productManagement.getCreatedDate().equals(today.minusDays(1))) {
+                registeredProductCount1DayAgo = registeredProductCount1DayAgo + 1;
+            } else if (productManagement.getCreatedDate().equals(today.minusDays(2))) {
+                registeredProductCount2DaysAgo = registeredProductCount2DaysAgo + 1;
+            } else if (productManagement.getCreatedDate().equals(today.minusDays(3))) {
+                registeredProductCount3DaysAgo = registeredProductCount3DaysAgo + 1;
+            } else if (productManagement.getCreatedDate().equals(today.minusDays(4))) {
+                registeredProductCount4DaysAgo = registeredProductCount4DaysAgo + 1;
+            } else if (productManagement.getCreatedDate().equals(today.minusDays(5))) {
+                registeredProductCount5DaysAgo = registeredProductCount5DaysAgo + 1;
+            } else if (productManagement.getCreatedDate().equals(today.minusDays(6))) {
+                registeredProductCount6DaysAgo = registeredProductCount6DaysAgo + 1;
+            }
+            Farm farm = product.getFarm();
+            ProductInfoResponseForAdmin productInfoResponseForAdmin
+                    = new ProductInfoResponseForAdmin(product.getId(), product.getProductName(), product.getProductSaleStatus(), productManagement.getCreatedDate(), farm.getFarmName());
+            productInfoResponseForAdminList.add(productInfoResponseForAdmin);
+
+        }
+        dateList.add(today);
+        dateList.add(today.minusDays(1));
+        dateList.add(today.minusDays(2));
+        dateList.add(today.minusDays(3));
+        dateList.add(today.minusDays(4));
+        dateList.add(today.minusDays(5));
+        dateList.add(today.minusDays(6));
+
+        productCountList.add(registeredProductCountToday);
+        productCountList.add(registeredProductCount1DayAgo);
+        productCountList.add(registeredProductCount2DaysAgo);
+        productCountList.add(registeredProductCount3DaysAgo);
+        productCountList.add(registeredProductCount4DaysAgo);
+        productCountList.add(registeredProductCount5DaysAgo);
+        productCountList.add(registeredProductCount6DaysAgo);
+
+        for (int i = 0; i < 7; i++) {
+            ProductManagementInfoResponseForAdmin productManagementInfoResponseForAdmin
+                    = new ProductManagementInfoResponseForAdmin(dateList.get(i), productCountList.get(i));
+            registeredProductCountList.add(productManagementInfoResponseForAdmin);
+        }
+
+        ProductInfoResponseFormForDashBoardForAdmin productInfoResponseFormForDashBoardForAdmin
+                = new ProductInfoResponseFormForDashBoardForAdmin(productInfoResponseForAdminList, registeredProductCountList);
+
+        log.info("Finding New registration Products successful");
+        return productInfoResponseFormForDashBoardForAdmin;
     }
 }

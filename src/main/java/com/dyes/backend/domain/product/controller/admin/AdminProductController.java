@@ -5,6 +5,7 @@ import com.dyes.backend.domain.product.controller.admin.form.ProductListDeleteRe
 import com.dyes.backend.domain.product.controller.admin.form.ProductModifyRequestForm;
 import com.dyes.backend.domain.product.controller.admin.form.ProductRegisterRequestForm;
 import com.dyes.backend.domain.product.service.admin.AdminProductService;
+import com.dyes.backend.domain.product.service.admin.response.form.ProductInfoResponseFormForDashBoardForAdmin;
 import com.dyes.backend.domain.product.service.admin.response.form.ProductListResponseFormForAdmin;
 import com.dyes.backend.domain.product.service.admin.response.form.ProductReadResponseFormForAdmin;
 import com.dyes.backend.domain.product.service.admin.response.form.ProductSummaryReadResponseFormForAdmin;
@@ -69,7 +70,7 @@ public class AdminProductController {
 
     // 8. 신규 상품 목록 조회
     @GetMapping("/admin/new-list")
-    public List<ProductListResponseFormForAdmin> getNewProductListForAdmin() {
+    public ProductInfoResponseFormForDashBoardForAdmin getNewProductListForAdmin() {
         return adminProductService.getNewProductListForAdmin();
     }
 
