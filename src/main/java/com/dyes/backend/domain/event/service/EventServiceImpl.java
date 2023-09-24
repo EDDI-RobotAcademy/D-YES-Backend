@@ -2,6 +2,7 @@ package com.dyes.backend.domain.event.service;
 
 import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.service.AdminService;
+import com.dyes.backend.domain.event.controller.form.EventProductModifyRequestForm;
 import com.dyes.backend.domain.event.controller.form.EventProductReadResponseForm;
 import com.dyes.backend.domain.event.entity.EventDeadLine;
 import com.dyes.backend.domain.event.entity.EventProduct;
@@ -9,6 +10,10 @@ import com.dyes.backend.domain.event.entity.EventPurchaseCount;
 import com.dyes.backend.domain.event.repository.EventDeadLineRepository;
 import com.dyes.backend.domain.event.repository.EventProductRepository;
 import com.dyes.backend.domain.event.repository.EventPurchaseCountRepository;
+import com.dyes.backend.domain.event.service.request.delete.EventProductDeleteRequest;
+import com.dyes.backend.domain.event.service.request.modify.EventProductModifyDeadLineRequest;
+import com.dyes.backend.domain.event.service.request.modify.EventProductModifyPurchaseCountRequest;
+import com.dyes.backend.domain.event.service.request.modify.ProductModifyUserTokenAndEventProductIdRequest;
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterDeadLineRequest;
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterPurchaseCountRequest;
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterRequest;
@@ -26,12 +31,17 @@ import com.dyes.backend.domain.farm.repository.FarmRepresentativeInfoRepository;
 import com.dyes.backend.domain.farm.service.response.FarmInfoResponseForUser;
 import com.dyes.backend.domain.product.entity.*;
 import com.dyes.backend.domain.product.repository.*;
+import com.dyes.backend.domain.product.service.admin.request.modify.ProductDetailImagesModifyRequest;
+import com.dyes.backend.domain.product.service.admin.request.modify.ProductMainImageModifyRequest;
+import com.dyes.backend.domain.product.service.admin.request.modify.ProductModifyRequest;
+import com.dyes.backend.domain.product.service.admin.request.modify.ProductOptionModifyRequest;
 import com.dyes.backend.domain.product.service.user.response.*;
 import com.dyes.backend.domain.product.service.user.response.form.ProductReviewResponseForUser;
 import com.dyes.backend.domain.review.entity.Review;
 import com.dyes.backend.domain.review.entity.ReviewRating;
 import com.dyes.backend.domain.review.repository.ReviewRatingRepository;
 import com.dyes.backend.domain.review.repository.ReviewRepository;
+import com.dyes.backend.domain.user.service.request.UserAuthenticationRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -268,6 +278,156 @@ public class EventServiceImpl implements EventService{
         } catch (Exception e) {
             log.error("Failed to list the product: {}", e.getMessage(), e);
             return null;
+        }
+    }
+    // 관리자가 공동 구매 물품 내용을 수정합니다
+    public boolean eventProductModify(ProductModifyUserTokenAndEventProductIdRequest productModifyUserTokenAndEventProductIdRequest,
+                                      ProductModifyRequest productModifyRequest, ProductOptionModifyRequest productOptionModifyRequest,
+                                      ProductMainImageModifyRequest productMainImageModifyRequest, List<ProductDetailImagesModifyRequest> productDetailImagesModifyRequest,
+                                      EventProductModifyDeadLineRequest eventProductModifyDeadLineRequest, EventProductModifyPurchaseCountRequest eventProductModifyPurchaseCountRequest) {
+
+        final String userToken = productModifyUserTokenAndEventProductIdRequest.getUserToken();
+        final Long eventProductId = productModifyUserTokenAndEventProductIdRequest.getEventProductId();
+
+
+        try {
+            final Admin admin = adminService.findAdminByUserToken(userToken);
+
+            if (admin == null) {
+                log.info("Unable to find admin with user token: {}", userToken);
+                return false;
+            }
+
+            Optional<EventProduct> maybeEventProduct = eventProductRepository.findByIdProductOptionDeadLineCount(eventProductId);
+            if (maybeEventProduct.isEmpty()){
+                return false;
+            }
+            EventProduct eventProduct = maybeEventProduct.get();
+            // 상품 수정 진행
+            Product product = eventProduct.getProductOption().getProduct();
+
+            product.setProductName(productModifyRequest.getProductName());
+            product.setProductDescription(productModifyRequest.getProductDescription());
+            product.setCultivationMethod(productModifyRequest.getCultivationMethod());
+            product.setProductSaleStatus(productModifyRequest.getProductSaleStatus());
+            productRepository.save(product);
+
+            Optional<ProductMainImage> maybeMainImage = productMainImageRepository.findByProduct(product);
+            if (maybeMainImage.isEmpty()){
+                return false;
+            }
+            ProductMainImage mainImage = maybeMainImage.get();
+
+            mainImage.setMainImg(productMainImageModifyRequest.getMainImg());
+            mainImage.setProduct(product);
+            productMainImageRepository.save(mainImage);
+
+            // DB에 저장된 상품 상세 이미지 가져오기
+            List<ProductDetailImages> productDetailImagesList = productDetailImagesRepository.findByProductWithProduct(product);
+
+            for (ProductDetailImages productDetailImages : productDetailImagesList) {
+                for (ProductDetailImagesModifyRequest detailImagesModifyRequest : productDetailImagesModifyRequest) {
+                    if (!productDetailImages.getId().equals(detailImagesModifyRequest.getDetailImageId())) {
+                        productDetailImagesRepository.delete(productDetailImages);
+                    } else if (detailImagesModifyRequest.getDetailImgs() != null) {
+                        ProductDetailImages detailImages = ProductDetailImages.builder()
+                                .detailImgs(detailImagesModifyRequest.getDetailImgs())
+                                .product(product)
+                                .build();
+                        productDetailImagesRepository.save(detailImages);
+                    }
+                }
+            }
+
+            ProductOption productOption = eventProduct.getProductOption();
+
+            productOption.setOptionName(productOptionModifyRequest.getOptionName());
+            productOption.setOptionPrice(productOptionModifyRequest.getOptionPrice());
+            productOption.setStock(productOptionModifyRequest.getStock());
+            productOption.setAmount(new Amount(productOptionModifyRequest.getValue(), productOptionModifyRequest.getUnit()));
+            productOption.setOptionSaleStatus(productOptionModifyRequest.getOptionSaleStatus());
+            productOption.setProduct(product);
+            productOptionRepository.save(productOption);
+
+            EventDeadLine eventDeadLine = eventProduct.getEventDeadLine();
+            eventDeadLine.setStartLine(eventProductModifyDeadLineRequest.getStartLine());
+            eventDeadLine.setDeadLine(eventProductModifyDeadLineRequest.getDeadLine());
+            eventDeadLineRepository.save(eventDeadLine);
+
+            EventPurchaseCount count = eventProduct.getEventPurchaseCount();
+            count.setTargetCount(eventProductModifyPurchaseCountRequest.getTargetCount());
+            eventPurchaseCountRepository.save(count);
+
+            return true;
+
+        } catch (Exception e) {
+            log.error("Failed to modify the product: {}", e.getMessage(), e);
+            return false;
+        }
+
+    }
+    public boolean eventProductDelete(EventProductDeleteRequest request) {
+        final String userToken = request.getUserToken();
+        final Long eventProductId = request.getEventProductId();
+
+        try {
+            Admin admin = adminService.findAdminByUserToken(userToken);
+
+            if (admin == null) {
+                log.info("Unable to find admin with user token: {}", userToken);
+                return false;
+            }
+
+            Optional<EventProduct> maybeEventProduct = eventProductRepository.findByIdProductOptionDeadLineCount(eventProductId);
+            if (maybeEventProduct.isEmpty()){
+                return false;
+            }
+
+            EventProduct eventProduct = maybeEventProduct.get();
+            Product product = eventProduct.getProductOption().getProduct();
+            ProductOption productOption = eventProduct.getProductOption();
+            EventPurchaseCount count = eventProduct.getEventPurchaseCount();
+            EventDeadLine deadLine = eventProduct.getEventDeadLine();
+
+
+            Optional<ProductMainImage> maybeMainImage = productMainImageRepository.findByProduct(product);
+            if (maybeMainImage.isPresent()){
+                ProductMainImage mainImage = maybeMainImage.get();
+                productMainImageRepository.delete(mainImage);
+            }
+
+
+            List<ProductDetailImages> productDetailImagesList = productDetailImagesRepository.findByProductWithProduct(product);
+            for (ProductDetailImages productDetailImages : productDetailImagesList) {
+                productDetailImagesRepository.delete(productDetailImages);
+            }
+
+            List<Review> reviewList = reviewRepository.findAllByProduct(product);
+            for (Review review : reviewList) {
+                Optional<ReviewRating> maybeRating = reviewRatingRepository.findByReview(review);
+                if (maybeRating.isPresent()) {
+                    reviewRatingRepository.delete(maybeRating.get());
+                }
+                reviewRepository.delete(review);
+            }
+
+            Optional<ProductManagement> maybeProductManagement = productManagementRepository.findByProduct(product);
+            if (maybeProductManagement.isPresent()){
+                productManagementRepository.delete(maybeProductManagement.get());
+            }
+
+            eventProductRepository.delete(eventProduct);
+
+            eventDeadLineRepository.delete(deadLine);
+            eventPurchaseCountRepository.delete(count);
+
+            productOptionRepository.delete(productOption);
+            productRepository.delete(product);
+
+            return true;
+        } catch (Exception e) {
+            log.error("Failed to delete the product: {}", e.getMessage(), e);
+            return false;
         }
     }
 
