@@ -8,6 +8,7 @@ import com.dyes.backend.domain.cart.repository.ContainProductOptionRepository;
 import com.dyes.backend.domain.farm.entity.*;
 import com.dyes.backend.domain.farm.repository.*;
 import com.dyes.backend.domain.farm.service.response.FarmInfoResponseForAdmin;
+import com.dyes.backend.domain.order.repository.OrderedProductRepository;
 import com.dyes.backend.domain.product.controller.admin.form.ProductDeleteRequestForm;
 import com.dyes.backend.domain.product.controller.admin.form.ProductModifyRequestForm;
 import com.dyes.backend.domain.product.controller.admin.form.ProductRegisterRequestForm;
@@ -79,6 +80,8 @@ public class AdminProductMockingTest {
     @Mock
     private ContainProductOptionRepository mockContainProductOptionRepository;
     @Mock
+    private OrderedProductRepository mockOrderedProductRepository;
+    @Mock
     private ReviewRepository mockReviewRepository;
     @Mock
     private AdminService mockAdminService;
@@ -104,6 +107,7 @@ public class AdminProductMockingTest {
                 mockFarmIntroductionInfoRepository,
                 mockContainProductOptionRepository,
                 mockReviewRepository,
+                mockOrderedProductRepository,
                 mockAdminService);
     }
 
