@@ -13,10 +13,7 @@ import com.dyes.backend.domain.order.service.user.response.KakaoRefundApprovedCa
 import com.dyes.backend.domain.payment.repository.PaymentRepository;
 import com.dyes.backend.domain.payment.repository.RefundedPaymentRepository;
 import com.dyes.backend.domain.payment.service.PaymentServiceImpl;
-import com.dyes.backend.domain.payment.service.request.KakaoPaymentApprovalRequest;
-import com.dyes.backend.domain.payment.service.request.KakaoPaymentRejectRequest;
-import com.dyes.backend.domain.payment.service.request.KakaoPaymentRequest;
-import com.dyes.backend.domain.payment.service.request.PaymentTemporarySaveRequest;
+import com.dyes.backend.domain.payment.service.request.*;
 import com.dyes.backend.domain.payment.service.response.KakaoApproveAmountResponse;
 import com.dyes.backend.domain.payment.service.response.KakaoApproveCardInfoResponse;
 import com.dyes.backend.domain.payment.service.response.KakaoApproveResponse;
@@ -283,9 +280,10 @@ public class PaymentMockingTest {
         final String userToken = "userToken";
         final Long orderId = 1L;
         final Long productOptionId = 1L;
+        final String refundReason = "환불 사유";
         KakaoPaymentRefundProductOptionRequest optionRequest = new KakaoPaymentRefundProductOptionRequest(productOptionId);
-        KakaoPaymentRefundRequestForm requestForm = new KakaoPaymentRefundRequestForm(userToken, orderId, List.of(optionRequest));
-        KakaoPaymentRefundRequest request = new KakaoPaymentRefundRequest(requestForm.getUserToken(), requestForm.getOrderId());
+        KakaoPaymentRefundOrderAndTokenAndReasonRequest orderAndTokenAndReasonRequest = new KakaoPaymentRefundOrderAndTokenAndReasonRequest(userToken, orderId, refundReason);
+        KakaoPaymentRefundRequestForm requestForm = new KakaoPaymentRefundRequestForm(orderAndTokenAndReasonRequest, List.of(optionRequest));
 
         User user = new User();
         user.setId("id");
@@ -298,7 +296,7 @@ public class PaymentMockingTest {
 
         OrderAmount orderAmount = new OrderAmount(100, 100);
         order.setAmount(orderAmount);
-        when(mockOrderRepository.findById(request.getOrderId())).thenReturn(Optional.of(order));
+        when(mockOrderRepository.findById(orderAndTokenAndReasonRequest.getOrderId())).thenReturn(Optional.of(order));
 
         final String refundUrl = "refund_url";
         final String cid = "cid";
@@ -325,7 +323,7 @@ public class PaymentMockingTest {
 
         when(mockRestTemplate.postForObject(eq(refundUrl), any(HttpEntity.class), eq(KakaoPaymentRefundResponse.class))).thenReturn(refundResponse);
 
-        boolean result = mockService.paymentRefundRequest(requestForm);
+        boolean result = mockService.paymentRefundRequest(orderAndTokenAndReasonRequest, List.of(optionRequest));
         assertTrue(result);
     }
 }

@@ -33,6 +33,7 @@ import com.dyes.backend.domain.payment.entity.Payment;
 import com.dyes.backend.domain.payment.repository.PaymentRepository;
 import com.dyes.backend.domain.payment.service.PaymentService;
 import com.dyes.backend.domain.payment.service.request.KakaoPaymentApprovalRequest;
+import com.dyes.backend.domain.payment.service.request.KakaoPaymentRefundOrderAndTokenAndReasonRequest;
 import com.dyes.backend.domain.payment.service.request.PaymentTemporarySaveRequest;
 import com.dyes.backend.domain.product.entity.Product;
 import com.dyes.backend.domain.product.entity.ProductMainImage;
@@ -122,9 +123,9 @@ public class OrderServiceImpl implements OrderService {
         boolean result = paymentService.paymentRejectWithKakao(requestForm);
         return result;
     }
-    public boolean refundPurchaseWithKakao (KakaoPaymentRefundRequestForm requestForm) {
-        log.info("KakaoPaymentRefundRequestForm: " + requestForm);
-        boolean result = paymentService.paymentRefundRequest(requestForm);
+    public boolean refundPurchaseWithKakao (KakaoPaymentRefundOrderAndTokenAndReasonRequest orderAndTokenAndReasonRequest,
+                                            List<KakaoPaymentRefundProductOptionRequest> requestList) {
+        boolean result = paymentService.paymentRefundRequest(orderAndTokenAndReasonRequest, requestList);
         return result;
     }
     // 상품 주문

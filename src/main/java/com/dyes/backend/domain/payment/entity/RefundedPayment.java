@@ -25,4 +25,5 @@ public class RefundedPayment {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id")
     private User user;
+    private String refundReason;
 }
