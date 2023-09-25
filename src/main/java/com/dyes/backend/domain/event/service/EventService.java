@@ -8,6 +8,7 @@ import com.dyes.backend.domain.event.service.request.modify.ProductModifyUserTok
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterDeadLineRequest;
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterPurchaseCountRequest;
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterRequest;
+import com.dyes.backend.domain.event.service.response.EventProductAdminListResponse;
 import com.dyes.backend.domain.event.service.response.EventProductListResponse;
 import com.dyes.backend.domain.product.service.admin.request.modify.ProductDetailImagesModifyRequest;
 import com.dyes.backend.domain.product.service.admin.request.modify.ProductMainImageModifyRequest;
@@ -27,4 +28,5 @@ public interface EventService {
                                ProductMainImageModifyRequest productMainImageModifyRequest, List<ProductDetailImagesModifyRequest> productDetailImagesModifyRequest,
                                EventProductModifyDeadLineRequest eventProductModifyDeadLineRequest, EventProductModifyPurchaseCountRequest eventProductModifyPurchaseCountRequest);
     boolean eventProductDelete(EventProductDeleteRequest request);
+    List<EventProductAdminListResponse> eventProductAdminList();
 }

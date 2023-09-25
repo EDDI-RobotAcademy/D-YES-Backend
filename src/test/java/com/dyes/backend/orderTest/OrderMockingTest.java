@@ -9,6 +9,9 @@ import com.dyes.backend.domain.cart.service.CartService;
 import com.dyes.backend.domain.delivery.entity.Delivery;
 import com.dyes.backend.domain.delivery.entity.DeliveryStatus;
 import com.dyes.backend.domain.delivery.repository.DeliveryRepository;
+import com.dyes.backend.domain.event.repository.EventOrderRepository;
+import com.dyes.backend.domain.event.repository.EventProductRepository;
+import com.dyes.backend.domain.event.repository.EventPurchaseCountRepository;
 import com.dyes.backend.domain.farm.entity.Farm;
 import com.dyes.backend.domain.order.controller.form.OrderConfirmRequestForm;
 import com.dyes.backend.domain.order.entity.OrderedProduct;
@@ -99,6 +102,13 @@ public class OrderMockingTest {
     private PaymentRepository mockPaymentRepository;
     @Mock
     private ReviewRepository mockReviewRepository;
+    @Mock
+    private EventProductRepository mockEventProductRepository;
+    @Mock
+    private EventOrderRepository mockEventOrderRepository;
+    @Mock
+    private EventPurchaseCountRepository mockEventPurchaseCountRepository;
+
     @InjectMocks
     private OrderServiceImpl mockOrderService;
     @BeforeEach
@@ -120,7 +130,10 @@ public class OrderMockingTest {
                 mockRedisService,
                 mockProductRepository,
                 mockPaymentRepository,
-                mockReviewRepository
+                mockReviewRepository,
+                mockEventProductRepository,
+                mockEventOrderRepository,
+                mockEventPurchaseCountRepository
                 );
     }
     @Test

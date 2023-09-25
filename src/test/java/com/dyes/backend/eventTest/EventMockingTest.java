@@ -17,6 +17,7 @@ import com.dyes.backend.domain.event.service.request.modify.ProductModifyUserTok
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterDeadLineRequest;
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterPurchaseCountRequest;
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterRequest;
+import com.dyes.backend.domain.event.service.response.EventProductAdminListResponse;
 import com.dyes.backend.domain.event.service.response.EventProductListResponse;
 import com.dyes.backend.domain.farm.entity.Farm;
 import com.dyes.backend.domain.farm.entity.FarmCustomerServiceInfo;
@@ -345,5 +346,34 @@ public class EventMockingTest {
 
         boolean result = mockService.eventProductDelete(deleteRequest);
         assertTrue(result);
+    }
+    @Test
+    @DisplayName("event mocking test: admin evnet product list")
+    public void 관리자는_이벤트_상품_현황_목록을_조회_할_수_있습니다() {
+        Farm farm = new Farm();
+
+        Product product = new Product();
+        product.setFarm(farm);
+
+        ProductOption productOption = new ProductOption();
+        productOption.setProduct(product);
+        productOption.setOptionSaleStatus(SaleStatus.AVAILABLE);
+
+        EventDeadLine deadLine = new EventDeadLine();
+        deadLine.setDeadLine(LocalDate.now());
+        deadLine.setStartLine(LocalDate.now());
+        EventPurchaseCount count = new EventPurchaseCount();
+        count.setNowCount(1);
+        count.setTargetCount(1);
+
+        EventProduct eventProduct = new EventProduct();
+        eventProduct.setProductOption(productOption);
+        eventProduct.setEventDeadLine(deadLine);
+        eventProduct.setEventPurchaseCount(count);
+
+        when(mockEventProductRepository.findAllWithProductOptionDeadLineCount()).thenReturn(List.of(eventProduct));
+
+        List<EventProductAdminListResponse> result = mockService.eventProductAdminList();
+        assertTrue(result != null);
     }
 }

@@ -9,6 +9,7 @@ import com.dyes.backend.domain.event.service.request.modify.ProductModifyUserTok
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterDeadLineRequest;
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterPurchaseCountRequest;
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterRequest;
+import com.dyes.backend.domain.event.service.response.EventProductAdminListResponse;
 import com.dyes.backend.domain.event.service.response.EventProductListResponse;
 import com.dyes.backend.domain.product.service.admin.request.modify.ProductDetailImagesModifyRequest;
 import com.dyes.backend.domain.product.service.admin.request.modify.ProductMainImageModifyRequest;
@@ -47,6 +48,13 @@ public class EventController {
 
         return responseForm;
     }
+    @GetMapping("/admin/list/all")
+    public EventProductAdminListResponseForm eventProductAdminList() {
+        List<EventProductAdminListResponse> responseList = eventService.eventProductAdminList();
+        EventProductAdminListResponseForm responseForm = new EventProductAdminListResponseForm(responseList);
+
+        return responseForm;
+    }
 
     // 공동 구매 상품의 내용 보기
     @GetMapping("/read/{eventProductId}")
@@ -78,4 +86,5 @@ public class EventController {
 
         return result;
     }
+
 }
