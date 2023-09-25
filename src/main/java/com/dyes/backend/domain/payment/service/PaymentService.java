@@ -1,5 +1,6 @@
 package com.dyes.backend.domain.payment.service;
 
+import com.dyes.backend.domain.event.entity.EventOrder;
 import com.dyes.backend.domain.order.controller.form.KakaoPaymentRefundRequestForm;
 import com.dyes.backend.domain.order.controller.form.KakaoPaymentRejectRequestForm;
 import com.dyes.backend.domain.order.service.user.request.OrderProductRequest;
@@ -16,4 +17,5 @@ public interface PaymentService {
     String paymentTemporaryDataSaveAndReturnRedirectView (OrderProductRequest request) throws JsonProcessingException;
     boolean paymentRejectWithKakao(KakaoPaymentRejectRequestForm requestForm);
     boolean paymentRefundRequest(KakaoPaymentRefundRequestForm requestForm);
+    void paymentEventProductRefundRequest(EventOrder eventOrder);
 }

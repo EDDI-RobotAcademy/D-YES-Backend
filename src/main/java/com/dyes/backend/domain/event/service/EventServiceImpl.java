@@ -5,9 +5,11 @@ import com.dyes.backend.domain.admin.service.AdminService;
 import com.dyes.backend.domain.event.controller.form.EventProductModifyRequestForm;
 import com.dyes.backend.domain.event.controller.form.EventProductReadResponseForm;
 import com.dyes.backend.domain.event.entity.EventDeadLine;
+import com.dyes.backend.domain.event.entity.EventOrder;
 import com.dyes.backend.domain.event.entity.EventProduct;
 import com.dyes.backend.domain.event.entity.EventPurchaseCount;
 import com.dyes.backend.domain.event.repository.EventDeadLineRepository;
+import com.dyes.backend.domain.event.repository.EventOrderRepository;
 import com.dyes.backend.domain.event.repository.EventProductRepository;
 import com.dyes.backend.domain.event.repository.EventPurchaseCountRepository;
 import com.dyes.backend.domain.event.service.request.delete.EventProductDeleteRequest;
@@ -30,6 +32,7 @@ import com.dyes.backend.domain.farm.repository.FarmIntroductionInfoRepository;
 import com.dyes.backend.domain.farm.repository.FarmRepository;
 import com.dyes.backend.domain.farm.repository.FarmRepresentativeInfoRepository;
 import com.dyes.backend.domain.farm.service.response.FarmInfoResponseForUser;
+import com.dyes.backend.domain.payment.service.PaymentService;
 import com.dyes.backend.domain.product.entity.*;
 import com.dyes.backend.domain.product.repository.*;
 import com.dyes.backend.domain.product.service.admin.request.modify.ProductDetailImagesModifyRequest;
@@ -46,6 +49,7 @@ import com.dyes.backend.domain.user.service.request.UserAuthenticationRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -75,6 +79,8 @@ public class EventServiceImpl implements EventService{
     final private ReviewRepository reviewRepository;
     final private ReviewRatingRepository reviewRatingRepository;
     final private FarmCustomerServiceInfoRepository farmCustomerServiceInfoRepository;
+    final private EventOrderRepository eventOrderRepository;
+    final private PaymentService paymentService;
 
     public boolean eventProductRegister(EventProductRegisterRequest productRequest,
                                         EventProductRegisterDeadLineRequest deadLineRequest,
@@ -546,5 +552,15 @@ public class EventServiceImpl implements EventService{
             }
         }
         return responseList;
+    }
+    // 이벤트 상품 페이백 해주기
+    @Scheduled(cron = "0 1 0 * * ?")
+    public void eventProductRefund() {
+        List<EventOrder> orderList = eventOrderRepository.findAllWithDeadlineAndCountAndUser();
+        for (EventOrder eventOrder : orderList) {
+            if (LocalDate.now().equals(eventOrder.getEventProduct().getEventDeadLine().getDeadLine())){
+                paymentService.paymentEventProductRefundRequest(eventOrder);
+            }
+        }
     }
 }

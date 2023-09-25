@@ -29,4 +29,5 @@ public interface EventService {
                                EventProductModifyDeadLineRequest eventProductModifyDeadLineRequest, EventProductModifyPurchaseCountRequest eventProductModifyPurchaseCountRequest);
     boolean eventProductDelete(EventProductDeleteRequest request);
     List<EventProductAdminListResponse> eventProductAdminList();
+    void eventProductRefund();
 }

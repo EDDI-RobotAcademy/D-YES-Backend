@@ -1,6 +1,8 @@
 package com.dyes.backend.domain.payment.service;
 
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
+import com.dyes.backend.domain.event.entity.EventOrder;
+import com.dyes.backend.domain.event.entity.EventPurchaseCount;
 import com.dyes.backend.domain.order.controller.form.KakaoPaymentRefundRequestForm;
 import com.dyes.backend.domain.order.controller.form.KakaoPaymentRejectRequestForm;
 import com.dyes.backend.domain.order.entity.OrderAmount;
@@ -263,6 +265,85 @@ public class PaymentServiceImpl implements PaymentService{
         } catch (Exception e) {
             log.error("Failed to reject: {}", e.getMessage(), e);
             return false;
+        }
+    }
+    public void paymentEventProductRefundRequest(EventOrder eventOrder) {
+        log.info("paymentRefundRequest start");
+
+        try {
+            Optional<ProductOrder> maybeOrder = orderRepository.findById(eventOrder.getProductOrder().getId());
+            if (maybeOrder.isEmpty()) {
+                log.info("maybeOrder isEmpty");
+                return;
+            }
+            ProductOrder order = maybeOrder.get();
+            User user = order.getUser();
+            EventPurchaseCount count = eventOrder.getEventProduct().getEventPurchaseCount();
+
+            final String cid = kakaoPaymentSecretsProvider.getCid();
+            final String tid = order.getTid();
+            final String refundUrl = kakaoPaymentSecretsProvider.getKakaoPaymentRefundUrl();
+
+            Optional<Payment> maybePayment = paymentRepository.findByProductOrder(order);
+            if (maybePayment.isEmpty()){
+                return;
+            }
+            Payment payment = maybePayment.get();
+            PaymentAmount paymentAmount = payment.getAmount();
+
+            Long cancelAmount;
+            if ((count.getNowCount() / count.getTargetCount()) < 1) {
+                cancelAmount = (long) (paymentAmount.getTotal() * 7/10 * ((count.getNowCount() / count.getTargetCount())));
+            } else {
+                cancelAmount = (long) (paymentAmount.getTotal() * 7/10);
+            }
+
+            MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+            parameters.add("cid", cid);
+            parameters.add("tid", tid);
+            parameters.add("cancel_amount", String.valueOf(cancelAmount));
+            parameters.add("cancel_tax_free_amount", "0");
+            HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(parameters, this.getHeaders());
+
+            try {
+                KakaoPaymentRefundResponse response = restTemplate.postForObject(refundUrl, requestEntity, KakaoPaymentRefundResponse.class);
+                if (response.getApproved_cancel_amount() != null) {
+
+                    OrderAmount orderAmount = order.getAmount();
+                    orderAmount.setRefundedAmount(Math.toIntExact(cancelAmount));
+                    order.setAmount(orderAmount);
+
+                    if (response.getStatus().equals(CANCEL_PAYMENT)) {
+                        order.setOrderStatus(CANCEL_PAYMENT);
+                    } else if (order.getAmount().getTotalAmount() == 0) {
+                        order.setOrderStatus(CANCEL_PAYMENT);
+                    } else {
+                        order.setOrderStatus(PART_CANCEL_PAYMENT);
+                    }
+
+                    RefundedPayment refundedPayment = RefundedPayment.builder()
+                            .aid(response.getAid())
+                            .tid(response.getTid())
+                            .user(user)
+                            .approved_cancel_amount(response.getApproved_cancel_amount().getTotal())
+                            .canceled_at(response.getCanceled_at())
+                            .build();
+
+                    List<OrderedProduct> productList = orderedProductRepository.findAllByProductOrder(order);
+                        for (OrderedProduct orderedProduct : productList) {
+                            orderedProduct.setOrderedProductStatus(OrderedProductStatus.PAYBACK);
+                            orderedProductRepository.save(orderedProduct);
+                        }
+
+                    orderRepository.save(order);
+                    refundedPaymentRepository.save(refundedPayment);
+                    log.info("paymentRefundRequest end");
+                }
+            } catch (HttpClientErrorException | HttpServerErrorException | NullPointerException e) {
+                log.error("Failed connect to server: {}", e.getMessage(), e);
+            }
+        } catch (Exception e) {
+            log.error("Failed to reject: {}", e.getMessage(), e);
         }
     }
 
