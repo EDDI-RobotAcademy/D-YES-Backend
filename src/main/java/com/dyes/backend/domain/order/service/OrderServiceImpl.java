@@ -10,8 +10,10 @@ import com.dyes.backend.domain.delivery.entity.DeliveryStatus;
 import com.dyes.backend.domain.delivery.repository.DeliveryRepository;
 import com.dyes.backend.domain.event.entity.EventOrder;
 import com.dyes.backend.domain.event.entity.EventProduct;
+import com.dyes.backend.domain.event.entity.EventPurchaseCount;
 import com.dyes.backend.domain.event.repository.EventOrderRepository;
 import com.dyes.backend.domain.event.repository.EventProductRepository;
+import com.dyes.backend.domain.event.repository.EventPurchaseCountRepository;
 import com.dyes.backend.domain.order.controller.form.*;
 import com.dyes.backend.domain.order.entity.*;
 import com.dyes.backend.domain.order.repository.OrderRepository;
@@ -48,6 +50,7 @@ import com.dyes.backend.domain.user.repository.AddressBookRepository;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import com.dyes.backend.utility.redis.RedisService;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -83,6 +86,7 @@ public class OrderServiceImpl implements OrderService {
     final private ReviewRepository reviewRepository;
     final private EventProductRepository eventProductRepository;
     final private EventOrderRepository eventOrderRepository;
+    final private EventPurchaseCountRepository eventPurchaseCountRepository;
 
     public String purchaseReadyWithKakao(OrderProductRequestForm requestForm) throws JsonProcessingException {
         log.info("purchaseKakao start");
@@ -475,6 +479,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     // 주문 진행
+    @Transactional(rollbackOn = Exception.class, dontRollbackOn = TargetCountAchievedException.class)
     public void saveOrderedData(OrderedPurchaserProfileRequest profileRequest,
                                 int totalAmount, String tid, User user, List<OrderedProductOptionRequest> orderedProductOptionRequestList) {
 
@@ -540,13 +545,23 @@ public class OrderServiceImpl implements OrderService {
 
                 orderedProductRepository.save(orderedProduct);
 
-                Optional<EventProduct> maybeEventProduct = eventProductRepository.findByProductOption(productOption);
+                Optional<EventProduct> maybeEventProduct = eventProductRepository.findByProductOptionWithPurchaseCount(productOption);
                 if (maybeEventProduct.isPresent()) {
                     EventOrder eventOrder = EventOrder.builder()
                             .eventProduct(maybeEventProduct.get())
                             .productOrder(order)
                             .build();
                     eventOrderRepository.save(eventOrder);
+
+                    EventPurchaseCount count = maybeEventProduct.get().getEventPurchaseCount();
+                    Integer nowCount = count.getNowCount() + 1;
+
+                    if (nowCount.equals(count.getTargetCount())) {
+                        log.info("achieve target count");
+                        throw new TargetCountAchievedException("Target count achieved");
+                    }
+                    count.setNowCount(nowCount);
+                    eventPurchaseCountRepository.save(count);
                 }
             }
         }
@@ -726,4 +741,10 @@ public class OrderServiceImpl implements OrderService {
             return null;
         }
     }
+    public class TargetCountAchievedException extends RuntimeException {
+        public TargetCountAchievedException(String message) {
+            super(message);
+        }
+    }
+
 }

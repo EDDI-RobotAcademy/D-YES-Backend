@@ -27,6 +27,7 @@ public interface EventProductRepository extends JpaRepository<EventProduct, Long
             "WHERE ep.id = :eventProductId")
     Optional<EventProduct> findByIdProductOptionDeadLineCount(@Param("eventProductId") Long eventProductId);
 
-    Optional<EventProduct> findByProductOption(ProductOption productOption);
+    @Query("SELECT e FROM EventProduct e JOIN FETCH e.eventPurchaseCount WHERE e.productOption = :productOption")
+    Optional<EventProduct> findByProductOptionWithPurchaseCount(@Param("productOption") ProductOption productOption);
 }
 
