@@ -112,8 +112,9 @@ public class RecipeServiceImpl implements RecipeService {
                 recipeListResponseListForm.add(recipeListResponseForm);
 
                 log.info("Recipe list read successful");
-                return recipeListResponseListForm;
             }
+            
+            return recipeListResponseListForm;
         } catch (Exception e) {
             log.error("Failed to read the recipe list: {}", e.getMessage(), e);
             return null;
