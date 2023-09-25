@@ -264,7 +264,6 @@ public class EventMockingTest {
         final Long eventProductId = 1L;
         ProductModifyUserTokenAndEventProductIdRequest productModifyUserTokenAndEventProductIdRequest = new ProductModifyUserTokenAndEventProductIdRequest();
         productModifyUserTokenAndEventProductIdRequest.setUserToken(userToken);
-        productModifyUserTokenAndEventProductIdRequest.setEventProductId(eventProductId);
         ProductModifyRequest productModifyRequest = new ProductModifyRequest();
         ProductOptionModifyRequest productOptionModifyRequest = new ProductOptionModifyRequest();
         ProductMainImageModifyRequest productMainImageModifyRequest = new ProductMainImageModifyRequest();
@@ -295,7 +294,7 @@ public class EventMockingTest {
         eventProduct.setProductOption(productOption);
         eventProduct.setEventDeadLine(deadLine);
         eventProduct.setEventPurchaseCount(count);
-        when(mockEventProductRepository.findByIdProductOptionDeadLineCount(productModifyUserTokenAndEventProductIdRequest.getEventProductId())).thenReturn(Optional.of(eventProduct));
+        when(mockEventProductRepository.findByIdProductOptionDeadLineCount(eventProductId)).thenReturn(Optional.of(eventProduct));
 
         ProductMainImage mainImage = new ProductMainImage();
         mainImage.setProduct(product);
@@ -305,7 +304,7 @@ public class EventMockingTest {
         detailImages.setProduct(product);
         when(mockProductDetailImagesRepository.findByProduct(product)).thenReturn(List.of(detailImages));
 
-        boolean result = mockService.eventProductModify(
+        boolean result = mockService.eventProductModify(eventProductId,
                 productModifyUserTokenAndEventProductIdRequest, productModifyRequest, productOptionModifyRequest,
                 productMainImageModifyRequest, productDetailImagesModifyRequest,
                 eventProductModifyDeadLineRequest, eventProductModifyPurchaseCountRequest

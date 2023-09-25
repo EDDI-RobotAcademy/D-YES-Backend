@@ -5,9 +5,11 @@ import com.dyes.backend.domain.order.service.OrderService;
 import com.dyes.backend.domain.order.service.admin.response.form.OrderDetailDataResponseForAdminForm;
 import com.dyes.backend.domain.order.service.admin.response.form.OrderInfoResponseFormForDashBoardForAdmin;
 import com.dyes.backend.domain.order.service.admin.response.form.OrderListResponseFormForAdmin;
+import com.dyes.backend.domain.order.service.user.request.KakaoPaymentRefundProductOptionRequest;
 import com.dyes.backend.domain.order.service.user.response.form.OrderConfirmResponseFormForUser;
 import com.dyes.backend.domain.order.service.user.response.form.OrderDetailDataResponseForUserForm;
 import com.dyes.backend.domain.order.service.user.response.form.OrderListResponseFormForUser;
+import com.dyes.backend.domain.payment.service.request.KakaoPaymentRefundOrderAndTokenAndReasonRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,8 +39,9 @@ public class OrderController {
     }
     @PostMapping("/payment/kakao/refund")
     public boolean refundWithKakaoPayment(@RequestBody KakaoPaymentRefundRequestForm requestForm) {
-        log.info("KakaoPaymentRefundRequestForm: " + requestForm);
-        return orderService.refundPurchaseWithKakao(requestForm);
+        KakaoPaymentRefundOrderAndTokenAndReasonRequest orderAndTokenAndReasonRequest = requestForm.getOrderAndTokenAndReasonRequest();
+        List<KakaoPaymentRefundProductOptionRequest> requestList =requestForm.getRequestList();
+        return orderService.refundPurchaseWithKakao(orderAndTokenAndReasonRequest, requestList);
     }
 
     // 결제 전 주문 요청내역 확인

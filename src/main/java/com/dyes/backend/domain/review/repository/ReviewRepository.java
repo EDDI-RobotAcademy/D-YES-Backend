@@ -11,7 +11,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
-    List<Review> findAllByProduct(Product product);
+    @Query("SELECT r FROM Review r JOIN FETCH r.optionNameList WHERE r.product = :product")
+    List<Review> findAllByProduct(@Param("product") Product product);
     @Query("SELECT r FROM Review r JOIN FETCH r.product p JOIN FETCH r.productOrder o WHERE r.user = :user")
     List<Review> findAllByUserWithProductAndOrder(@Param("user") User user);
 }

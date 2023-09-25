@@ -23,10 +23,10 @@ public interface EventService {
                                  EventProductRegisterPurchaseCountRequest countRequest);
     List<EventProductListResponse> eventProductList();
     EventProductReadResponseForm eventProductRead(Long eventProductId);
-    boolean eventProductModify(ProductModifyUserTokenAndEventProductIdRequest productModifyUserTokenAndEventProductIdRequest,
-                               ProductModifyRequest productModifyRequest, ProductOptionModifyRequest productOptionModifyRequest,
-                               ProductMainImageModifyRequest productMainImageModifyRequest, List<ProductDetailImagesModifyRequest> productDetailImagesModifyRequest,
-                               EventProductModifyDeadLineRequest eventProductModifyDeadLineRequest, EventProductModifyPurchaseCountRequest eventProductModifyPurchaseCountRequest);
+    public boolean eventProductModify(Long eventProductId,ProductModifyUserTokenAndEventProductIdRequest productModifyUserTokenAndEventProductIdRequest,
+                                      ProductModifyRequest productModifyRequest, ProductOptionModifyRequest productOptionModifyRequest,
+                                      ProductMainImageModifyRequest productMainImageModifyRequest, List<ProductDetailImagesModifyRequest> productDetailImagesModifyRequest,
+                                      EventProductModifyDeadLineRequest eventProductModifyDeadLineRequest, EventProductModifyPurchaseCountRequest eventProductModifyPurchaseCountRequest);
     boolean eventProductDelete(EventProductDeleteRequest request);
     List<EventProductAdminListResponse> eventProductAdminList();
     void eventProductRefund();

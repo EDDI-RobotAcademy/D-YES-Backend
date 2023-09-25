@@ -22,10 +22,7 @@ import com.dyes.backend.domain.payment.entity.PaymentCardInfo;
 import com.dyes.backend.domain.payment.entity.RefundedPayment;
 import com.dyes.backend.domain.payment.repository.PaymentRepository;
 import com.dyes.backend.domain.payment.repository.RefundedPaymentRepository;
-import com.dyes.backend.domain.payment.service.request.KakaoPaymentApprovalRequest;
-import com.dyes.backend.domain.payment.service.request.KakaoPaymentRejectRequest;
-import com.dyes.backend.domain.payment.service.request.KakaoPaymentRequest;
-import com.dyes.backend.domain.payment.service.request.PaymentTemporarySaveRequest;
+import com.dyes.backend.domain.payment.service.request.*;
 import com.dyes.backend.domain.payment.service.response.KakaoApproveResponse;
 import com.dyes.backend.domain.payment.service.response.KakaoPaymentReadyResponse;
 import com.dyes.backend.domain.product.entity.ProductOption;
@@ -165,14 +162,13 @@ public class PaymentServiceImpl implements PaymentService{
         }
     }
 
-    public boolean paymentRefundRequest(KakaoPaymentRefundRequestForm requestForm) {
+    public boolean paymentRefundRequest(KakaoPaymentRefundOrderAndTokenAndReasonRequest orderAndTokenAndReasonRequest,
+                                        List<KakaoPaymentRefundProductOptionRequest> requestList) {
         log.info("paymentRefundRequest start");
 
-        KakaoPaymentRefundRequest request = new KakaoPaymentRefundRequest(requestForm.getUserToken(), requestForm.getOrderId());
-        List<KakaoPaymentRefundProductOptionRequest> requestList = requestForm.getRequestList();
-
-        final String userToken = request.getUserToken();
-        final Long orderId = request.getOrderId();
+        final String userToken = orderAndTokenAndReasonRequest.getUserToken();
+        final Long orderId = orderAndTokenAndReasonRequest.getOrderId();
+        final String refundReason = orderAndTokenAndReasonRequest.getRefundReason();
 
         try {
             User user = authenticationService.findUserByUserToken(userToken);
@@ -236,6 +232,7 @@ public class PaymentServiceImpl implements PaymentService{
                             .aid(response.getAid())
                             .tid(response.getTid())
                             .user(user)
+                            .refundReason(refundReason)
                             .approved_cancel_amount(response.getApproved_cancel_amount().getTotal())
                             .canceled_at(response.getCanceled_at())
                             .build();

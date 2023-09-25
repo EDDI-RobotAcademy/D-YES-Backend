@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @Builder
@@ -13,7 +14,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class ReviewRequestResponse {
     private String productName;
-    private String optionName;
+    private List<String> optionNameList;
     private String content;
     private String userNickName;
     private LocalDate createDate;

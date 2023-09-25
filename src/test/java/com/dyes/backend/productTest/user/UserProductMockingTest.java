@@ -116,7 +116,7 @@ public class UserProductMockingTest {
         FarmCustomerServiceInfo farmCustomerServiceInfo = new FarmCustomerServiceInfo(1L, "070-1234-5678", new Address(), farm);
         FarmIntroductionInfo farmIntroductionInfo = new FarmIntroductionInfo(1L, "메인이미지", "한줄소개", new ArrayList<>(), farm);
         Product product = new Product(productId, "상품 이름", "상세 설명", CultivationMethod.ORGANIC, ONION, AVAILABLE, farm);
-        Review review = new Review(1L, "상품 이름", "옵션 이름", "정다운", "리뷰 내용", new User(), product, LocalDate.now(), LocalDate.now(), new ProductOrder());
+        Review review = new Review(1L, "상품 이름", List.of("옵션 이름"), "정다운", "리뷰 내용", new User(), product, LocalDate.now(), LocalDate.now(), new ProductOrder());
         ReviewRating reviewRating = new ReviewRating(1L, 5, review, product);
         List<Review> reviewList = new ArrayList<>();
         reviewList.add(review);
