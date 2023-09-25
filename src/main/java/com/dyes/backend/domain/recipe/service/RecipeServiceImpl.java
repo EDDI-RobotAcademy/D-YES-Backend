@@ -13,12 +13,15 @@ import com.dyes.backend.domain.recipe.service.request.RecipeMainImageRegisterReq
 import com.dyes.backend.domain.recipe.service.request.RecipeRegisterRequest;
 import com.dyes.backend.domain.recipe.service.response.form.RecipeListResponseForm;
 import com.dyes.backend.domain.user.entity.User;
+import com.dyes.backend.domain.user.entity.UserProfile;
+import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -29,6 +32,7 @@ public class RecipeServiceImpl implements RecipeService {
     final private RecipeIngredientRepository recipeIngredientRepository;
     final private RecipeMainImageRepository recipeMainImageRepository;
     final private AuthenticationService authenticationService;
+    final private UserProfileRepository userProfileRepository;
 
     // 레시피 등록
     @Override
@@ -99,16 +103,26 @@ public class RecipeServiceImpl implements RecipeService {
         List<RecipeListResponseForm> recipeListResponseListForm = new ArrayList<>();
 
         try {
-            List<Recipe> recipeList = recipeRepository.findAll();
+            List<Recipe> recipeList = recipeRepository.findAllWithUser();
             for (Recipe recipe : recipeList) {
                 RecipeMainImage recipeMainImage = recipeMainImageRepository.findByRecipe(recipe);
                 RecipeContent recipeContent = recipeContentRepository.findByRecipe(recipe);
+                User user = recipe.getUser();
+                Optional<UserProfile> maybeUserProfile = userProfileRepository.findByUser(user);
+                String nickName = null;
+                if(maybeUserProfile.isPresent()) {
+                    UserProfile userProfile = maybeUserProfile.get();
+                    nickName = userProfile.getNickName();
+                }
                 RecipeListResponseForm recipeListResponseForm
                         = new RecipeListResponseForm(
                         recipe.getId(),
                         recipe.getRecipeName(),
                         recipeMainImage.getRecipeMainImage(),
-                        recipeContent.getRecipeDescription());
+                        recipeContent.getRecipeDescription(),
+                        recipeContent.getCookingTime(),
+                        recipeContent.getDifficulty(),
+                        nickName);
                 recipeListResponseListForm.add(recipeListResponseForm);
 
                 log.info("Recipe list read successful");

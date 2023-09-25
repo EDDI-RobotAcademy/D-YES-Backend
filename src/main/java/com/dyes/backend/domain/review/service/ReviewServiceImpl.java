@@ -118,7 +118,7 @@ public class ReviewServiceImpl implements ReviewService{
             Review review = Review.builder()
                     .user(user)
                     .productOrder(order)
-                    .Content(content)
+                    .content(content)
                     .productName(productOption.getProduct().getProductName())
                     .optionName(productOption.getOptionName())
                     .userNickName(userProfile.getNickName())

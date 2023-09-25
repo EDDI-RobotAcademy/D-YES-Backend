@@ -23,7 +23,7 @@ public class Review {
     private String productName;
     private String optionName;
     private String userNickName;
-    private String Content;
+    private String content;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id")
     private User user;
