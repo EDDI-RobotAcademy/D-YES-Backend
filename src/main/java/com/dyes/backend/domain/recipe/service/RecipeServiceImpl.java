@@ -11,10 +11,14 @@ import com.dyes.backend.domain.recipe.service.request.RecipeContentRegisterReque
 import com.dyes.backend.domain.recipe.service.request.RecipeIngredientRegisterRequest;
 import com.dyes.backend.domain.recipe.service.request.RecipeMainImageRegisterRequest;
 import com.dyes.backend.domain.recipe.service.request.RecipeRegisterRequest;
+import com.dyes.backend.domain.recipe.service.response.form.RecipeListResponseForm;
 import com.dyes.backend.domain.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -26,6 +30,7 @@ public class RecipeServiceImpl implements RecipeService {
     final private RecipeMainImageRepository recipeMainImageRepository;
     final private AuthenticationService authenticationService;
 
+    // 레시피 등록
     @Override
     public boolean registerRecipe(RecipeRegisterForm registerForm) {
         log.info("Registering a new recipe");
@@ -83,6 +88,36 @@ public class RecipeServiceImpl implements RecipeService {
         } catch (Exception e) {
             log.error("Failed to register the recipe: {}", e.getMessage(), e);
             return false;
+        }
+    }
+
+    // 레시피 목록
+    @Override
+    public List<RecipeListResponseForm> getRecipeList() {
+        log.info("Reading recipe list");
+
+        List<RecipeListResponseForm> recipeListResponseListForm = new ArrayList<>();
+
+        try {
+            List<Recipe> recipeList = recipeRepository.findAll();
+            for (Recipe recipe : recipeList) {
+                RecipeMainImage recipeMainImage = recipeMainImageRepository.findByRecipe(recipe);
+                RecipeContent recipeContent = recipeContentRepository.findByRecipe(recipe);
+                RecipeListResponseForm recipeListResponseForm
+                        = new RecipeListResponseForm(
+                        recipe.getId(),
+                        recipe.getRecipeName(),
+                        recipeMainImage.getRecipeMainImage(),
+                        recipeContent.getRecipeDescription());
+                recipeListResponseListForm.add(recipeListResponseForm);
+
+                log.info("Recipe list read successful");
+            }
+            
+            return recipeListResponseListForm;
+        } catch (Exception e) {
+            log.error("Failed to read the recipe list: {}", e.getMessage(), e);
+            return null;
         }
     }
 
