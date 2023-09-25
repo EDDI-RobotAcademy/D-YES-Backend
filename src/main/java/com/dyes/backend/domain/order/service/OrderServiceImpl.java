@@ -479,7 +479,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     // 주문 진행
-    @Transactional(rollbackOn = Exception.class, dontRollbackOn = TargetCountAchievedException.class)
+    @Transactional(rollbackOn = Exception.class, dontRollbackOn = OverMaxStockException.class)
     public void saveOrderedData(OrderedPurchaserProfileRequest profileRequest,
                                 int totalAmount, String tid, User user, List<OrderedProductOptionRequest> orderedProductOptionRequestList) {
 
@@ -531,6 +531,11 @@ public class OrderServiceImpl implements OrderService {
                 }
                 Product product = maybeProduct.get();
 
+                if (productOption.getStock() - optionRequest.getProductOptionCount() < 0) {
+                    log.info("over max stock");
+                        throw new OverMaxStockException("over max stock");
+                }
+
                 productOption.setStock(productOption.getStock() - optionRequest.getProductOptionCount());
                 productOptionRepository.save(productOption);
 
@@ -555,11 +560,6 @@ public class OrderServiceImpl implements OrderService {
 
                     EventPurchaseCount count = maybeEventProduct.get().getEventPurchaseCount();
                     Integer nowCount = count.getNowCount() + 1;
-
-                    if (nowCount.equals(count.getTargetCount())) {
-                        log.info("achieve target count");
-                        throw new TargetCountAchievedException("Target count achieved");
-                    }
                     count.setNowCount(nowCount);
                     eventPurchaseCountRepository.save(count);
                 }
@@ -741,8 +741,8 @@ public class OrderServiceImpl implements OrderService {
             return null;
         }
     }
-    public class TargetCountAchievedException extends RuntimeException {
-        public TargetCountAchievedException(String message) {
+    public class OverMaxStockException extends RuntimeException {
+        public OverMaxStockException(String message) {
             super(message);
         }
     }

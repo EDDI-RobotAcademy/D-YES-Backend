@@ -7,6 +7,7 @@ import com.dyes.backend.domain.event.entity.EventDeadLine;
 import com.dyes.backend.domain.event.entity.EventProduct;
 import com.dyes.backend.domain.event.entity.EventPurchaseCount;
 import com.dyes.backend.domain.event.repository.EventDeadLineRepository;
+import com.dyes.backend.domain.event.repository.EventOrderRepository;
 import com.dyes.backend.domain.event.repository.EventProductRepository;
 import com.dyes.backend.domain.event.repository.EventPurchaseCountRepository;
 import com.dyes.backend.domain.event.service.EventServiceImpl;
@@ -27,6 +28,7 @@ import com.dyes.backend.domain.farm.repository.FarmCustomerServiceInfoRepository
 import com.dyes.backend.domain.farm.repository.FarmIntroductionInfoRepository;
 import com.dyes.backend.domain.farm.repository.FarmRepository;
 import com.dyes.backend.domain.farm.repository.FarmRepresentativeInfoRepository;
+import com.dyes.backend.domain.payment.service.PaymentService;
 import com.dyes.backend.domain.product.entity.*;
 import com.dyes.backend.domain.product.repository.*;
 import com.dyes.backend.domain.product.service.admin.request.modify.ProductDetailImagesModifyRequest;
@@ -87,6 +89,10 @@ public class EventMockingTest {
     private ReviewRatingRepository mockReviewRatingRepository;
     @Mock
     private FarmCustomerServiceInfoRepository mockFarmCustomerServiceInfoRepository;
+    @Mock
+    private EventOrderRepository mockEventOrderRepository;
+    @Mock
+    private PaymentService mockPaymentService;
 
     @InjectMocks
     private EventServiceImpl mockService;
@@ -110,7 +116,9 @@ public class EventMockingTest {
                 mockFarmRepresentativeInfoRepository,
                 mockReviewRepository,
                 mockReviewRatingRepository,
-                mockFarmCustomerServiceInfoRepository
+                mockFarmCustomerServiceInfoRepository,
+                mockEventOrderRepository,
+                mockPaymentService
         );
     }
     @Test
