@@ -9,6 +9,7 @@ import com.dyes.backend.domain.event.service.request.modify.ProductModifyUserTok
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterDeadLineRequest;
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterPurchaseCountRequest;
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterRequest;
+import com.dyes.backend.domain.event.service.response.EventProductAdminListResponse;
 import com.dyes.backend.domain.event.service.response.EventProductListResponse;
 import com.dyes.backend.domain.product.service.admin.request.modify.ProductDetailImagesModifyRequest;
 import com.dyes.backend.domain.product.service.admin.request.modify.ProductMainImageModifyRequest;
@@ -44,6 +45,13 @@ public class EventController {
     public EventProductListResponseForm eventProductList() {
         List<EventProductListResponse> responseList = eventService.eventProductList();
         EventProductListResponseForm responseForm = new EventProductListResponseForm(responseList);
+
+        return responseForm;
+    }
+    @GetMapping("/admin/list/all")
+    public EventProductAdminListResponseForm eventProductAdminList() {
+        List<EventProductAdminListResponse> responseList = eventService.eventProductAdminList();
+        EventProductAdminListResponseForm responseForm = new EventProductAdminListResponseForm(responseList);
 
         return responseForm;
     }

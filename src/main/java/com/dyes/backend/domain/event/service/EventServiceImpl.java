@@ -17,6 +17,7 @@ import com.dyes.backend.domain.event.service.request.modify.ProductModifyUserTok
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterDeadLineRequest;
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterPurchaseCountRequest;
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterRequest;
+import com.dyes.backend.domain.event.service.response.EventProductAdminListResponse;
 import com.dyes.backend.domain.event.service.response.EventProductDeadLineResponse;
 import com.dyes.backend.domain.event.service.response.EventProductListResponse;
 import com.dyes.backend.domain.event.service.response.EventProductPurchaseCountResponse;
@@ -91,6 +92,7 @@ public class EventServiceImpl implements EventService{
 
             EventPurchaseCount count = EventPurchaseCount.builder()
                     .targetCount(countRequest.getTargetCount())
+                    .nowCount(0)
                     .build();
             eventPurchaseCountRepository.save(count);
 
@@ -511,5 +513,38 @@ public class EventServiceImpl implements EventService{
             log.error("Failed to register the product: {}", e.getMessage(), e);
             return null;
         }
+    }
+
+    // 관리자의 이벤트 상품 현황 목록 보기
+    public List<EventProductAdminListResponse> eventProductAdminList() {
+        List<EventProduct> eventProductList = eventProductRepository.findAllWithProductOptionDeadLineCount();
+        List<EventProductAdminListResponse> responseList = new ArrayList<>();
+
+        for (EventProduct eventProduct : eventProductList) {
+            if (eventProduct.getEventPurchaseCount().getNowCount() < eventProduct.getEventPurchaseCount().getTargetCount()) {
+                EventProductAdminListResponse response = EventProductAdminListResponse.builder()
+                        .eventProductId(eventProduct.getId())
+                        .eventProductName(eventProduct.getProductOption().getProduct().getProductName())
+                        .stock(eventProduct.getProductOption().getStock())
+                        .deadLine(eventProduct.getEventDeadLine().getDeadLine())
+                        .startLine(eventProduct.getEventDeadLine().getStartLine())
+                        .discountRate(30 * (eventProduct.getEventPurchaseCount().getNowCount())/(eventProduct.getEventPurchaseCount().getTargetCount()))
+                        .eventPurchaseCount(eventProduct.getEventPurchaseCount().getNowCount())
+                        .build();
+                responseList.add(response);
+            } else {
+                EventProductAdminListResponse response = EventProductAdminListResponse.builder()
+                        .eventProductId(eventProduct.getId())
+                        .eventProductName(eventProduct.getProductOption().getProduct().getProductName())
+                        .stock(eventProduct.getProductOption().getStock())
+                        .deadLine(eventProduct.getEventDeadLine().getDeadLine())
+                        .startLine(eventProduct.getEventDeadLine().getStartLine())
+                        .discountRate(30)
+                        .eventPurchaseCount(eventProduct.getEventPurchaseCount().getNowCount())
+                        .build();
+                responseList.add(response);
+            }
+        }
+        return responseList;
     }
 }
