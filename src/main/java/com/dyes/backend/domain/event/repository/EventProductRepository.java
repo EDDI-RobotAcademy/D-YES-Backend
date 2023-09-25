@@ -1,6 +1,7 @@
 package com.dyes.backend.domain.event.repository;
 
 import com.dyes.backend.domain.event.entity.EventProduct;
+import com.dyes.backend.domain.product.entity.ProductOption;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -26,5 +27,6 @@ public interface EventProductRepository extends JpaRepository<EventProduct, Long
             "WHERE ep.id = :eventProductId")
     Optional<EventProduct> findByIdProductOptionDeadLineCount(@Param("eventProductId") Long eventProductId);
 
+    Optional<EventProduct> findByProductOption(ProductOption productOption);
 }
 

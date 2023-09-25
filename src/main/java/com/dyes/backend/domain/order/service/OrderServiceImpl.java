@@ -8,6 +8,10 @@ import com.dyes.backend.domain.cart.service.CartService;
 import com.dyes.backend.domain.delivery.entity.Delivery;
 import com.dyes.backend.domain.delivery.entity.DeliveryStatus;
 import com.dyes.backend.domain.delivery.repository.DeliveryRepository;
+import com.dyes.backend.domain.event.entity.EventOrder;
+import com.dyes.backend.domain.event.entity.EventProduct;
+import com.dyes.backend.domain.event.repository.EventOrderRepository;
+import com.dyes.backend.domain.event.repository.EventProductRepository;
 import com.dyes.backend.domain.order.controller.form.*;
 import com.dyes.backend.domain.order.entity.*;
 import com.dyes.backend.domain.order.repository.OrderRepository;
@@ -77,6 +81,8 @@ public class OrderServiceImpl implements OrderService {
     final private ProductRepository productRepository;
     final private PaymentRepository paymentRepository;
     final private ReviewRepository reviewRepository;
+    final private EventProductRepository eventProductRepository;
+    final private EventOrderRepository eventOrderRepository;
 
     public String purchaseReadyWithKakao(OrderProductRequestForm requestForm) throws JsonProcessingException {
         log.info("purchaseKakao start");
@@ -533,6 +539,15 @@ public class OrderServiceImpl implements OrderService {
                         .build();
 
                 orderedProductRepository.save(orderedProduct);
+
+                Optional<EventProduct> maybeEventProduct = eventProductRepository.findByProductOption(productOption);
+                if (maybeEventProduct.isPresent()) {
+                    EventOrder eventOrder = EventOrder.builder()
+                            .eventProduct(maybeEventProduct.get())
+                            .productOrder(order)
+                            .build();
+                    eventOrderRepository.save(eventOrder);
+                }
             }
         }
         // 구매자 정보 저장
@@ -545,6 +560,7 @@ public class OrderServiceImpl implements OrderService {
                 .build();
 
         orderedPurchaserProfileRepository.save(purchaserProfile);
+
     }
     public OrderDetailDataResponseForAdminForm orderDetailDataCombineForAdmin(Long orderId) {
         try {
