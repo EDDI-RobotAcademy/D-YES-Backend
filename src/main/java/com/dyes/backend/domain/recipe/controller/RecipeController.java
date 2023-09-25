@@ -1,5 +1,6 @@
 package com.dyes.backend.domain.recipe.controller;
 
+import com.dyes.backend.domain.recipe.controller.form.RecipeDeleteForm;
 import com.dyes.backend.domain.recipe.controller.form.RecipeRegisterForm;
 import com.dyes.backend.domain.recipe.service.RecipeService;
 
@@ -26,4 +27,12 @@ public class RecipeController {
     public List<RecipeListResponseForm> getRecipeList() {
         return recipeService.getRecipeList();
     }
+
+    @DeleteMapping("/delete/{recipeId}")
+    public boolean deleteRecipe (@PathVariable("recipeId") Long recipeId,
+                                 @RequestBody RecipeDeleteForm deleteForm) {
+        return recipeService.deleteRecipe(recipeId, deleteForm);
+    }
+
+    //read
 }
