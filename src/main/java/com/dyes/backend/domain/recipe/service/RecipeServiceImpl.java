@@ -1,6 +1,7 @@
 package com.dyes.backend.domain.recipe.service;
 
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
+import com.dyes.backend.domain.recipe.controller.form.RecipeDeleteForm;
 import com.dyes.backend.domain.recipe.controller.form.RecipeRegisterForm;
 import com.dyes.backend.domain.recipe.entity.*;
 import com.dyes.backend.domain.recipe.repository.RecipeContentRepository;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -113,11 +115,54 @@ public class RecipeServiceImpl implements RecipeService {
 
                 log.info("Recipe list read successful");
             }
-            
+
             return recipeListResponseListForm;
         } catch (Exception e) {
             log.error("Failed to read the recipe list: {}", e.getMessage(), e);
             return null;
+        }
+    }
+
+    @Override
+    public Boolean deleteRecipe(Long recipeId, RecipeDeleteForm deleteForm) {
+        log.info("Deleting recipe with ID: {}", recipeId);
+
+        String userToken = deleteForm.getUserToken();
+        User user = authenticationService.findUserByUserToken(userToken);
+
+        if(user == null) {
+            log.info("Unable to find user with user token: {}", userToken);
+            return false;
+        }
+
+        Optional<Recipe> maybeRecipe = recipeRepository.findById(recipeId);
+        if (maybeRecipe.isEmpty()) {
+            log.info("Recipe is empty");
+            return false;
+        }
+
+        Recipe deleteRecipe = maybeRecipe.get();
+        if (!deleteRecipe.getUser().getId().equals(user.getId())) {
+            log.info("UserId do not match");
+            return false;
+        }
+
+        try {
+            RecipeMainImage recipeMainImage = recipeMainImageRepository.findByRecipe(deleteRecipe);
+            RecipeContent recipeContent = recipeContentRepository.findByRecipe(deleteRecipe);
+            RecipeIngredient recipeIngredient = recipeIngredientRepository.findByRecipe(deleteRecipe);
+
+            recipeMainImageRepository.delete(recipeMainImage);
+            recipeContentRepository.delete(recipeContent);
+            recipeIngredientRepository.delete(recipeIngredient);
+            recipeRepository.delete(deleteRecipe);
+
+            log.info("Recipe deletion successful for farm with ID: {}", recipeId);
+            return true;
+
+        } catch (Exception e) {
+            log.error("Failed to delete the recipe: {}", e.getMessage(), e);
+            return false;
         }
     }
 
