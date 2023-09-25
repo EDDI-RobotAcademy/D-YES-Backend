@@ -78,18 +78,14 @@ public class ReviewServiceImpl implements ReviewService{
         }
         return false;
     }
-    public boolean registerReview(ReviewRegisterRequestForm requestForm) {
+    public boolean registerReview(ReviewRegisterRequest reviewRegisterRequest, List<ReviewImagesRegisterRequest> reviewImagesRegisterRequestList) {
         log.info("registerReview start");
 
-        ReviewRegisterRequest request = new ReviewRegisterRequest(
-                requestForm.getUserToken(), requestForm.getOrderId(), requestForm.getProductOptionId(), requestForm.getContent(), requestForm.getRating());
-        List<ReviewImagesRegisterRequest> imagesRegisterRequestList = requestForm.getImagesRegisterRequestList();
-
-        final String userToken = request.getUserToken();
-        final Long orderId = request.getOrderId();
-        final Long productOptionId = request.getProductOptionId();
-        final String content = request.getContent();
-        final Integer rating = request.getRating();
+        final String userToken = reviewRegisterRequest.getUserToken();
+        final Long orderId = reviewRegisterRequest.getOrderId();
+        final List<Long> productOptionIdList = reviewRegisterRequest.getProductOptionIdList();
+        final String content = reviewRegisterRequest.getContent();
+        final Integer rating = reviewRegisterRequest.getRating();
 
         try {
             User user = authenticationService.findUserByUserToken(userToken);
@@ -109,18 +105,24 @@ public class ReviewServiceImpl implements ReviewService{
             }
             ProductOrder order = maybeOrder.get();
 
-            Optional<ProductOption> maybeProductOption = productOptionRepository.findByIdWithProduct(productOptionId);
-            if (maybeProductOption.isEmpty()) {
-                return false;
+            List<String> productOptionNameList = new ArrayList<>();
+            ProductOption productOption = new ProductOption();
+            for (Long productOptionId : productOptionIdList) {
+                Optional<ProductOption> maybeProductOption = productOptionRepository.findByIdWithProduct(productOptionId);
+                if (maybeProductOption.isEmpty()) {
+                    return false;
+                }
+                productOption = maybeProductOption.get();
+                productOptionNameList.add(productOption.getOptionName());
             }
-            ProductOption productOption = maybeProductOption.get();
+
 
             Review review = Review.builder()
                     .user(user)
                     .productOrder(order)
                     .content(content)
                     .productName(productOption.getProduct().getProductName())
-                    .optionName(productOption.getOptionName())
+                    .optionNameList(productOptionNameList)
                     .userNickName(userProfile.getNickName())
                     .product(productOption.getProduct())
                     .reviewDate(LocalDate.now())
@@ -136,7 +138,7 @@ public class ReviewServiceImpl implements ReviewService{
             reviewRatingRepository.save(reviewRating);
             log.info("registerReview end");
 
-            for (ReviewImagesRegisterRequest imagesRegisterRequest : imagesRegisterRequestList) {
+            for (ReviewImagesRegisterRequest imagesRegisterRequest : reviewImagesRegisterRequestList) {
                 ReviewImages images = ReviewImages.builder()
                         .img(imagesRegisterRequest.getReviewImages())
                         .review(review)
@@ -176,7 +178,7 @@ public class ReviewServiceImpl implements ReviewService{
                 ReviewRequestResponse response = ReviewRequestResponse.builder()
                         .userNickName(review.getUserNickName())
                         .productName(review.getProductName())
-                        .optionName(review.getOptionName())
+                        .optionNameList(review.getOptionNameList())
                         .content(review.getContent())
                         .rating(reviewRating.getRating())
                         .createDate(review.getReviewDate())

@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Data
@@ -21,7 +22,8 @@ public class Review {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String productName;
-    private String optionName;
+    @ElementCollection
+    private List<String> optionNameList;
     private String userNickName;
     private String content;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

@@ -111,12 +111,7 @@ public class ReviewMockingTest {
         final String content = "내용";
         final Integer rating = 1;
         ReviewImagesRegisterRequest imagesRegisterRequest = new ReviewImagesRegisterRequest();
-
-        ReviewRegisterRequestForm requestForm = new ReviewRegisterRequestForm(userToken, orderId, productOptionId, content, rating, List.of(imagesRegisterRequest));
-        ReviewRegisterRequest request = new ReviewRegisterRequest(
-                requestForm.getUserToken(), requestForm.getOrderId(),
-                requestForm.getProductOptionId(), requestForm.getContent(), requestForm.getRating()
-        );
+        ReviewRegisterRequest request = new ReviewRegisterRequest(userToken, orderId, List.of(productOptionId), content, rating);
 
         User user = new User();
         when(mockAuthenticationService.findUserByUserToken(userToken)).thenReturn(user);
@@ -129,7 +124,7 @@ public class ReviewMockingTest {
         productOption.setProduct(product);
         when(mockProductOptionRepository.findByIdWithProduct(productOptionId)).thenReturn(Optional.of(productOption));
 
-        boolean result = mockService.registerReview(requestForm);
+        boolean result = mockService.registerReview(request, List.of(imagesRegisterRequest));
         assertTrue(result);
     }
     @Test
