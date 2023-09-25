@@ -9,5 +9,4 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ProductModifyUserTokenAndEventProductIdRequest {
     private String userToken;
-    private Long eventProductId;
 }

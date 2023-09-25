@@ -289,13 +289,12 @@ public class EventServiceImpl implements EventService{
         }
     }
     // 관리자가 공동 구매 물품 내용을 수정합니다
-    public boolean eventProductModify(ProductModifyUserTokenAndEventProductIdRequest productModifyUserTokenAndEventProductIdRequest,
+    public boolean eventProductModify(Long eventProductId,ProductModifyUserTokenAndEventProductIdRequest productModifyUserTokenAndEventProductIdRequest,
                                       ProductModifyRequest productModifyRequest, ProductOptionModifyRequest productOptionModifyRequest,
                                       ProductMainImageModifyRequest productMainImageModifyRequest, List<ProductDetailImagesModifyRequest> productDetailImagesModifyRequest,
                                       EventProductModifyDeadLineRequest eventProductModifyDeadLineRequest, EventProductModifyPurchaseCountRequest eventProductModifyPurchaseCountRequest) {
 
         final String userToken = productModifyUserTokenAndEventProductIdRequest.getUserToken();
-        final Long eventProductId = productModifyUserTokenAndEventProductIdRequest.getEventProductId();
 
 
         try {
@@ -317,7 +316,6 @@ public class EventServiceImpl implements EventService{
             product.setProductName(productModifyRequest.getProductName());
             product.setProductDescription(productModifyRequest.getProductDescription());
             product.setCultivationMethod(productModifyRequest.getCultivationMethod());
-            product.setProductSaleStatus(productModifyRequest.getProductSaleStatus());
             productRepository.save(product);
 
             Optional<ProductMainImage> maybeMainImage = productMainImageRepository.findByProduct(product);
@@ -353,7 +351,6 @@ public class EventServiceImpl implements EventService{
             productOption.setOptionPrice(productOptionModifyRequest.getOptionPrice());
             productOption.setStock(productOptionModifyRequest.getStock());
             productOption.setAmount(new Amount(productOptionModifyRequest.getValue(), productOptionModifyRequest.getUnit()));
-            productOption.setOptionSaleStatus(productOptionModifyRequest.getOptionSaleStatus());
             productOption.setProduct(product);
             productOptionRepository.save(productOption);
 

@@ -61,8 +61,9 @@ public class EventController {
     public EventProductReadResponseForm eventProductRead(@PathVariable Long eventProductId) {
         return eventService.eventProductRead(eventProductId);
     }
-    @PutMapping("/modify")
-    public boolean eventProductModify(@RequestBody EventProductModifyRequestForm requestForm) {
+    @PutMapping("/modify/{eventProductId}")
+    public boolean eventProductModify(@PathVariable Long eventProductId,
+            @RequestBody EventProductModifyRequestForm requestForm) {
         ProductModifyUserTokenAndEventProductIdRequest productModifyUserTokenAndEventProductIdRequest = requestForm.getProductModifyUserTokenAndEventProductIdRequest();
         ProductModifyRequest productModifyRequest = requestForm.getProductModifyRequest();
         ProductOptionModifyRequest productOptionModifyRequest = requestForm.getProductOptionModifyRequest();
@@ -71,7 +72,7 @@ public class EventController {
         EventProductModifyDeadLineRequest eventProductModifyDeadLineRequest = requestForm.getEventProductModifyDeadLineRequest();
         EventProductModifyPurchaseCountRequest eventProductModifyPurchaseCountRequest = requestForm.getEventProductModifyPurchaseCountRequest();
 
-        boolean result = eventService.eventProductModify(
+        boolean result = eventService.eventProductModify(eventProductId,
                 productModifyUserTokenAndEventProductIdRequest, productModifyRequest, productOptionModifyRequest,
                 productMainImageModifyRequest, productDetailImagesModifyRequest, eventProductModifyDeadLineRequest,
                 eventProductModifyPurchaseCountRequest);
