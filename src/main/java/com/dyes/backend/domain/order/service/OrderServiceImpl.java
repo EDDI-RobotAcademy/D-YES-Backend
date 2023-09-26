@@ -769,15 +769,15 @@ public class OrderServiceImpl implements OrderService {
             }
 
             Optional<ProductOrder> maybeOrder = orderRepository.findById(orderId);
-            if (maybeOrder.isEmpty()){
+            if (maybeOrder.isEmpty()) {
                 return false;
             }
             ProductOrder order = maybeOrder.get();
 
             List<OrderedProduct> orderedProductList = orderedProductRepository.findAllByProductOrder(order);
-            for (OrderedProduct orderedProduct : orderedProductList){
+            for (OrderedProduct orderedProduct : orderedProductList) {
                 for (Long productOptionId : productOptionIdList) {
-                    if (orderedProduct.getProductOptionId().equals(productOptionId)){
+                    if (orderedProduct.getProductOptionId().equals(productOptionId)) {
                         orderedProduct.setOrderedProductStatus(WAITING_REFUND);
                         orderedProductRepository.save(orderedProduct);
                     }
@@ -810,10 +810,12 @@ public class OrderServiceImpl implements OrderService {
         int totalPreviousOrdersAmount = 0;
         double monthOverMonthGrowthRate = 0;
         List<Integer> orderCountListByDay = new ArrayList<>();
-
+        
+        // 당월 주문 내역 가져오기
         List<ProductOrder> productOrderList
                 = orderRepository.findByOrderedTimeBetween(firstDayOfCurrentMonth, lastDayOfCurrentMonth);
 
+        // 주문 건수 가져오기(합계, 완료, 취소)
         for (ProductOrder productOrder : productOrderList) {
             totalOrdersCount = totalOrdersCount + 1;
             if (productOrder.getOrderStatus().equals(SUCCESS_PAYMENT)) {
@@ -825,6 +827,21 @@ public class OrderServiceImpl implements OrderService {
             totalOrdersAmount = totalOrdersAmount
                     + (productOrder.getAmount().getTotalAmount() - productOrder.getAmount().getRefundedAmount());
         }
+
+        // 일별 주문 수량 가져오기
+        LocalDate date = firstDayOfCurrentMonth;
+        while (!date.isAfter(lastDayOfCurrentMonth)) {
+            int tmpOrdersCount = 0;
+            for (ProductOrder productOrder : productOrderList) {
+                if (productOrder.getOrderedTime().equals(date)) {
+                    tmpOrdersCount = tmpOrdersCount + 1;
+                }
+            }
+            orderCountListByDay.add(tmpOrdersCount);
+            date = date.plusDays(1);
+        }
+
+        // 전월 대비 변동율 구하기
         List<ProductOrder> previousProductOrderList
                 = orderRepository.findByOrderedTimeBetween(firstDayOfPreviousMonth, lastDayOfPreviousMonth);
         for (ProductOrder previousProductOrder : previousProductOrderList) {
@@ -842,7 +859,12 @@ public class OrderServiceImpl implements OrderService {
 
         MonthlyOrdersStatisticsResponseForm monthlyOrdersStatisticsResponseForm
                 = new MonthlyOrdersStatisticsResponseForm(
-                totalOrdersCount, completedOrders, cancelledOrders, totalOrdersAmount, monthOverMonthGrowthRate);
+                totalOrdersCount,
+                completedOrders,
+                cancelledOrders, 
+                totalOrdersAmount, 
+                monthOverMonthGrowthRate, 
+                orderCountListByDay);
         return monthlyOrdersStatisticsResponseForm;
     }
 
