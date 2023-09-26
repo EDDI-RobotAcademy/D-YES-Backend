@@ -151,7 +151,7 @@ public class CartMockingTest {
         Cart cart = new Cart(1L, user);
         when(mockCartRepository.findByUser(user)).thenReturn(Optional.of(cart));
 
-        Product product = new Product(1L, "상품 이름", "상세 정보", CultivationMethod.ORGANIC, ONION, SaleStatus.AVAILABLE, new Farm());
+        Product product = new Product(1L, "상품 이름", "상세 정보", CultivationMethod.ORGANIC, ONION, SaleStatus.AVAILABLE, new Farm(), MaybeEventProduct.NO);
         ProductOption productOption = new ProductOption(1L, "옵션이름", 2000L, 10, new Amount(), product, product.getProductSaleStatus());
         ContainProductOption containProductOption = new ContainProductOption(1L, cart, "상품명", 1L, "메인이미지", 1L, "옵션이름", 2000L, 1);
         when(mockContainProductOptionRepository.findAllByCart(cart)).thenReturn(List.of(containProductOption));

@@ -54,6 +54,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static com.dyes.backend.domain.product.entity.MaybeEventProduct.YES;
 import static com.dyes.backend.domain.product.entity.SaleStatus.AVAILABLE;
 
 @Service
@@ -463,6 +464,7 @@ public class EventServiceImpl implements EventService{
                     .cultivationMethod(productRequest.getCultivationMethod())
                     .produceType(productRequest.getProduceType())
                     .productSaleStatus(AVAILABLE)
+                    .maybeEventProduct(YES)
                     .farm(farm)
                     .build();
 
