@@ -1,5 +1,7 @@
 package com.dyes.backend.domain.inquiry.service;
 
+import com.dyes.backend.domain.admin.entity.Admin;
+import com.dyes.backend.domain.admin.service.AdminService;
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
 import com.dyes.backend.domain.inquiry.controller.form.InquiryListResponseForm;
 import com.dyes.backend.domain.inquiry.controller.form.InquiryReadResponseForm;
@@ -10,6 +12,7 @@ import com.dyes.backend.domain.inquiry.entity.InquiryType;
 import com.dyes.backend.domain.inquiry.repository.InquiryContentRepository;
 import com.dyes.backend.domain.inquiry.repository.InquiryRepository;
 import com.dyes.backend.domain.inquiry.service.request.InquiryRegisterRequest;
+import com.dyes.backend.domain.inquiry.service.request.InquiryReplyRequest;
 import com.dyes.backend.domain.inquiry.service.response.read.InquiryReadInquiryInfoResponse;
 import com.dyes.backend.domain.inquiry.service.response.read.InquiryReadUserResponse;
 import com.dyes.backend.domain.user.entity.User;
@@ -17,6 +20,8 @@ import com.dyes.backend.domain.user.entity.UserProfile;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -34,6 +39,8 @@ public class InquiryServiceImpl implements InquiryService{
     final private InquiryContentRepository inquiryContentRepository;
     final private AuthenticationService authenticationService;
     final private UserProfileRepository userProfileRepository;
+    final private AdminService adminService;
+    final private JavaMailSender javaMailSender;
 
     public boolean inquiryRegister(InquiryRegisterRequest request) {
         final String userToken = request.getUserToken();
@@ -117,9 +124,46 @@ public class InquiryServiceImpl implements InquiryService{
                 responseFormList.add(responseForm);
             }
             return responseFormList;
-        }catch (Exception e) {
+        } catch (Exception e) {
             log.error("Error occurred while get inquiry list", e);
             return null;
+        }
+    }
+    public boolean replyInquiry(InquiryReplyRequest request) {
+        final String userToken = request.getUserToken();
+        final Long inquiryId = request.getInquiryId();
+        final String title = request.getTitle();
+        final String content = request.getContent();
+
+        try {
+            Admin admin = adminService.findAdminByUserToken(userToken);
+            if (admin == null) {
+                return false;
+            }
+
+            Optional<Inquiry> maybeInquiry = inquiryRepository.findByIdWithUserContent(inquiryId);
+            if (maybeInquiry.isEmpty()){
+                return false;
+            }
+            Inquiry inquiry = maybeInquiry.get();
+
+            Optional<UserProfile> maybeUserProfile = userProfileRepository.findByUser(inquiry.getUser());
+            if (maybeUserProfile.isEmpty()){
+                return false;
+            }
+            UserProfile userProfile = maybeUserProfile.get();
+
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setSubject(title);
+            message.setText(content);
+            message.setTo(userProfile.getEmail());
+
+            javaMailSender.send(message);
+            return true;
+
+        } catch (Exception e) {
+            log.error("Error occurred while get inquiry list", e);
+            return false;
         }
     }
 }
