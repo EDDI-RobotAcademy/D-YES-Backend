@@ -6,6 +6,7 @@ import com.dyes.backend.domain.inquiry.service.request.InquiryRegisterRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -17,7 +18,7 @@ public class InquiryController {
     final private InquiryService inquiryService;
 
     @PostMapping("/register")
-    public boolean inquiryRegister(InquiryRegisterRequestForm requestForm) {
+    public boolean inquiryRegister(@RequestBody InquiryRegisterRequestForm requestForm) {
         InquiryRegisterRequest request = requestForm.getInquiryRegisterRequest();
         return inquiryService.inquiryRegister(request);
     }
