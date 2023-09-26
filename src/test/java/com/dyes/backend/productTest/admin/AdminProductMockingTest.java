@@ -408,7 +408,7 @@ public class AdminProductMockingTest {
     @DisplayName("product mocking test: admin product read")
     public void 관리자가_상품을_수정하기_전에_상품을_확인할_수_있습니다() {
         Farm farm = new Farm(1L, "투투농가");
-        Product product = new Product(1L, "상품 이름", "상세 설명", CultivationMethod.ORGANIC, ONION, AVAILABLE, farm);
+        Product product = new Product(1L, "상품 이름", "상세 설명", CultivationMethod.ORGANIC, ONION, AVAILABLE, farm, MaybeEventProduct.NO);
         List<ProductOption> productOption = new ArrayList<>();
         productOption.add(new ProductOption(1L, "옵션 이름", 10000L, 100, new Amount(), product, AVAILABLE));
         ProductMainImage productMainImage = new ProductMainImage(product.getId(), "메인 이미지", product);
@@ -451,7 +451,7 @@ public class AdminProductMockingTest {
     @DisplayName("product mocking test: admin product read-summary")
     public void 관리자가_상품을_삭제하기_전에_상품_요약정보를_확인할_수_있습니다() {
         Farm farm = new Farm(1L, "투투농가");
-        Product product = new Product(1L, "상품 이름", "상세 설명", CultivationMethod.ORGANIC, ONION, AVAILABLE, farm);
+        Product product = new Product(1L, "상품 이름", "상세 설명", CultivationMethod.ORGANIC, ONION, AVAILABLE, farm, MaybeEventProduct.NO);
         List<ProductOption> productOption = new ArrayList<>();
         productOption.add(new ProductOption(1L, "옵션 이름", 1L, 1, new Amount(), product, AVAILABLE));
 

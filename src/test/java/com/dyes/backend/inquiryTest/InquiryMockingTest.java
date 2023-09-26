@@ -5,6 +5,7 @@ import com.dyes.backend.domain.inquiry.controller.form.InquiryListResponseForm;
 import com.dyes.backend.domain.inquiry.controller.form.InquiryReadResponseForm;
 import com.dyes.backend.domain.inquiry.entity.Inquiry;
 import com.dyes.backend.domain.inquiry.entity.InquiryContent;
+import com.dyes.backend.domain.inquiry.entity.InquiryStatus;
 import com.dyes.backend.domain.inquiry.entity.InquiryType;
 import com.dyes.backend.domain.inquiry.repository.InquiryContentRepository;
 import com.dyes.backend.domain.inquiry.repository.InquiryRepository;
@@ -70,6 +71,7 @@ public class InquiryMockingTest {
         Inquiry inquiry = Inquiry.builder()
                 .title(title)
                 .user(user)
+                .inquiryStatus(InquiryStatus.WAITING)
                 .content(inquiryContent)
                 .inquiryType(InquiryType.PURCHASE)
                 .createDate(LocalDate.now())
