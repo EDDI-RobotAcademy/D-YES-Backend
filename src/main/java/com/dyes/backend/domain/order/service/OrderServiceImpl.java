@@ -22,10 +22,7 @@ import com.dyes.backend.domain.order.repository.OrderRepository;
 import com.dyes.backend.domain.order.repository.OrderedProductRepository;
 import com.dyes.backend.domain.order.repository.OrderedPurchaserProfileRepository;
 import com.dyes.backend.domain.order.service.admin.response.*;
-import com.dyes.backend.domain.order.service.admin.response.form.OrderDetailDataResponseForAdminForm;
-import com.dyes.backend.domain.order.service.admin.response.form.OrderInfoResponseFormForDashBoardForAdmin;
-import com.dyes.backend.domain.order.service.admin.response.form.OrderListResponseFormForAdmin;
-import com.dyes.backend.domain.order.service.admin.response.form.OrderManagementInfoResponseForAdmin;
+import com.dyes.backend.domain.order.service.admin.response.form.*;
 import com.dyes.backend.domain.order.service.user.request.*;
 import com.dyes.backend.domain.order.service.user.response.*;
 import com.dyes.backend.domain.order.service.user.response.form.OrderConfirmResponseFormForUser;
@@ -59,12 +56,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 import static com.dyes.backend.domain.delivery.entity.DeliveryStatus.PREPARING;
+import static com.dyes.backend.domain.order.entity.OrderStatus.CANCEL_PAYMENT;
+import static com.dyes.backend.domain.order.entity.OrderStatus.SUCCESS_PAYMENT;
 import static com.dyes.backend.domain.order.entity.OrderedProductStatus.WAITING_REFUND;
 import static com.dyes.backend.domain.user.entity.AddressBookOption.DEFAULT_OPTION;
 
@@ -102,12 +102,13 @@ public class OrderServiceImpl implements OrderService {
                 requestForm.getOrderedProductOptionRequestList(),
                 requestForm.getTotalAmount(),
                 requestForm.getFrom()
-                );
+        );
         String redirectUrl = paymentService.paymentTemporaryDataSaveAndReturnRedirectView(request);
 
         return redirectUrl;
     }
-    public boolean approvalPurchaseWithKakao (KakaoPaymentApprovalRequestForm requestForm) throws JsonProcessingException {
+
+    public boolean approvalPurchaseWithKakao(KakaoPaymentApprovalRequestForm requestForm) throws JsonProcessingException {
         log.info("approvalPurchaseKakao start");
         KakaoPaymentApprovalRequest request = new KakaoPaymentApprovalRequest(requestForm.getUserToken(), requestForm.getPg_token());
         PaymentTemporarySaveRequest result = paymentService.paymentApprovalRequest(request);
@@ -123,15 +124,18 @@ public class OrderServiceImpl implements OrderService {
         log.info("approvalPurchaseKakao end");
         return false;
     }
-    public boolean rejectPurchaseWithKakao (KakaoPaymentRejectRequestForm requestForm) {
+
+    public boolean rejectPurchaseWithKakao(KakaoPaymentRejectRequestForm requestForm) {
         boolean result = paymentService.paymentRejectWithKakao(requestForm);
         return result;
     }
-    public boolean refundPurchaseWithKakao (KakaoPaymentRefundOrderAndTokenAndReasonRequest orderAndTokenAndReasonRequest,
-                                            List<KakaoPaymentRefundProductOptionRequest> requestList) {
+
+    public boolean refundPurchaseWithKakao(KakaoPaymentRefundOrderAndTokenAndReasonRequest orderAndTokenAndReasonRequest,
+                                           List<KakaoPaymentRefundProductOptionRequest> requestList) {
         boolean result = paymentService.paymentRefundRequest(orderAndTokenAndReasonRequest, requestList);
         return result;
     }
+
     // 상품 주문
     public void orderProduct(PaymentTemporarySaveRequest saveRequest) {
         log.info("orderProductInCart start");
@@ -175,6 +179,7 @@ public class OrderServiceImpl implements OrderService {
             log.error("Error occurred while ordering products in cart", e);
         }
     }
+
     // 상품을 주문하기 전에 확인하기
     @Override
     public OrderConfirmResponseFormForUser orderConfirm(OrderConfirmRequestForm requestForm) {
@@ -193,8 +198,8 @@ public class OrderServiceImpl implements OrderService {
             String address = "";
             String zipcode = "";
             String addressDetail = "";
-            for(AddressBook addressBook : addressBookList) {
-                if(addressBook.getAddressBookOption().equals(DEFAULT_OPTION)){
+            for (AddressBook addressBook : addressBookList) {
+                if (addressBook.getAddressBookOption().equals(DEFAULT_OPTION)) {
                     address = addressBook.getAddress().getAddress();
                     zipcode = addressBook.getAddress().getZipCode();
                     addressDetail = addressBook.getAddress().getAddressDetail();
@@ -336,7 +341,7 @@ public class OrderServiceImpl implements OrderService {
 
         List<ProductOrder> productOrderList
                 = orderRepository.findAllByOrderedTimeAfterOrderByOrderedTimeDesc(sevenDaysAgo);
-        if(productOrderList.size() == 0) {
+        if (productOrderList.size() == 0) {
             log.info("No Orders found.");
             return null;
         }
@@ -353,7 +358,7 @@ public class OrderServiceImpl implements OrderService {
         // 상품 목록 조회 진행
         for (ProductOrder productOrder : productOrderList) {
             List<OrderedProduct> orderedProductList = orderedProductRepository.findAllByProductOrder(productOrder);
-            String representativeProductName= orderedProductList.get(0).getProductName();
+            String representativeProductName = orderedProductList.get(0).getProductName();
             if (productOrder.getOrderedTime().equals(today)) {
                 registeredOrderCountToday = registeredOrderCountToday + 1;
             } else if (productOrder.getOrderedTime().equals(today.minusDays(1))) {
@@ -452,8 +457,8 @@ public class OrderServiceImpl implements OrderService {
                 // 리뷰 내역에서 product로
                 Long reviewId = null;
                 for (Review review : reviewList) {
-                    if (review.getProductOrder().getId().equals(order.getId())){
-                        if (review.getProduct().getId().equals(product.getId())){
+                    if (review.getProductOrder().getId().equals(order.getId())) {
+                        if (review.getProduct().getId().equals(product.getId())) {
                             reviewId = review.getId();
                         }
                     }
@@ -504,7 +509,7 @@ public class OrderServiceImpl implements OrderService {
         ProductOrder order = ProductOrder.builder()
                 .user(user)
                 .tid(tid)
-                .orderStatus(OrderStatus.SUCCESS_PAYMENT)
+                .orderStatus(SUCCESS_PAYMENT)
                 .amount(new OrderAmount(totalAmount, 0))
                 .orderedTime(LocalDate.now())
                 .delivery(delivery)
@@ -513,7 +518,7 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(order);
 
         Optional<Payment> maybePayment = paymentRepository.findByTid(tid);
-        if(maybePayment.isEmpty()){
+        if (maybePayment.isEmpty()) {
             log.info("Can not find Payment data");
             return;
         }
@@ -538,7 +543,7 @@ public class OrderServiceImpl implements OrderService {
 
                 if (productOption.getStock() - optionRequest.getProductOptionCount() < 0) {
                     log.info("over max stock");
-                        throw new OverMaxStockException("over max stock");
+                    throw new OverMaxStockException("over max stock");
                 }
 
                 productOption.setStock(productOption.getStock() - optionRequest.getProductOptionCount());
@@ -582,12 +587,13 @@ public class OrderServiceImpl implements OrderService {
         orderedPurchaserProfileRepository.save(purchaserProfile);
 
     }
+
     public OrderDetailDataResponseForAdminForm orderDetailDataCombineForAdmin(Long orderId) {
         try {
             log.info("orderDetailDataCombineForAdmin start");
 
             Optional<ProductOrder> maybeOrder = orderRepository.findByStringIdWithDelivery(orderId);
-            if (maybeOrder.isEmpty()){
+            if (maybeOrder.isEmpty()) {
                 log.info("no order data");
                 return null;
             }
@@ -617,9 +623,9 @@ public class OrderServiceImpl implements OrderService {
 
             List<OrderCombineOrderedProductData> productDataList = new ArrayList<>();
 
-            for (OrderedProduct orderedProduct : orderedProductList){
+            for (OrderedProduct orderedProduct : orderedProductList) {
                 Optional<ProductOption> maybeProductOption = productOptionRepository.findById(orderedProduct.getProductOptionId());
-                if (maybeOrder.isPresent()){
+                if (maybeOrder.isPresent()) {
                     ProductOption productOption = maybeProductOption.get();
                     OrderCombineOrderedProductData productData = OrderCombineOrderedProductData.builder()
                             .productId(orderedProduct.getProductId())
@@ -665,12 +671,13 @@ public class OrderServiceImpl implements OrderService {
             return null;
         }
     }
+
     public OrderDetailDataResponseForUserForm orderDetailDataCombineForUser(Long orderId) {
         try {
             log.info("orderDetailDataCombineForUser start");
 
             Optional<ProductOrder> maybeOrder = orderRepository.findByStringIdWithDelivery(orderId);
-            if (maybeOrder.isEmpty()){
+            if (maybeOrder.isEmpty()) {
                 log.info("no order data");
                 return null;
             }
@@ -700,9 +707,9 @@ public class OrderServiceImpl implements OrderService {
 
             List<OrderCombineOrderedProductDataForUser> productDataList = new ArrayList<>();
 
-            for (OrderedProduct orderedProduct : orderedProductList){
+            for (OrderedProduct orderedProduct : orderedProductList) {
                 Optional<ProductOption> maybeProductOption = productOptionRepository.findById(orderedProduct.getProductOptionId());
-                if (maybeOrder.isPresent()){
+                if (maybeOrder.isPresent()) {
                     ProductOption productOption = maybeProductOption.get();
                     OrderCombineOrderedProductDataForUser productData = OrderCombineOrderedProductDataForUser.builder()
                             .productOptionName(productOption.getOptionName())
@@ -746,6 +753,8 @@ public class OrderServiceImpl implements OrderService {
             return null;
         }
     }
+
+    @Override
     public boolean orderedProductWaitingRefund(OrderedProductChangeStatusRequestForm requestForm) {
         final String userToken = requestForm.getUserToken();
         final Long orderId = requestForm.getOrderId();
@@ -781,6 +790,62 @@ public class OrderServiceImpl implements OrderService {
         }
 
     }
+
+    // 관리자의 월 주문 통계 데이터 확인
+    @Override
+    public MonthlyOrdersStatisticsResponseForm getMonthlyOrders() {
+        final LocalDate currentDate = LocalDate.now();
+        final LocalDate firstDayOfCurrentMonth = currentDate.withDayOfMonth(1);
+        final LocalDate lastDayOfCurrentMonth = currentDate.with(TemporalAdjusters.lastDayOfMonth());
+        log.info("This month Period: " + firstDayOfCurrentMonth + " ~ " + lastDayOfCurrentMonth);
+
+        final LocalDate lastDayOfPreviousMonth = firstDayOfCurrentMonth.minusDays(1);
+        final LocalDate firstDayOfPreviousMonth = lastDayOfPreviousMonth.withDayOfMonth(1);
+        log.info("This previous Period: " + firstDayOfPreviousMonth + " ~ " + lastDayOfPreviousMonth);
+
+        int totalOrdersCount = 0;
+        int completedOrders = 0;
+        int cancelledOrders = 0;
+        int totalOrdersAmount = 0;
+        int totalPreviousOrdersAmount = 0;
+        double monthOverMonthGrowthRate = 0;
+        List<Integer> orderCountListByDay = new ArrayList<>();
+
+        List<ProductOrder> productOrderList
+                = orderRepository.findByOrderedTimeBetween(firstDayOfCurrentMonth, lastDayOfCurrentMonth);
+
+        for (ProductOrder productOrder : productOrderList) {
+            totalOrdersCount = totalOrdersCount + 1;
+            if (productOrder.getOrderStatus().equals(SUCCESS_PAYMENT)) {
+                completedOrders = completedOrders + 1;
+            } else if (productOrder.getOrderStatus().equals(CANCEL_PAYMENT)) {
+                cancelledOrders = cancelledOrders + 1;
+            }
+
+            totalOrdersAmount = totalOrdersAmount
+                    + (productOrder.getAmount().getTotalAmount() - productOrder.getAmount().getRefundedAmount());
+        }
+        List<ProductOrder> previousProductOrderList
+                = orderRepository.findByOrderedTimeBetween(firstDayOfPreviousMonth, lastDayOfPreviousMonth);
+        for (ProductOrder previousProductOrder : previousProductOrderList) {
+            totalPreviousOrdersAmount = totalPreviousOrdersAmount
+                    + (previousProductOrder.getAmount().getTotalAmount() - previousProductOrder.getAmount().getRefundedAmount());
+        }
+
+        if (totalPreviousOrdersAmount != 0) {
+            monthOverMonthGrowthRate
+                    = ((double) (totalOrdersAmount - totalPreviousOrdersAmount) / totalPreviousOrdersAmount) * 100;
+        } else {
+            log.info("Previous data does not exist, previous total amount: " + totalPreviousOrdersAmount);
+            monthOverMonthGrowthRate = 0;
+        }
+
+        MonthlyOrdersStatisticsResponseForm monthlyOrdersStatisticsResponseForm
+                = new MonthlyOrdersStatisticsResponseForm(
+                totalOrdersCount, completedOrders, cancelledOrders, totalOrdersAmount, monthOverMonthGrowthRate);
+        return monthlyOrdersStatisticsResponseForm;
+    }
+
     public class OverMaxStockException extends RuntimeException {
         public OverMaxStockException(String message) {
             super(message);

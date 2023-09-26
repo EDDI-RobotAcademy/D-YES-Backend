@@ -2,6 +2,7 @@ package com.dyes.backend.domain.order.controller;
 
 import com.dyes.backend.domain.order.controller.form.*;
 import com.dyes.backend.domain.order.service.OrderService;
+import com.dyes.backend.domain.order.service.admin.response.form.MonthlyOrdersStatisticsResponseForm;
 import com.dyes.backend.domain.order.service.admin.response.form.OrderDetailDataResponseForAdminForm;
 import com.dyes.backend.domain.order.service.admin.response.form.OrderInfoResponseFormForDashBoardForAdmin;
 import com.dyes.backend.domain.order.service.admin.response.form.OrderListResponseFormForAdmin;
@@ -75,8 +76,15 @@ public class OrderController {
     public OrderDetailDataResponseForUserForm getCombineOrderDataForUser(@PathVariable("productOrderId") Long productOrderId){
         return orderService.orderDetailDataCombineForUser(productOrderId);
     }
+
     @PostMapping("/waiting-for-refund")
     public boolean waitingForRefund (@RequestBody OrderedProductChangeStatusRequestForm requestForm){
         return orderService.orderedProductWaitingRefund(requestForm);
+    }
+
+    // 관리자의 월 주문 통계 데이터 확인
+    @GetMapping("/admin/monthly_orders")
+    public MonthlyOrdersStatisticsResponseForm getMonthlyOrders(){
+        return orderService.getMonthlyOrders();
     }
 }
