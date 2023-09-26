@@ -1,6 +1,7 @@
 package com.dyes.backend.inquiryTest;
 
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
+import com.dyes.backend.domain.inquiry.controller.form.InquiryListResponseForm;
 import com.dyes.backend.domain.inquiry.controller.form.InquiryReadResponseForm;
 import com.dyes.backend.domain.inquiry.entity.Inquiry;
 import com.dyes.backend.domain.inquiry.entity.InquiryContent;
@@ -21,6 +22,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -90,6 +92,15 @@ public class InquiryMockingTest {
         when(mockUserProfileRepository.findByUser(inquiry.getUser())).thenReturn(Optional.of(userProfile));
 
         InquiryReadResponseForm result = mockService.readInquiry(inquiryId);
+        assertTrue(result != null);
+    }
+    @Test
+    @DisplayName("inquiry mocking test: inquiry list")
+    public void 관리자는_문의_목록_페이지를_볼_수_있습니다() {
+        Inquiry inquiry = new Inquiry();
+        when(mockInquiryRepository.findAll()).thenReturn(List.of(inquiry));
+
+        List<InquiryListResponseForm> result = mockService.listInquiry();
         assertTrue(result != null);
     }
 }

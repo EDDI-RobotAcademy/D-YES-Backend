@@ -28,4 +28,6 @@ public class Inquiry {
     private LocalDate createDate;
     @Enumerated
     private InquiryType inquiryType;
+    @Enumerated
+    private InquiryStatus inquiryStatus;
 }

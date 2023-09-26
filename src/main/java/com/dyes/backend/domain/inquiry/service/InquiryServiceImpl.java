@@ -1,9 +1,11 @@
 package com.dyes.backend.domain.inquiry.service;
 
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
+import com.dyes.backend.domain.inquiry.controller.form.InquiryListResponseForm;
 import com.dyes.backend.domain.inquiry.controller.form.InquiryReadResponseForm;
 import com.dyes.backend.domain.inquiry.entity.Inquiry;
 import com.dyes.backend.domain.inquiry.entity.InquiryContent;
+import com.dyes.backend.domain.inquiry.entity.InquiryStatus;
 import com.dyes.backend.domain.inquiry.entity.InquiryType;
 import com.dyes.backend.domain.inquiry.repository.InquiryContentRepository;
 import com.dyes.backend.domain.inquiry.repository.InquiryRepository;
@@ -18,7 +20,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+
+import static com.dyes.backend.domain.inquiry.entity.InquiryStatus.WAITING;
 
 @Service
 @Slf4j
@@ -52,6 +58,7 @@ public class InquiryServiceImpl implements InquiryService{
                     .user(user)
                     .createDate(LocalDate.now())
                     .inquiryType(inquiryType)
+                    .inquiryStatus(WAITING)
                     .build();
             inquiryRepository.save(inquiry);
 
@@ -91,6 +98,27 @@ public class InquiryServiceImpl implements InquiryService{
             return responseForm;
         } catch (Exception e) {
             log.error("Error occurred while read inquiry", e);
+            return null;
+        }
+    }
+    public List<InquiryListResponseForm> listInquiry() {
+        try {
+            List<Inquiry> inquiryList = inquiryRepository.findAll();
+
+            List<InquiryListResponseForm> responseFormList = new ArrayList<>();
+            for (Inquiry inquiry : inquiryList) {
+                InquiryListResponseForm responseForm = InquiryListResponseForm.builder()
+                        .inquiryId(inquiry.getId())
+                        .title(inquiry.getTitle())
+                        .inquiryType(inquiry.getInquiryType())
+                        .inquiryStatus(inquiry.getInquiryStatus())
+                        .createDate(inquiry.getCreateDate())
+                        .build();
+                responseFormList.add(responseForm);
+            }
+            return responseFormList;
+        }catch (Exception e) {
+            log.error("Error occurred while get inquiry list", e);
             return null;
         }
     }
