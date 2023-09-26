@@ -2,16 +2,11 @@ package com.dyes.backend.domain.recipe.service;
 
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
 import com.dyes.backend.domain.recipe.controller.form.RecipeDeleteForm;
+import com.dyes.backend.domain.recipe.controller.form.RecipeIngredientInfoForm;
 import com.dyes.backend.domain.recipe.controller.form.RecipeRegisterForm;
 import com.dyes.backend.domain.recipe.entity.*;
-import com.dyes.backend.domain.recipe.repository.RecipeContentRepository;
-import com.dyes.backend.domain.recipe.repository.RecipeIngredientRepository;
-import com.dyes.backend.domain.recipe.repository.RecipeMainImageRepository;
-import com.dyes.backend.domain.recipe.repository.RecipeRepository;
-import com.dyes.backend.domain.recipe.service.request.RecipeContentRegisterRequest;
-import com.dyes.backend.domain.recipe.service.request.RecipeIngredientRegisterRequest;
-import com.dyes.backend.domain.recipe.service.request.RecipeMainImageRegisterRequest;
-import com.dyes.backend.domain.recipe.service.request.RecipeRegisterRequest;
+import com.dyes.backend.domain.recipe.repository.*;
+import com.dyes.backend.domain.recipe.service.request.*;
 import com.dyes.backend.domain.recipe.service.response.form.RecipeListResponseForm;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserProfile;
@@ -20,9 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -30,7 +23,10 @@ import java.util.Optional;
 public class RecipeServiceImpl implements RecipeService {
     final private RecipeRepository recipeRepository;
     final private RecipeContentRepository recipeContentRepository;
-    final private RecipeIngredientRepository recipeIngredientRepository;
+    final private RecipeMainIngredientRepository recipeMainIngredientRepository;
+    final private RecipeSubIngredientRepository recipeSubIngredientRepository;
+    final private RecipeSeasoningIngredientRepository recipeSeasoningIngredientRepository;
+    final private RecipeCategoryRepository recipeCategoryRepository;
     final private RecipeMainImageRepository recipeMainImageRepository;
     final private AuthenticationService authenticationService;
     final private UserProfileRepository userProfileRepository;
@@ -50,6 +46,7 @@ public class RecipeServiceImpl implements RecipeService {
 
         RecipeRegisterRequest recipeRegisterRequest = registerForm.getRecipeRegisterRequest();
         RecipeContentRegisterRequest recipeContentRegisterRequest = registerForm.getRecipeContentRegisterRequest();
+        RecipeCategoryRegisterRequest recipeCategoryRegisterRequest = registerForm.getRecipeCategoryRegisterRequest();
         RecipeIngredientRegisterRequest recipeIngredientRegisterRequest = registerForm.getRecipeIngredientRegisterRequest();
         RecipeMainImageRegisterRequest recipeMainImageRegisterRequest = registerForm.getRecipeMainImageRegisterRequest();
 
@@ -61,24 +58,51 @@ public class RecipeServiceImpl implements RecipeService {
 
             recipeRepository.save(recipe);
 
-            RecipeIngredient recipeIngredient = RecipeIngredient.builder()
+            RecipeMainIngredient recipeMainIngredient = RecipeMainIngredient.builder()
+                    .servingSize(recipeIngredientRegisterRequest.getServingSize())
                     .mainIngredient(recipeIngredientRegisterRequest.getMainIngredient())
-                    .otherIngredientList(recipeIngredientRegisterRequest.getOtherIngredient())
+                    .mainIngredientAmount(recipeIngredientRegisterRequest.getMainIngredientAmount())
                     .recipe(recipe)
                     .build();
+            recipeMainIngredientRepository.save(recipeMainIngredient);
 
-            recipeIngredientRepository.save(recipeIngredient);
+            List<RecipeIngredientInfoForm> otherIngredienList = recipeIngredientRegisterRequest.getOtherIngredienList();
+            for(RecipeIngredientInfoForm recipeIngredientInfoForm : otherIngredienList) {
+                RecipeSubIngredient recipeSubIngredient = RecipeSubIngredient.builder()
+                        .ingredientName(recipeIngredientInfoForm.getIngredientName())
+                        .ingredientAmount(recipeIngredientInfoForm.getIngredientAmount())
+                        .recipe(recipe)
+                        .build();
+                recipeSubIngredientRepository.save(recipeSubIngredient);
+            }
+
+            List<RecipeIngredientInfoForm> seasoningList = recipeIngredientRegisterRequest.getSeasoningList();
+            for(RecipeIngredientInfoForm recipeIngredientInfoForm : seasoningList) {
+                RecipeSeasoningIngredient recipeSeasoningIngredient = RecipeSeasoningIngredient.builder()
+                        .seasoningName(recipeIngredientInfoForm.getIngredientAmount())
+                        .seasoningAmount(recipeIngredientInfoForm.getIngredientAmount())
+                        .recipe(recipe)
+                        .build();
+                recipeSeasoningIngredientRepository.save(recipeSeasoningIngredient);
+            }
 
             RecipeContent recipeContent = RecipeContent.builder()
                     .recipeDetails(recipeContentRegisterRequest.getRecipeDetails())
                     .recipeDescription(recipeContentRegisterRequest.getRecipeDescription())
                     .cookingTime(recipeContentRegisterRequest.getCookingTime())
-                    .timeUnit(recipeContentRegisterRequest.getTimeUnit())
                     .difficulty(recipeContentRegisterRequest.getDifficulty())
                     .recipe(recipe)
                     .build();
 
             recipeContentRepository.save(recipeContent);
+
+            RecipeCategory recipeCategory = RecipeCategory.builder()
+                    .recipeMainCategory(recipeCategoryRegisterRequest.getRecipeMainCategory())
+                    .recipeSubCategory(recipeCategoryRegisterRequest.getRecipeSubCategory())
+                    .recipe(recipe)
+                    .build();
+
+            recipeCategoryRepository.save(recipeCategory);
 
             RecipeMainImage recipeMainImage = RecipeMainImage.builder()
                     .recipeMainImage(recipeMainImageRegisterRequest.getRecipeMainImage())
@@ -163,11 +187,11 @@ public class RecipeServiceImpl implements RecipeService {
         try {
             RecipeMainImage recipeMainImage = recipeMainImageRepository.findByRecipe(deleteRecipe);
             RecipeContent recipeContent = recipeContentRepository.findByRecipe(deleteRecipe);
-            RecipeIngredient recipeIngredient = recipeIngredientRepository.findByRecipe(deleteRecipe);
+            RecipeMainIngredient recipeMainIngredient = recipeMainIngredientRepository.findByRecipe(deleteRecipe);
 
             recipeMainImageRepository.delete(recipeMainImage);
             recipeContentRepository.delete(recipeContent);
-            recipeIngredientRepository.delete(recipeIngredient);
+            recipeMainIngredientRepository.delete(recipeMainIngredient);
             recipeRepository.delete(deleteRecipe);
 
             log.info("Recipe deletion successful for farm with ID: {}", recipeId);
