@@ -290,9 +290,9 @@ public class PaymentServiceImpl implements PaymentService{
 
             Long cancelAmount;
             if ((count.getNowCount() / count.getTargetCount()) < 1) {
-                cancelAmount = (long) (paymentAmount.getTotal() * 7/10 * ((count.getNowCount() / count.getTargetCount())));
+                cancelAmount = (long) (paymentAmount.getTotal() * 3/10 * ((count.getNowCount() / count.getTargetCount())));
             } else {
-                cancelAmount = (long) (paymentAmount.getTotal() * 7/10);
+                cancelAmount = (long) (paymentAmount.getTotal() * 3/10);
             }
 
             MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();

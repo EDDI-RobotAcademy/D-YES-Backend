@@ -75,4 +75,8 @@ public class OrderController {
     public OrderDetailDataResponseForUserForm getCombineOrderDataForUser(@PathVariable("productOrderId") Long productOrderId){
         return orderService.orderDetailDataCombineForUser(productOrderId);
     }
+    @PostMapping("/waiting-for-refund")
+    public boolean waitingForRefund (@RequestBody OrderedProductChangeStatusRequestForm requestForm){
+        return orderService.orderedProductWaitingRefund(requestForm);
+    }
 }

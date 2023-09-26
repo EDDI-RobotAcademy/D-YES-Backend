@@ -1,5 +1,7 @@
 package com.dyes.backend.domain.order.service;
 
+import com.dyes.backend.domain.admin.entity.Admin;
+import com.dyes.backend.domain.admin.service.AdminService;
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
 import com.dyes.backend.domain.cart.entity.Cart;
 import com.dyes.backend.domain.cart.entity.ContainProductOption;
@@ -63,6 +65,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static com.dyes.backend.domain.delivery.entity.DeliveryStatus.PREPARING;
+import static com.dyes.backend.domain.order.entity.OrderedProductStatus.WAITING_REFUND;
 import static com.dyes.backend.domain.user.entity.AddressBookOption.DEFAULT_OPTION;
 
 @Service
@@ -88,6 +91,7 @@ public class OrderServiceImpl implements OrderService {
     final private EventProductRepository eventProductRepository;
     final private EventOrderRepository eventOrderRepository;
     final private EventPurchaseCountRepository eventPurchaseCountRepository;
+    final private AdminService adminService;
 
     public String purchaseReadyWithKakao(OrderProductRequestForm requestForm) throws JsonProcessingException {
         log.info("purchaseKakao start");
@@ -741,6 +745,41 @@ public class OrderServiceImpl implements OrderService {
             log.error("Error occurred while confirm products in cart", e);
             return null;
         }
+    }
+    public boolean orderedProductWaitingRefund(OrderedProductChangeStatusRequestForm requestForm) {
+        final String userToken = requestForm.getUserToken();
+        final Long orderId = requestForm.getOrderId();
+        final List<Long> productOptionIdList = requestForm.getProductOptionId();
+
+        try {
+            final Admin admin = adminService.findAdminByUserToken(userToken);
+
+            if (admin == null) {
+                log.info("Unable to find admin with user token: {}", userToken);
+                return false;
+            }
+
+            Optional<ProductOrder> maybeOrder = orderRepository.findById(orderId);
+            if (maybeOrder.isEmpty()){
+                return false;
+            }
+            ProductOrder order = maybeOrder.get();
+
+            List<OrderedProduct> orderedProductList = orderedProductRepository.findAllByProductOrder(order);
+            for (OrderedProduct orderedProduct : orderedProductList){
+                for (Long productOptionId : productOptionIdList) {
+                    if (orderedProduct.getProductOptionId().equals(productOptionId)){
+                        orderedProduct.setOrderedProductStatus(WAITING_REFUND);
+                        orderedProductRepository.save(orderedProduct);
+                    }
+                }
+            }
+            return true;
+        } catch (Exception e) {
+            log.error("Error occurred while change ordered products status", e);
+            return false;
+        }
+
     }
     public class OverMaxStockException extends RuntimeException {
         public OverMaxStockException(String message) {
