@@ -19,10 +19,7 @@ import com.dyes.backend.domain.event.service.request.modify.ProductModifyUserTok
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterDeadLineRequest;
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterPurchaseCountRequest;
 import com.dyes.backend.domain.event.service.request.register.EventProductRegisterRequest;
-import com.dyes.backend.domain.event.service.response.EventProductAdminListResponse;
-import com.dyes.backend.domain.event.service.response.EventProductDeadLineResponse;
-import com.dyes.backend.domain.event.service.response.EventProductListResponse;
-import com.dyes.backend.domain.event.service.response.EventProductPurchaseCountResponse;
+import com.dyes.backend.domain.event.service.response.*;
 import com.dyes.backend.domain.farm.entity.Farm;
 import com.dyes.backend.domain.farm.entity.FarmCustomerServiceInfo;
 import com.dyes.backend.domain.farm.entity.FarmIntroductionInfo;
@@ -270,6 +267,7 @@ public class EventServiceImpl implements EventService{
             EventProductPurchaseCountResponse countResponse = new EventProductPurchaseCountResponse(
                     count.getTargetCount(), count.getNowCount()
             );
+            EventProductProduceTypeResponse produceTypeResponse = new EventProductProduceTypeResponse(product.getProduceType());
 
             EventProductReadResponseForm responseForm = EventProductReadResponseForm.builder()
                     .productResponseForUser(productResponseForUser)
@@ -280,6 +278,7 @@ public class EventServiceImpl implements EventService{
                     .productReviewResponseForUser(productReviewResponseForUser)
                     .eventProductDeadLineResponse(deadLineResponse)
                     .eventProductPurchaseCountResponse(countResponse)
+                    .eventProductProduceTypeResponse(produceTypeResponse)
                     .build();
 
             return responseForm;
