@@ -2,9 +2,11 @@ package com.dyes.backend.domain.farmproducePriceForecast.service;
 
 import com.dyes.backend.domain.farmproducePriceForecast.controller.form.AnalysisRequestForm;
 import com.dyes.backend.domain.farmproducePriceForecast.controller.form.FarmProducePriceRequestForm;
-import com.dyes.backend.domain.farmproducePriceForecast.entity.*;
 import com.dyes.backend.domain.farmproducePriceForecast.repository.*;
+import com.dyes.backend.domain.farmproducePriceForecast.service.request.FarmProducePriceForecastData;
 import com.dyes.backend.domain.farmproducePriceForecast.service.response.FarmProducePriceForecastResponseForm;
+import com.dyes.backend.utility.redis.RedisService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -17,8 +19,6 @@ import org.springframework.web.client.RestTemplate;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-
-import static com.dyes.backend.domain.farm.entity.ProduceType.*;
 
 @Service
 @Slf4j
@@ -33,6 +33,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
     final private PotatoPriceRepository potatoPriceRepository;
     final private WelshOnionPriceRepository welshOnionPriceRepository;
     final private YoungPumpkinPriceRepository youngPumpkinPriceRepository;
+    final private RedisService redisService;
     @Value("${fastapi.url}")
     private String fastapi_url;
 
@@ -40,36 +41,28 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
     @Override
     public void saveCabbagePrice(FarmProducePriceRequestForm farmProducePriceRequestForm) {
         final String farmProduceName = farmProducePriceRequestForm.getFarmProduceName();
-        if(farmProduceName.equals("cabbage")) {
+        if (farmProduceName.equals("cabbage")) {
             final LocalDate startDate = farmProducePriceRequestForm.getDate();
             final List<Integer> priceList = farmProducePriceRequestForm.getFarmProducePrice();
 
             List<LocalDate> dateList = new ArrayList<>();
-            for(int i = 0; i < priceList.size(); i++) {
-                dateList.add(startDate.plusDays(i+1));
+            for (int i = 0; i < priceList.size(); i++) {
+                dateList.add(startDate.plusDays(i + 1));
             }
-
+            Map<String, Integer> priceListByDay = new HashMap<>();
             for (int i = 0; i < dateList.size(); i++) {
                 LocalDate saveDate = dateList.get(i);
                 Integer price = priceList.get(i);
 
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 String formattedDate = saveDate.format(formatter);
-
-                Optional<CabbagePrice> maybeCabbagePrice = cabbagePriceRepository.findByDate(formattedDate);
-
-                CabbagePrice cabbagePrice;
-                if(maybeCabbagePrice.isPresent()) {
-                    cabbagePrice = maybeCabbagePrice.get();
-                    cabbagePrice.setPrice(price);
-                } else {
-                    cabbagePrice = CabbagePrice.builder()
-                            .date(formattedDate)
-                            .price(price)
-                            .produceType(CABBAGE)
-                            .build();
-                }
-                cabbagePriceRepository.save(cabbagePrice);
+                priceListByDay.put(formattedDate, price);
+            }
+            FarmProducePriceForecastData farmProducePriceForecastData = new FarmProducePriceForecastData(priceListByDay);
+            try {
+                redisService.setFarmProducePrice("cabbage", farmProducePriceForecastData);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
             }
         } else {
             log.info("It's not cabbage");
@@ -80,36 +73,28 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
     @Override
     public void saveCarrotPrice(FarmProducePriceRequestForm farmProducePriceRequestForm) {
         final String farmProduceName = farmProducePriceRequestForm.getFarmProduceName();
-        if(farmProduceName.equals("carrot")) {
+        if (farmProduceName.equals("carrot")) {
             final LocalDate startDate = farmProducePriceRequestForm.getDate();
             final List<Integer> priceList = farmProducePriceRequestForm.getFarmProducePrice();
 
             List<LocalDate> dateList = new ArrayList<>();
-            for(int i = 0; i < priceList.size(); i++) {
-                dateList.add(startDate.plusDays(i+1));
+            for (int i = 0; i < priceList.size(); i++) {
+                dateList.add(startDate.plusDays(i + 1));
             }
-
+            Map<String, Integer> priceListByDay = new HashMap<>();
             for (int i = 0; i < dateList.size(); i++) {
                 LocalDate saveDate = dateList.get(i);
                 Integer price = priceList.get(i);
 
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 String formattedDate = saveDate.format(formatter);
-
-                Optional<CarrotPrice> maybeCarrotPrice = carrotPriceRepository.findByDate(formattedDate);
-
-                CarrotPrice carrotPrice;
-                if(maybeCarrotPrice.isPresent()) {
-                    carrotPrice = maybeCarrotPrice.get();
-                    carrotPrice.setPrice(price);
-                } else {
-                    carrotPrice = CarrotPrice.builder()
-                            .date(formattedDate)
-                            .price(price)
-                            .produceType(CARROT)
-                            .build();
-                }
-                carrotPriceRepository.save(carrotPrice);
+                priceListByDay.put(formattedDate, price);
+            }
+            FarmProducePriceForecastData farmProducePriceForecastData = new FarmProducePriceForecastData(priceListByDay);
+            try {
+                redisService.setFarmProducePrice("carrot", farmProducePriceForecastData);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
             }
         } else {
             log.info("It's not carrot");
@@ -120,36 +105,28 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
     @Override
     public void saveCucumberPrice(FarmProducePriceRequestForm farmProducePriceRequestForm) {
         final String farmProduceName = farmProducePriceRequestForm.getFarmProduceName();
-        if(farmProduceName.equals("cucumber")) {
+        if (farmProduceName.equals("cucumber")) {
             final LocalDate startDate = farmProducePriceRequestForm.getDate();
             final List<Integer> priceList = farmProducePriceRequestForm.getFarmProducePrice();
 
             List<LocalDate> dateList = new ArrayList<>();
-            for(int i = 0; i < priceList.size(); i++) {
-                dateList.add(startDate.plusDays(i+1));
+            for (int i = 0; i < priceList.size(); i++) {
+                dateList.add(startDate.plusDays(i + 1));
             }
-
+            Map<String, Integer> priceListByDay = new HashMap<>();
             for (int i = 0; i < dateList.size(); i++) {
                 LocalDate saveDate = dateList.get(i);
                 Integer price = priceList.get(i);
 
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 String formattedDate = saveDate.format(formatter);
-
-                Optional<CucumberPrice> maybeCucumberPrice = cucumberPriceRepository.findByDate(formattedDate);
-
-                CucumberPrice cucumberPrice;
-                if(maybeCucumberPrice.isPresent()) {
-                    cucumberPrice = maybeCucumberPrice.get();
-                    cucumberPrice.setPrice(price);
-                } else {
-                    cucumberPrice = CucumberPrice.builder()
-                            .date(formattedDate)
-                            .price(price)
-                            .produceType(CUCUMBER)
-                            .build();
-                }
-                cucumberPriceRepository.save(cucumberPrice);
+                priceListByDay.put(formattedDate, price);
+            }
+            FarmProducePriceForecastData farmProducePriceForecastData = new FarmProducePriceForecastData(priceListByDay);
+            try {
+                redisService.setFarmProducePrice("cucumber", farmProducePriceForecastData);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
             }
         } else {
             log.info("It's not cucumber");
@@ -160,36 +137,28 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
     @Override
     public void saveKimchiCabbagePrice(FarmProducePriceRequestForm farmProducePriceRequestForm) {
         final String farmProduceName = farmProducePriceRequestForm.getFarmProduceName();
-        if(farmProduceName.equals("kimchiCabbage")) {
+        if (farmProduceName.equals("kimchiCabbage")) {
             final LocalDate startDate = farmProducePriceRequestForm.getDate();
             final List<Integer> priceList = farmProducePriceRequestForm.getFarmProducePrice();
 
             List<LocalDate> dateList = new ArrayList<>();
-            for(int i = 0; i < priceList.size(); i++) {
-                dateList.add(startDate.plusDays(i+1));
+            for (int i = 0; i < priceList.size(); i++) {
+                dateList.add(startDate.plusDays(i + 1));
             }
-
+            Map<String, Integer> priceListByDay = new HashMap<>();
             for (int i = 0; i < dateList.size(); i++) {
                 LocalDate saveDate = dateList.get(i);
                 Integer price = priceList.get(i);
 
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 String formattedDate = saveDate.format(formatter);
-
-                Optional<KimchiCabbagePrice> maybeKimchiCabbagePrice = kimchiCabbagePriceRepository.findByDate(formattedDate);
-
-                KimchiCabbagePrice kimchiCabbagePrice;
-                if(maybeKimchiCabbagePrice.isPresent()) {
-                    kimchiCabbagePrice = maybeKimchiCabbagePrice.get();
-                    kimchiCabbagePrice.setPrice(price);
-                } else {
-                    kimchiCabbagePrice = KimchiCabbagePrice.builder()
-                            .date(formattedDate)
-                            .price(price)
-                            .produceType(KIMCHI_CABBAGE)
-                            .build();
-                }
-                kimchiCabbagePriceRepository.save(kimchiCabbagePrice);
+                priceListByDay.put(formattedDate, price);
+            }
+            FarmProducePriceForecastData farmProducePriceForecastData = new FarmProducePriceForecastData(priceListByDay);
+            try {
+                redisService.setFarmProducePrice("kimchiCabbage", farmProducePriceForecastData);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
             }
         } else {
             log.info("It's not kimchiCabbage");
@@ -200,36 +169,28 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
     @Override
     public void saveOnionPrice(FarmProducePriceRequestForm farmProducePriceRequestForm) {
         final String farmProduceName = farmProducePriceRequestForm.getFarmProduceName();
-        if(farmProduceName.equals("onion")) {
+        if (farmProduceName.equals("onion")) {
             final LocalDate startDate = farmProducePriceRequestForm.getDate();
             final List<Integer> priceList = farmProducePriceRequestForm.getFarmProducePrice();
 
             List<LocalDate> dateList = new ArrayList<>();
-            for(int i = 0; i < priceList.size(); i++) {
-                dateList.add(startDate.plusDays(i+1));
+            for (int i = 0; i < priceList.size(); i++) {
+                dateList.add(startDate.plusDays(i + 1));
             }
-
+            Map<String, Integer> priceListByDay = new HashMap<>();
             for (int i = 0; i < dateList.size(); i++) {
                 LocalDate saveDate = dateList.get(i);
                 Integer price = priceList.get(i);
 
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 String formattedDate = saveDate.format(formatter);
-
-                Optional<OnionPrice> maybeOnionPrice = onionPriceRepository.findByDate(formattedDate);
-
-                OnionPrice onionPrice;
-                if(maybeOnionPrice.isPresent()) {
-                    onionPrice = maybeOnionPrice.get();
-                    onionPrice.setPrice(price);
-                } else {
-                    onionPrice = OnionPrice.builder()
-                            .date(formattedDate)
-                            .price(price)
-                            .produceType(ONION)
-                            .build();
-                }
-                onionPriceRepository.save(onionPrice);
+                priceListByDay.put(formattedDate, price);
+            }
+            FarmProducePriceForecastData farmProducePriceForecastData = new FarmProducePriceForecastData(priceListByDay);
+            try {
+                redisService.setFarmProducePrice("onion", farmProducePriceForecastData);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
             }
         } else {
             log.info("It's not onion");
@@ -240,36 +201,28 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
     @Override
     public void savePotatoPrice(FarmProducePriceRequestForm farmProducePriceRequestForm) {
         final String farmProduceName = farmProducePriceRequestForm.getFarmProduceName();
-        if(farmProduceName.equals("potato")) {
+        if (farmProduceName.equals("potato")) {
             final LocalDate startDate = farmProducePriceRequestForm.getDate();
             final List<Integer> priceList = farmProducePriceRequestForm.getFarmProducePrice();
 
             List<LocalDate> dateList = new ArrayList<>();
-            for(int i = 0; i < priceList.size(); i++) {
-                dateList.add(startDate.plusDays(i+1));
+            for (int i = 0; i < priceList.size(); i++) {
+                dateList.add(startDate.plusDays(i + 1));
             }
-
+            Map<String, Integer> priceListByDay = new HashMap<>();
             for (int i = 0; i < dateList.size(); i++) {
                 LocalDate saveDate = dateList.get(i);
                 Integer price = priceList.get(i);
 
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 String formattedDate = saveDate.format(formatter);
-
-                Optional<PotatoPrice> maybePotatoPrice = potatoPriceRepository.findByDate(formattedDate);
-
-                PotatoPrice potatoPrice;
-                if(maybePotatoPrice.isPresent()) {
-                    potatoPrice = maybePotatoPrice.get();
-                    potatoPrice.setPrice(price);
-                } else {
-                    potatoPrice = PotatoPrice.builder()
-                            .date(formattedDate)
-                            .price(price)
-                            .produceType(POTATO)
-                            .build();
-                }
-                potatoPriceRepository.save(potatoPrice);
+                priceListByDay.put(formattedDate, price);
+            }
+            FarmProducePriceForecastData farmProducePriceForecastData = new FarmProducePriceForecastData(priceListByDay);
+            try {
+                redisService.setFarmProducePrice("potato", farmProducePriceForecastData);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
             }
         } else {
             log.info("It's not potato");
@@ -280,36 +233,28 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
     @Override
     public void saveWelshOnionPrice(FarmProducePriceRequestForm farmProducePriceRequestForm) {
         final String farmProduceName = farmProducePriceRequestForm.getFarmProduceName();
-        if(farmProduceName.equals("welshOnion")) {
+        if (farmProduceName.equals("welshOnion")) {
             final LocalDate startDate = farmProducePriceRequestForm.getDate();
             final List<Integer> priceList = farmProducePriceRequestForm.getFarmProducePrice();
 
             List<LocalDate> dateList = new ArrayList<>();
-            for(int i = 0; i < priceList.size(); i++) {
-                dateList.add(startDate.plusDays(i+1));
+            for (int i = 0; i < priceList.size(); i++) {
+                dateList.add(startDate.plusDays(i + 1));
             }
-
+            Map<String, Integer> priceListByDay = new HashMap<>();
             for (int i = 0; i < dateList.size(); i++) {
                 LocalDate saveDate = dateList.get(i);
                 Integer price = priceList.get(i);
 
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 String formattedDate = saveDate.format(formatter);
-
-                Optional<WelshOnionPrice> maybeWelshOnionPrice = welshOnionPriceRepository.findByDate(formattedDate);
-
-                WelshOnionPrice welshOnionPrice;
-                if(maybeWelshOnionPrice.isPresent()) {
-                    welshOnionPrice = maybeWelshOnionPrice.get();
-                    welshOnionPrice.setPrice(price);
-                } else {
-                    welshOnionPrice = WelshOnionPrice.builder()
-                            .date(formattedDate)
-                            .price(price)
-                            .produceType(WELSH_ONION)
-                            .build();
-                }
-                welshOnionPriceRepository.save(welshOnionPrice);
+                priceListByDay.put(formattedDate, price);
+            }
+            FarmProducePriceForecastData farmProducePriceForecastData = new FarmProducePriceForecastData(priceListByDay);
+            try {
+                redisService.setFarmProducePrice("welshOnion", farmProducePriceForecastData);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
             }
         } else {
             log.info("It's not welshOnion");
@@ -320,36 +265,28 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
     @Override
     public void saveYoungPumpkinPrice(FarmProducePriceRequestForm farmProducePriceRequestForm) {
         final String farmProduceName = farmProducePriceRequestForm.getFarmProduceName();
-        if(farmProduceName.equals("youngPumpkin")) {
+        if (farmProduceName.equals("youngPumpkin")) {
             final LocalDate startDate = farmProducePriceRequestForm.getDate();
             final List<Integer> priceList = farmProducePriceRequestForm.getFarmProducePrice();
 
             List<LocalDate> dateList = new ArrayList<>();
-            for(int i = 0; i < priceList.size(); i++) {
-                dateList.add(startDate.plusDays(i+1));
+            for (int i = 0; i < priceList.size(); i++) {
+                dateList.add(startDate.plusDays(i + 1));
             }
-
+            Map<String, Integer> priceListByDay = new HashMap<>();
             for (int i = 0; i < dateList.size(); i++) {
                 LocalDate saveDate = dateList.get(i);
                 Integer price = priceList.get(i);
 
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 String formattedDate = saveDate.format(formatter);
-
-                Optional<YoungPumpkinPrice> maybeYoungPumpkinPrice = youngPumpkinPriceRepository.findByDate(formattedDate);
-
-                YoungPumpkinPrice youngPumpkinPrice;
-                if(maybeYoungPumpkinPrice.isPresent()) {
-                    youngPumpkinPrice = maybeYoungPumpkinPrice.get();
-                    youngPumpkinPrice.setPrice(price);
-                } else {
-                    youngPumpkinPrice = YoungPumpkinPrice.builder()
-                            .date(formattedDate)
-                            .price(price)
-                            .produceType(YOUNG_PUMPKIN)
-                            .build();
-                }
-                youngPumpkinPriceRepository.save(youngPumpkinPrice);
+                priceListByDay.put(formattedDate, price);
+            }
+            FarmProducePriceForecastData farmProducePriceForecastData = new FarmProducePriceForecastData(priceListByDay);
+            try {
+                redisService.setFarmProducePrice("youngPumpkin", farmProducePriceForecastData);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
             }
         } else {
             log.info("It's not youngPumpkin");
@@ -363,187 +300,211 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
         List<FarmProducePriceForecastResponseForm> farmProducePriceForecastResponseFormList = new ArrayList<>();
 
         // 양배추
-        List<Map<LocalDate, Integer>> CabbagePriceList = new ArrayList<>();
+        List<Map<LocalDate, Integer>> cabbagePriceList = new ArrayList<>();
         FarmProducePriceForecastResponseForm cabbageResponseForm = new FarmProducePriceForecastResponseForm();
-        for(int j = 0; j < 14; j++) {
-            LocalDate date = currentDate.plusDays(j+1);
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            String formattedDate = date.format(formatter);
+        try {
+            FarmProducePriceForecastData farmProducePriceForecastData
+                    = redisService.getFarmProducePriceForecastData("cabbage");
+            Map<String, Integer> priceListByDay = farmProducePriceForecastData.getPriceListByDay();
+            for (int j = 0; j < 14; j++) {
+                LocalDate date = currentDate.plusDays(j + 1);
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                String formattedDate = date.format(formatter);
 
-            Optional<CabbagePrice> maybeCabbagePrice = cabbagePriceRepository.findByDate(formattedDate);
-
-            if(maybeCabbagePrice.isEmpty()) {
-                log.info("Cabbage price is empty");
-            } else {
-                CabbagePrice cabbagePrice = maybeCabbagePrice.get();
+                int price = priceListByDay.get(formattedDate);
                 Map<LocalDate, Integer> priceByDay = new HashMap<>();
-                priceByDay.put(date, cabbagePrice.getPrice());
-                CabbagePriceList.add(priceByDay);
+                priceByDay.put(date, price);
+                cabbagePriceList.add(priceByDay);
+
+                cabbageResponseForm
+                        = new FarmProducePriceForecastResponseForm("cabbage", cabbagePriceList);
             }
-            cabbageResponseForm
-                    = new FarmProducePriceForecastResponseForm("cabbage", CabbagePriceList);
-            }
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
         farmProducePriceForecastResponseFormList.add(cabbageResponseForm);
 
         // 당근
-        List<Map<LocalDate, Integer>> CarrotPriceList = new ArrayList<>();
+        List<Map<LocalDate, Integer>> carrotPriceList = new ArrayList<>();
         FarmProducePriceForecastResponseForm carrotResponseForm = new FarmProducePriceForecastResponseForm();
-        for(int j = 0; j < 14; j++) {
-            LocalDate date = currentDate.plusDays(j+1);
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            String formattedDate = date.format(formatter);
+        try {
+            FarmProducePriceForecastData farmProducePriceForecastData
+                    = redisService.getFarmProducePriceForecastData("carrot");
+            Map<String, Integer> priceListByDay = farmProducePriceForecastData.getPriceListByDay();
 
-            Optional<CarrotPrice> maybeCarrotPrice = carrotPriceRepository.findByDate(formattedDate);
+            for (int j = 0; j < 14; j++) {
+                LocalDate date = currentDate.plusDays(j + 1);
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                String formattedDate = date.format(formatter);
 
-            if(maybeCarrotPrice.isEmpty()) {
-                log.info("Carrot price is empty");
-            } else {
-                CarrotPrice carrotPrice = maybeCarrotPrice.get();
+                int price = priceListByDay.get(formattedDate);
                 Map<LocalDate, Integer> priceByDay = new HashMap<>();
-                priceByDay.put(date, carrotPrice.getPrice());
-                CarrotPriceList.add(priceByDay);
+                priceByDay.put(date, price);
+                carrotPriceList.add(priceByDay);
+
+                carrotResponseForm
+                        = new FarmProducePriceForecastResponseForm("carrot", carrotPriceList);
             }
-            carrotResponseForm
-                    = new FarmProducePriceForecastResponseForm("carrot", CarrotPriceList);
-            }
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
         farmProducePriceForecastResponseFormList.add(carrotResponseForm);
-        
+
         // 오이
         List<Map<LocalDate, Integer>> cucumberPriceList = new ArrayList<>();
         FarmProducePriceForecastResponseForm cucumberResponseForm = new FarmProducePriceForecastResponseForm();
-        for(int j = 0; j < 14; j++) {
-            LocalDate date = currentDate.plusDays(j+1);
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            String formattedDate = date.format(formatter);
+        try {
+            FarmProducePriceForecastData farmProducePriceForecastData
+                    = redisService.getFarmProducePriceForecastData("cucumber");
+            Map<String, Integer> priceListByDay = farmProducePriceForecastData.getPriceListByDay();
 
-            Optional<CucumberPrice> maybeCucumberPrice = cucumberPriceRepository.findByDate(formattedDate);
+            for (int j = 0; j < 14; j++) {
+                LocalDate date = currentDate.plusDays(j + 1);
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                String formattedDate = date.format(formatter);
 
-            if(maybeCucumberPrice.isEmpty()) {
-                log.info("Cucumber price is empty");
-            } else {
-                CucumberPrice cucumberPrice = maybeCucumberPrice.get();
+                int price = priceListByDay.get(formattedDate);
                 Map<LocalDate, Integer> priceByDay = new HashMap<>();
-                priceByDay.put(date, cucumberPrice.getPrice());
+                priceByDay.put(date, price);
                 cucumberPriceList.add(priceByDay);
+
+                cucumberResponseForm
+                        = new FarmProducePriceForecastResponseForm("cucumber", cucumberPriceList);
             }
-            cucumberResponseForm
-                    = new FarmProducePriceForecastResponseForm("cucumber", cucumberPriceList);
-            }
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
         farmProducePriceForecastResponseFormList.add(cucumberResponseForm);
 
         // 김치
         List<Map<LocalDate, Integer>> kimchiCabbagePriceList = new ArrayList<>();
         FarmProducePriceForecastResponseForm kimchiCabbageResponseForm = new FarmProducePriceForecastResponseForm();
-        for(int j = 0; j < 14; j++) {
-            LocalDate date = currentDate.plusDays(j+1);
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            String formattedDate = date.format(formatter);
+        try {
+            FarmProducePriceForecastData farmProducePriceForecastData
+                    = redisService.getFarmProducePriceForecastData("kimchiCabbage");
+            Map<String, Integer> priceListByDay = farmProducePriceForecastData.getPriceListByDay();
 
-            Optional<KimchiCabbagePrice> maybeKimchiCabbagePrice = kimchiCabbagePriceRepository.findByDate(formattedDate);
+            for (int j = 0; j < 14; j++) {
+                LocalDate date = currentDate.plusDays(j + 1);
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                String formattedDate = date.format(formatter);
 
-            if(maybeKimchiCabbagePrice.isEmpty()) {
-                log.info("KimchiCabbage price is empty");
-            } else {
-                KimchiCabbagePrice kimchiCabbagePrice = maybeKimchiCabbagePrice.get();
+                int price = priceListByDay.get(formattedDate);
                 Map<LocalDate, Integer> priceByDay = new HashMap<>();
-                priceByDay.put(date, kimchiCabbagePrice.getPrice());
+                priceByDay.put(date, price);
                 kimchiCabbagePriceList.add(priceByDay);
+
+                kimchiCabbageResponseForm
+                        = new FarmProducePriceForecastResponseForm("kimchiCabbage", kimchiCabbagePriceList);
             }
-            kimchiCabbageResponseForm
-                    = new FarmProducePriceForecastResponseForm("kimchiCabbage", kimchiCabbagePriceList);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
         farmProducePriceForecastResponseFormList.add(kimchiCabbageResponseForm);
 
         // 양파
         List<Map<LocalDate, Integer>> onionPriceList = new ArrayList<>();
         FarmProducePriceForecastResponseForm onionResponseForm = new FarmProducePriceForecastResponseForm();
-        for(int j = 0; j < 14; j++) {
-            LocalDate date = currentDate.plusDays(j+1);
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            String formattedDate = date.format(formatter);
+        try {
+            FarmProducePriceForecastData farmProducePriceForecastData
+                    = redisService.getFarmProducePriceForecastData("onion");
+            Map<String, Integer> priceListByDay = farmProducePriceForecastData.getPriceListByDay();
 
-            Optional<OnionPrice> maybeOnionPrice = onionPriceRepository.findByDate(formattedDate);
+            for (int j = 0; j < 14; j++) {
+                LocalDate date = currentDate.plusDays(j + 1);
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                String formattedDate = date.format(formatter);
 
-            if(maybeOnionPrice.isEmpty()) {
-                log.info("Onion price is empty");
-            } else {
-                OnionPrice onionPrice = maybeOnionPrice.get();
+                int price = priceListByDay.get(formattedDate);
                 Map<LocalDate, Integer> priceByDay = new HashMap<>();
-                priceByDay.put(date, onionPrice.getPrice());
+                priceByDay.put(date, price);
                 onionPriceList.add(priceByDay);
+
+                onionResponseForm
+                        = new FarmProducePriceForecastResponseForm("onion", onionPriceList);
             }
-            onionResponseForm
-                    = new FarmProducePriceForecastResponseForm("onion", onionPriceList);
-            }
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
         farmProducePriceForecastResponseFormList.add(onionResponseForm);
 
         // 감자
         List<Map<LocalDate, Integer>> potatoPriceList = new ArrayList<>();
         FarmProducePriceForecastResponseForm potatoResponseForm = new FarmProducePriceForecastResponseForm();
-        for(int j = 0; j < 14; j++) {
-            LocalDate date = currentDate.plusDays(j+1);
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            String formattedDate = date.format(formatter);
+        try {
+            FarmProducePriceForecastData farmProducePriceForecastData
+                    = redisService.getFarmProducePriceForecastData("potato");
+            Map<String, Integer> priceListByDay = farmProducePriceForecastData.getPriceListByDay();
 
-            Optional<PotatoPrice> maybePotatoPrice = potatoPriceRepository.findByDate(formattedDate);
+            for (int j = 0; j < 14; j++) {
+                LocalDate date = currentDate.plusDays(j + 1);
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                String formattedDate = date.format(formatter);
 
-            if(maybePotatoPrice.isEmpty()) {
-                log.info("Potato price is empty");
-            } else {
-                PotatoPrice potatoPrice = maybePotatoPrice.get();
+                int price = priceListByDay.get(formattedDate);
                 Map<LocalDate, Integer> priceByDay = new HashMap<>();
-                priceByDay.put(date, potatoPrice.getPrice());
+                priceByDay.put(date, price);
                 potatoPriceList.add(priceByDay);
+
+                potatoResponseForm
+                        = new FarmProducePriceForecastResponseForm("potato", potatoPriceList);
             }
-            potatoResponseForm
-                    = new FarmProducePriceForecastResponseForm("potato", potatoPriceList);
-            }
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
         farmProducePriceForecastResponseFormList.add(potatoResponseForm);
 
         // 대파
         List<Map<LocalDate, Integer>> welshOnionPriceList = new ArrayList<>();
         FarmProducePriceForecastResponseForm welshOnionResponseForm = new FarmProducePriceForecastResponseForm();
-        for(int j = 0; j < 14; j++) {
-            LocalDate date = currentDate.plusDays(j+1);
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            String formattedDate = date.format(formatter);
+        try {
+            FarmProducePriceForecastData farmProducePriceForecastData
+                    = redisService.getFarmProducePriceForecastData("welshOnion");
+            Map<String, Integer> priceListByDay = farmProducePriceForecastData.getPriceListByDay();
 
-            Optional<WelshOnionPrice> maybeWelshOnionPrice = welshOnionPriceRepository.findByDate(formattedDate);
+            for (int j = 0; j < 14; j++) {
+                LocalDate date = currentDate.plusDays(j + 1);
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                String formattedDate = date.format(formatter);
 
-            if(maybeWelshOnionPrice.isEmpty()) {
-                log.info("WelshOnion price is empty");
-            } else {
-                WelshOnionPrice welshOnionPrice = maybeWelshOnionPrice.get();
+                int price = priceListByDay.get(formattedDate);
                 Map<LocalDate, Integer> priceByDay = new HashMap<>();
-                priceByDay.put(date, welshOnionPrice.getPrice());
+                priceByDay.put(date, price);
                 welshOnionPriceList.add(priceByDay);
+
+                welshOnionResponseForm
+                        = new FarmProducePriceForecastResponseForm("welshOnion", welshOnionPriceList);
             }
-            welshOnionResponseForm
-                    = new FarmProducePriceForecastResponseForm("welshOnion", welshOnionPriceList);
-            }
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
         farmProducePriceForecastResponseFormList.add(welshOnionResponseForm);
 
         // 애호박
         List<Map<LocalDate, Integer>> youngPumpkinPriceList = new ArrayList<>();
         FarmProducePriceForecastResponseForm youngPumpkinResponseForm = new FarmProducePriceForecastResponseForm();
-        for(int j = 0; j < 14; j++) {
-            LocalDate date = currentDate.plusDays(j+1);
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            String formattedDate = date.format(formatter);
+        try {
+            FarmProducePriceForecastData farmProducePriceForecastData
+                    = redisService.getFarmProducePriceForecastData("youngPumpkin");
+            Map<String, Integer> priceListByDay = farmProducePriceForecastData.getPriceListByDay();
 
-            Optional<YoungPumpkinPrice> maybeYoungPumpkinPrice = youngPumpkinPriceRepository.findByDate(formattedDate);
+            for (int j = 0; j < 14; j++) {
+                LocalDate date = currentDate.plusDays(j + 1);
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                String formattedDate = date.format(formatter);
 
-            if(maybeYoungPumpkinPrice.isEmpty()) {
-                log.info("YoungPumpkin price is empty");
-            } else {
-                YoungPumpkinPrice youngPumpkinPrice = maybeYoungPumpkinPrice.get();
+                int price = priceListByDay.get(formattedDate);
                 Map<LocalDate, Integer> priceByDay = new HashMap<>();
-                priceByDay.put(date, youngPumpkinPrice.getPrice());
+                priceByDay.put(date, price);
                 youngPumpkinPriceList.add(priceByDay);
+
+                youngPumpkinResponseForm
+                        = new FarmProducePriceForecastResponseForm("youngPumpkin", youngPumpkinPriceList);
             }
-            youngPumpkinResponseForm
-                    = new FarmProducePriceForecastResponseForm("youngPumpkin", youngPumpkinPriceList);
-            }
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
         farmProducePriceForecastResponseFormList.add(youngPumpkinResponseForm);
 
         return farmProducePriceForecastResponseFormList;
@@ -572,12 +533,12 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
                 log.info(result);
                 List<Integer> farmProducePriceList = new ArrayList<>();
 
-                String predictedCabbagePrice =  result_price(requestEntity);
+                String predictedCabbagePrice = result_price(requestEntity);
                 String numbersOnly = predictedCabbagePrice.replaceAll("\\[|\\]|,", "");
 
                 log.info("정리된 값: " + numbersOnly);
                 String[] numberStrings = numbersOnly.split("\\s+");
-                
+
                 for (String numberString : numberStrings) {
                     String cleanedNumberString = numberString.replace("\"", "");
                     log.info("정리된 스트링 숫자 값: " + cleanedNumberString);
@@ -627,7 +588,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
                 log.info(result);
                 List<Integer> farmProducePriceList = new ArrayList<>();
 
-                String predictedWelshOnionPrice =  result_price(requestEntity);
+                String predictedWelshOnionPrice = result_price(requestEntity);
                 String numbersOnly = predictedWelshOnionPrice.replaceAll("\\[|\\]|,", "");
 
                 log.info("정리된 값: " + numbersOnly);
@@ -682,7 +643,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
                 log.info(result);
                 List<Integer> farmProducePriceList = new ArrayList<>();
 
-                String predictedYoungPumpkinPrice =  result_price(requestEntity);
+                String predictedYoungPumpkinPrice = result_price(requestEntity);
                 String numbersOnly = predictedYoungPumpkinPrice.replaceAll("\\[|\\]|,", "");
 
                 log.info("정리된 값: " + numbersOnly);
@@ -737,7 +698,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
                 log.info(result);
                 List<Integer> farmProducePriceList = new ArrayList<>();
 
-                String predictedKimchiCabbagePrice =  result_price(requestEntity);
+                String predictedKimchiCabbagePrice = result_price(requestEntity);
                 String numbersOnly = predictedKimchiCabbagePrice.replaceAll("\\[|\\]|,", "");
 
                 log.info("정리된 값: " + numbersOnly);
@@ -792,7 +753,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
                 log.info(result);
                 List<Integer> farmProducePriceList = new ArrayList<>();
 
-                String predictedOnionPrice =  result_price(requestEntity);
+                String predictedOnionPrice = result_price(requestEntity);
                 String numbersOnly = predictedOnionPrice.replaceAll("\\[|\\]|,", "");
 
                 log.info("정리된 값: " + numbersOnly);
@@ -847,7 +808,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
                 log.info(result);
                 List<Integer> farmProducePriceList = new ArrayList<>();
 
-                String predictedCarrotPrice =  result_price(requestEntity);
+                String predictedCarrotPrice = result_price(requestEntity);
                 String numbersOnly = predictedCarrotPrice.replaceAll("\\[|\\]|,", "");
 
                 log.info("정리된 값: " + numbersOnly);
@@ -902,7 +863,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
                 log.info(result);
                 List<Integer> farmProducePriceList = new ArrayList<>();
 
-                String predictedPotatoPrice =  result_price(requestEntity);
+                String predictedPotatoPrice = result_price(requestEntity);
                 String numbersOnly = predictedPotatoPrice.replaceAll("\\[|\\]|,", "");
 
                 log.info("정리된 값: " + numbersOnly);
@@ -957,7 +918,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
                 log.info(result);
                 List<Integer> farmProducePriceList = new ArrayList<>();
 
-                String predictedCucumberPrice =  result_price(requestEntity);
+                String predictedCucumberPrice = result_price(requestEntity);
                 String numbersOnly = predictedCucumberPrice.replaceAll("\\[|\\]|,", "");
 
                 log.info("정리된 값: " + numbersOnly);
