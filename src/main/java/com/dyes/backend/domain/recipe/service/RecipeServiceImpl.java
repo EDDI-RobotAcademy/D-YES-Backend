@@ -7,7 +7,9 @@ import com.dyes.backend.domain.recipe.controller.form.RecipeRegisterForm;
 import com.dyes.backend.domain.recipe.entity.*;
 import com.dyes.backend.domain.recipe.repository.*;
 import com.dyes.backend.domain.recipe.service.request.*;
+import com.dyes.backend.domain.recipe.service.response.RecipeInfoResponse;
 import com.dyes.backend.domain.recipe.service.response.form.RecipeListResponseForm;
+import com.dyes.backend.domain.recipe.service.response.form.RecipeInfoReadResponseForm;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserProfile;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
@@ -201,6 +203,42 @@ public class RecipeServiceImpl implements RecipeService {
             log.error("Failed to delete the recipe: {}", e.getMessage(), e);
             return false;
         }
+    }
+
+    @Override
+    public RecipeInfoReadResponseForm readRecipe(Long recipeId) {
+        log.info("Reading recipe with ID: {}", recipeId);
+
+        Optional<Recipe> maybeRecipe = recipeRepository.findById(recipeId);
+        if (maybeRecipe.isEmpty()) {
+            log.info("Recipe is empty");
+            return null;
+        }
+
+        try {
+            Recipe recipe = maybeRecipe.get();
+            RecipeContent recipeContent = recipeContentRepository.findByRecipe(recipe);
+            RecipeCategory recipeCategory = recipeCategoryRepository.findByRecipe(recipe);
+            RecipeMainImage recipeMainImage = recipeMainImageRepository.findByRecipe(recipe);
+            RecipeMainIngredient recipeMainIngredient = recipeMainIngredientRepository.findByRecipe(recipe);
+            RecipeSubIngredient recipeSubIngredient = recipeSubIngredientRepository.findByRecipe(recipe);
+            RecipeSeasoningIngredient recipeSeasoningIngredient = recipeSeasoningIngredientRepository.findByRecipe(recipe);
+
+            RecipeInfoResponse recipeInfoResponse
+                    = new RecipeInfoResponse().recipeInfoResponse(recipe, recipeContent, recipeMainImage, recipeCategory,
+                    recipeMainIngredient, recipeSubIngredient, recipeSeasoningIngredient);
+
+            RecipeInfoReadResponseForm recipeInfoReadResponseForm = new RecipeInfoReadResponseForm(recipeInfoResponse);
+
+            log.info("Recipe read successful for farm with ID: {}", recipeId);
+            return recipeInfoReadResponseForm;
+
+        } catch (Exception e) {
+            log.error("Failed to read the recipe: {}", e.getMessage(), e);
+            return null;
+        }
+
+
     }
 
 }
