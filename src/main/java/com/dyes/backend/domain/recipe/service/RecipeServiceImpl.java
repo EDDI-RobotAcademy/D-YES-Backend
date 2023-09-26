@@ -15,7 +15,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -39,7 +41,7 @@ public class RecipeServiceImpl implements RecipeService {
         String userToken = registerForm.getUserToken();
         User user = authenticationService.findUserByUserToken(userToken);
 
-        if(user == null) {
+        if (user == null) {
             log.info("Unable to find user with user token: {}", userToken);
             return false;
         }
@@ -67,7 +69,7 @@ public class RecipeServiceImpl implements RecipeService {
             recipeMainIngredientRepository.save(recipeMainIngredient);
 
             List<RecipeIngredientInfoForm> otherIngredienList = recipeIngredientRegisterRequest.getOtherIngredienList();
-            for(RecipeIngredientInfoForm recipeIngredientInfoForm : otherIngredienList) {
+            for (RecipeIngredientInfoForm recipeIngredientInfoForm : otherIngredienList) {
                 RecipeSubIngredient recipeSubIngredient = RecipeSubIngredient.builder()
                         .ingredientName(recipeIngredientInfoForm.getIngredientName())
                         .ingredientAmount(recipeIngredientInfoForm.getIngredientAmount())
@@ -77,7 +79,7 @@ public class RecipeServiceImpl implements RecipeService {
             }
 
             List<RecipeIngredientInfoForm> seasoningList = recipeIngredientRegisterRequest.getSeasoningList();
-            for(RecipeIngredientInfoForm recipeIngredientInfoForm : seasoningList) {
+            for (RecipeIngredientInfoForm recipeIngredientInfoForm : seasoningList) {
                 RecipeSeasoningIngredient recipeSeasoningIngredient = RecipeSeasoningIngredient.builder()
                         .seasoningName(recipeIngredientInfoForm.getIngredientAmount())
                         .seasoningAmount(recipeIngredientInfoForm.getIngredientAmount())
@@ -135,7 +137,7 @@ public class RecipeServiceImpl implements RecipeService {
                 User user = recipe.getUser();
                 Optional<UserProfile> maybeUserProfile = userProfileRepository.findByUser(user);
                 String nickName = null;
-                if(maybeUserProfile.isPresent()) {
+                if (maybeUserProfile.isPresent()) {
                     UserProfile userProfile = maybeUserProfile.get();
                     nickName = userProfile.getNickName();
                 }
@@ -167,7 +169,7 @@ public class RecipeServiceImpl implements RecipeService {
         String userToken = deleteForm.getUserToken();
         User user = authenticationService.findUserByUserToken(userToken);
 
-        if(user == null) {
+        if (user == null) {
             log.info("Unable to find user with user token: {}", userToken);
             return false;
         }
@@ -188,12 +190,21 @@ public class RecipeServiceImpl implements RecipeService {
             RecipeMainImage recipeMainImage = recipeMainImageRepository.findByRecipe(deleteRecipe);
             RecipeContent recipeContent = recipeContentRepository.findByRecipe(deleteRecipe);
             RecipeMainIngredient recipeMainIngredient = recipeMainIngredientRepository.findByRecipe(deleteRecipe);
+            RecipeCategory recipeCategory = recipeCategoryRepository.findByRecipe(deleteRecipe);
+            List<RecipeSubIngredient> recipeSubIngredientList = recipeSubIngredientRepository.findAllByRecipe(deleteRecipe);
+            List<RecipeSeasoningIngredient> recipeSeasoningIngredientList = recipeSeasoningIngredientRepository.findAllByRecipe(deleteRecipe);
 
             recipeMainImageRepository.delete(recipeMainImage);
             recipeContentRepository.delete(recipeContent);
             recipeMainIngredientRepository.delete(recipeMainIngredient);
+            recipeCategoryRepository.delete(recipeCategory);
+            for (RecipeSubIngredient recipeSubIngredient : recipeSubIngredientList) {
+                recipeSubIngredientRepository.delete(recipeSubIngredient);
+            }
+            for (RecipeSeasoningIngredient recipeSeasoningIngredient : recipeSeasoningIngredientList) {
+                recipeSeasoningIngredientRepository.delete(recipeSeasoningIngredient);
+            }
             recipeRepository.delete(deleteRecipe);
-
             log.info("Recipe deletion successful for farm with ID: {}", recipeId);
             return true;
 
