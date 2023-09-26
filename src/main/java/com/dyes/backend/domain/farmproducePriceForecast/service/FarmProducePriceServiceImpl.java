@@ -549,9 +549,9 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
         return farmProducePriceForecastResponseFormList;
     }
 
-    @Scheduled(cron = "0 38 14 * * ?")
+    @Scheduled(cron = "0 45 14 * * ?")
     public String getCabbagePriceFromFastAPI() {
-        log.info("시작!!");
+        log.info("Starting cabbage price prediction request...");
         String url = "http://" + fastapi_url + "/ai-request-command";
 
         RestTemplate restTemplate = new RestTemplate();
@@ -604,9 +604,9 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
         }
     }
 
-    @Scheduled(cron = "15 38 14 * * ?")
+    @Scheduled(cron = "15 45 14 * * ?")
     public String getGreenOnionPriceFromFastAPI() {
-        log.info("시작!!");
+        log.info("Starting green onion price prediction request...");
         String url = "http://" + fastapi_url + "/ai-request-command";
 
         RestTemplate restTemplate = new RestTemplate();
@@ -659,9 +659,9 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
         }
     }
 
-    @Scheduled(cron = "30 38 14 * * ?")
+    @Scheduled(cron = "30 45 14 * * ?")
     public String getGreenPumpkinPriceFromFastAPI() {
-        log.info("시작!!");
+        log.info("Starting green pumpkin price prediction request...");
         String url = "http://" + fastapi_url + "/ai-request-command";
 
         RestTemplate restTemplate = new RestTemplate();
@@ -714,9 +714,9 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
         }
     }
 
-    @Scheduled(cron = "45 38 14 * * ?")
+    @Scheduled(cron = "45 45 14 * * ?")
     public String getKimchiCabbagePriceFromFastAPI() {
-        log.info("시작!!");
+        log.info("Starting kimchi cabbage price prediction request...");
         String url = "http://" + fastapi_url + "/ai-request-command";
 
         RestTemplate restTemplate = new RestTemplate();
@@ -769,9 +769,9 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
         }
     }
 
-    @Scheduled(cron = "0 39 14 * * ?")
+    @Scheduled(cron = "0 46 14 * * ?")
     public String getOnionPriceFromFastAPI() {
-        log.info("시작!!");
+        log.info("Starting onion price prediction request...");
         String url = "http://" + fastapi_url + "/ai-request-command";
 
         RestTemplate restTemplate = new RestTemplate();
@@ -815,6 +815,171 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
                         = new FarmProducePriceRequestForm(currentDate, farmProduceName, farmProducePriceList);
                 saveOnionPrice(farmProducePriceRequestForm);
                 return predictedOnionPrice;
+
+            } else {
+                return "농산물 가격 예측이 불가합니다.";
+            }
+        } else {
+            return "요청 실패";
+        }
+    }
+
+    @Scheduled(cron = "15 46 14 * * ?")
+    public String getCarrotPriceFromFastAPI() {
+        log.info("Starting carrot price prediction request...");
+        String url = "http://" + fastapi_url + "/ai-request-command";
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        AnalysisRequestForm requestForm = new AnalysisRequestForm(995, "," + "request_predict");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<AnalysisRequestForm> requestEntity = new HttpEntity<>(requestForm, headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity,
+                String.class);
+
+        if (response.getStatusCode().is2xxSuccessful()) {
+            String result = response.getBody();
+            if (Objects.equals(result, "true")) {
+                log.info(result);
+                List<Integer> farmProducePriceList = new ArrayList<>();
+
+                String predictedCarrotPrice =  result_price(requestEntity);
+                String numbersOnly = predictedCarrotPrice.replaceAll("\\[|\\]|,", "");
+
+                log.info("정리된 값: " + numbersOnly);
+                String[] numberStrings = numbersOnly.split("\\s+");
+
+                for (String numberString : numberStrings) {
+                    String cleanedNumberString = numberString.replace("\"", "");
+                    log.info("정리된 스트링 숫자 값: " + cleanedNumberString);
+                    if (!cleanedNumberString.isEmpty()) {
+                        Integer number = Integer.valueOf(cleanedNumberString.trim());
+                        log.info("정리된 정수 숫자 값: " + number);
+                        farmProducePriceList.add(number);
+                    }
+                }
+
+                LocalDate currentDate = LocalDate.now();
+                log.info("오늘 날짜: " + currentDate);
+                String farmProduceName = "carrot";
+                FarmProducePriceRequestForm farmProducePriceRequestForm
+                        = new FarmProducePriceRequestForm(currentDate, farmProduceName, farmProducePriceList);
+                saveCarrotPrice(farmProducePriceRequestForm);
+                return predictedCarrotPrice;
+
+            } else {
+                return "농산물 가격 예측이 불가합니다.";
+            }
+        } else {
+            return "요청 실패";
+        }
+    }
+
+    @Scheduled(cron = "30 46 14 * * ?")
+    public String getPotatoPriceFromFastAPI() {
+        log.info("Starting potato price prediction request...");
+        String url = "http://" + fastapi_url + "/ai-request-command";
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        AnalysisRequestForm requestForm = new AnalysisRequestForm(996, "," + "request_predict");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<AnalysisRequestForm> requestEntity = new HttpEntity<>(requestForm, headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity,
+                String.class);
+
+        if (response.getStatusCode().is2xxSuccessful()) {
+            String result = response.getBody();
+            if (Objects.equals(result, "true")) {
+                log.info(result);
+                List<Integer> farmProducePriceList = new ArrayList<>();
+
+                String predictedPotatoPrice =  result_price(requestEntity);
+                String numbersOnly = predictedPotatoPrice.replaceAll("\\[|\\]|,", "");
+
+                log.info("정리된 값: " + numbersOnly);
+                String[] numberStrings = numbersOnly.split("\\s+");
+
+                for (String numberString : numberStrings) {
+                    String cleanedNumberString = numberString.replace("\"", "");
+                    log.info("정리된 스트링 숫자 값: " + cleanedNumberString);
+                    if (!cleanedNumberString.isEmpty()) {
+                        Integer number = Integer.valueOf(cleanedNumberString.trim());
+                        log.info("정리된 정수 숫자 값: " + number);
+                        farmProducePriceList.add(number);
+                    }
+                }
+
+                LocalDate currentDate = LocalDate.now();
+                log.info("오늘 날짜: " + currentDate);
+                String farmProduceName = "potato";
+                FarmProducePriceRequestForm farmProducePriceRequestForm
+                        = new FarmProducePriceRequestForm(currentDate, farmProduceName, farmProducePriceList);
+                savePotatoPrice(farmProducePriceRequestForm);
+                return predictedPotatoPrice;
+
+            } else {
+                return "농산물 가격 예측이 불가합니다.";
+            }
+        } else {
+            return "요청 실패";
+        }
+    }
+
+    @Scheduled(cron = "0 47 14 * * ?")
+    public String getCucumberPriceFromFastAPI() {
+        log.info("Starting cucumber price prediction request...");
+        String url = "http://" + fastapi_url + "/ai-request-command";
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        AnalysisRequestForm requestForm = new AnalysisRequestForm(997, "," + "request_predict");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<AnalysisRequestForm> requestEntity = new HttpEntity<>(requestForm, headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity,
+                String.class);
+
+        if (response.getStatusCode().is2xxSuccessful()) {
+            String result = response.getBody();
+            if (Objects.equals(result, "true")) {
+                log.info(result);
+                List<Integer> farmProducePriceList = new ArrayList<>();
+
+                String predictedCucumberPrice =  result_price(requestEntity);
+                String numbersOnly = predictedCucumberPrice.replaceAll("\\[|\\]|,", "");
+
+                log.info("정리된 값: " + numbersOnly);
+                String[] numberStrings = numbersOnly.split("\\s+");
+
+                for (String numberString : numberStrings) {
+                    String cleanedNumberString = numberString.replace("\"", "");
+                    log.info("정리된 스트링 숫자 값: " + cleanedNumberString);
+                    if (!cleanedNumberString.isEmpty()) {
+                        Integer number = Integer.valueOf(cleanedNumberString.trim());
+                        log.info("정리된 정수 숫자 값: " + number);
+                        farmProducePriceList.add(number);
+                    }
+                }
+
+                LocalDate currentDate = LocalDate.now();
+                log.info("오늘 날짜: " + currentDate);
+                String farmProduceName = "cucumber";
+                FarmProducePriceRequestForm farmProducePriceRequestForm
+                        = new FarmProducePriceRequestForm(currentDate, farmProduceName, farmProducePriceList);
+                saveCucumberPrice(farmProducePriceRequestForm);
+                return predictedCucumberPrice;
 
             } else {
                 return "농산물 가격 예측이 불가합니다.";
