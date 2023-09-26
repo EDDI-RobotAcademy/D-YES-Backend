@@ -25,7 +25,6 @@ public class Inquiry {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "content_id")
     private InquiryContent content;
-
     private LocalDate createDate;
     @Enumerated
     private InquiryType inquiryType;

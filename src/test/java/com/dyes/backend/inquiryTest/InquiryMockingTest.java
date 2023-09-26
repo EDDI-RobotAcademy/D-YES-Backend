@@ -1,6 +1,7 @@
 package com.dyes.backend.inquiryTest;
 
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
+import com.dyes.backend.domain.inquiry.controller.form.InquiryReadResponseForm;
 import com.dyes.backend.domain.inquiry.entity.Inquiry;
 import com.dyes.backend.domain.inquiry.entity.InquiryContent;
 import com.dyes.backend.domain.inquiry.entity.InquiryType;
@@ -9,6 +10,8 @@ import com.dyes.backend.domain.inquiry.repository.InquiryRepository;
 import com.dyes.backend.domain.inquiry.service.InquiryServiceImpl;
 import com.dyes.backend.domain.inquiry.service.request.InquiryRegisterRequest;
 import com.dyes.backend.domain.user.entity.User;
+import com.dyes.backend.domain.user.entity.UserProfile;
+import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,7 +21,9 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -29,6 +34,8 @@ public class InquiryMockingTest {
     private AuthenticationService mockAuthenticationService;
     @Mock
     private InquiryContentRepository mockInquiryContentRepository;
+    @Mock
+    private UserProfileRepository mockUserProfileRepository;
 
     @InjectMocks
     private InquiryServiceImpl mockService;
@@ -40,7 +47,8 @@ public class InquiryMockingTest {
         mockService = new InquiryServiceImpl(
                 mockInquiryRepository,
                 mockInquiryContentRepository,
-                mockAuthenticationService
+                mockAuthenticationService,
+                mockUserProfileRepository
         );
     }
     @Test
@@ -68,5 +76,20 @@ public class InquiryMockingTest {
         mockService.inquiryRegister(request);
         verify(mockInquiryContentRepository, times(1)).save(eq(inquiryContent));
         verify(mockInquiryRepository, times(1)).save(eq(inquiry));
+    }
+    @Test
+    @DisplayName("inquiry mocking test: inquiry read")
+    public void 관리자가_문의를_읽을_수_있습니다() {
+        final Long inquiryId = 1L;
+
+        Inquiry inquiry = new Inquiry();
+        inquiry.setContent(new InquiryContent());
+        when(mockInquiryRepository.findByIdWithUserContent(inquiryId)).thenReturn(Optional.of(inquiry));
+
+        UserProfile userProfile = new UserProfile();
+        when(mockUserProfileRepository.findByUser(inquiry.getUser())).thenReturn(Optional.of(userProfile));
+
+        InquiryReadResponseForm result = mockService.readInquiry(inquiryId);
+        assertTrue(result != null);
     }
 }
