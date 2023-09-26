@@ -28,5 +28,5 @@ public interface OrderService {
     List<OrderListResponseFormForUser> getMyOrderListForUser(String userToken);
     OrderDetailDataResponseForAdminForm orderDetailDataCombineForAdmin(Long orderId);
     OrderDetailDataResponseForUserForm orderDetailDataCombineForUser(Long orderId);
-    MonthlyOrdersStatisticsResponseForm getMonthlyOrders();
+    boolean orderedProductWaitingRefund(OrderedProductChangeStatusRequestForm requestForm);
 }
