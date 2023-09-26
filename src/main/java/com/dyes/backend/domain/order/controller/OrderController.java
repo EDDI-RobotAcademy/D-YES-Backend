@@ -81,4 +81,10 @@ public class OrderController {
     public boolean waitingForRefund (@RequestBody OrderedProductChangeStatusRequestForm requestForm){
         return orderService.orderedProductWaitingRefund(requestForm);
     }
+
+    // 관리자의 월 주문 통계 데이터 확인
+    @GetMapping("/admin/monthly_orders")
+    public MonthlyOrdersStatisticsResponseForm getMonthlyOrders(){
+        return orderService.getMonthlyOrders();
+    }
 }

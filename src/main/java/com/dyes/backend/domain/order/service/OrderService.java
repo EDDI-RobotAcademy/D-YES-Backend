@@ -29,4 +29,5 @@ public interface OrderService {
     OrderDetailDataResponseForAdminForm orderDetailDataCombineForAdmin(Long orderId);
     OrderDetailDataResponseForUserForm orderDetailDataCombineForUser(Long orderId);
     boolean orderedProductWaitingRefund(OrderedProductChangeStatusRequestForm requestForm);
+    MonthlyOrdersStatisticsResponseForm getMonthlyOrders();
 }

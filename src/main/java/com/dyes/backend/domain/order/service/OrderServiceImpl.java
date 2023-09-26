@@ -791,6 +791,61 @@ public class OrderServiceImpl implements OrderService {
 
     }
 
+    // 관리자의 월 주문 통계 데이터 확인
+    @Override
+    public MonthlyOrdersStatisticsResponseForm getMonthlyOrders() {
+        final LocalDate currentDate = LocalDate.now();
+        final LocalDate firstDayOfCurrentMonth = currentDate.withDayOfMonth(1);
+        final LocalDate lastDayOfCurrentMonth = currentDate.with(TemporalAdjusters.lastDayOfMonth());
+        log.info("This month Period: " + firstDayOfCurrentMonth + " ~ " + lastDayOfCurrentMonth);
+
+        final LocalDate lastDayOfPreviousMonth = firstDayOfCurrentMonth.minusDays(1);
+        final LocalDate firstDayOfPreviousMonth = lastDayOfPreviousMonth.withDayOfMonth(1);
+        log.info("This previous Period: " + firstDayOfPreviousMonth + " ~ " + lastDayOfPreviousMonth);
+
+        int totalOrdersCount = 0;
+        int completedOrders = 0;
+        int cancelledOrders = 0;
+        int totalOrdersAmount = 0;
+        int totalPreviousOrdersAmount = 0;
+        double monthOverMonthGrowthRate = 0;
+        List<Integer> orderCountListByDay = new ArrayList<>();
+
+        List<ProductOrder> productOrderList
+                = orderRepository.findByOrderedTimeBetween(firstDayOfCurrentMonth, lastDayOfCurrentMonth);
+
+        for (ProductOrder productOrder : productOrderList) {
+            totalOrdersCount = totalOrdersCount + 1;
+            if (productOrder.getOrderStatus().equals(SUCCESS_PAYMENT)) {
+                completedOrders = completedOrders + 1;
+            } else if (productOrder.getOrderStatus().equals(CANCEL_PAYMENT)) {
+                cancelledOrders = cancelledOrders + 1;
+            }
+
+            totalOrdersAmount = totalOrdersAmount
+                    + (productOrder.getAmount().getTotalAmount() - productOrder.getAmount().getRefundedAmount());
+        }
+        List<ProductOrder> previousProductOrderList
+                = orderRepository.findByOrderedTimeBetween(firstDayOfPreviousMonth, lastDayOfPreviousMonth);
+        for (ProductOrder previousProductOrder : previousProductOrderList) {
+            totalPreviousOrdersAmount = totalPreviousOrdersAmount
+                    + (previousProductOrder.getAmount().getTotalAmount() - previousProductOrder.getAmount().getRefundedAmount());
+        }
+
+        if (totalPreviousOrdersAmount != 0) {
+            monthOverMonthGrowthRate
+                    = ((double) (totalOrdersAmount - totalPreviousOrdersAmount) / totalPreviousOrdersAmount) * 100;
+        } else {
+            log.info("Previous data does not exist, previous total amount: " + totalPreviousOrdersAmount);
+            monthOverMonthGrowthRate = 0;
+        }
+
+        MonthlyOrdersStatisticsResponseForm monthlyOrdersStatisticsResponseForm
+                = new MonthlyOrdersStatisticsResponseForm(
+                totalOrdersCount, completedOrders, cancelledOrders, totalOrdersAmount, monthOverMonthGrowthRate);
+        return monthlyOrdersStatisticsResponseForm;
+    }
+
     public class OverMaxStockException extends RuntimeException {
         public OverMaxStockException(String message) {
             super(message);
