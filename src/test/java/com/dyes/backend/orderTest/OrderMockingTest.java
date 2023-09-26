@@ -1,5 +1,7 @@
 package com.dyes.backend.orderTest;
 
+import com.dyes.backend.domain.admin.entity.Admin;
+import com.dyes.backend.domain.admin.service.AdminService;
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
 import com.dyes.backend.domain.cart.entity.Cart;
 import com.dyes.backend.domain.cart.entity.ContainProductOption;
@@ -14,6 +16,8 @@ import com.dyes.backend.domain.event.repository.EventProductRepository;
 import com.dyes.backend.domain.event.repository.EventPurchaseCountRepository;
 import com.dyes.backend.domain.farm.entity.Farm;
 import com.dyes.backend.domain.order.controller.form.OrderConfirmRequestForm;
+import com.dyes.backend.domain.order.controller.form.OrderedProductChangeStatusRequestForm;
+import com.dyes.backend.domain.order.entity.OrderAmount;
 import com.dyes.backend.domain.order.entity.OrderedProduct;
 import com.dyes.backend.domain.order.entity.OrderedPurchaserProfile;
 import com.dyes.backend.domain.order.entity.ProductOrder;
@@ -107,6 +111,8 @@ public class OrderMockingTest {
     @Mock
     private EventOrderRepository mockEventOrderRepository;
     @Mock
+    private AdminService mockAdminService;
+    @Mock
     private EventPurchaseCountRepository mockEventPurchaseCountRepository;
 
     @InjectMocks
@@ -133,7 +139,8 @@ public class OrderMockingTest {
                 mockReviewRepository,
                 mockEventProductRepository,
                 mockEventOrderRepository,
-                mockEventPurchaseCountRepository
+                mockEventPurchaseCountRepository,
+                mockAdminService
                 );
     }
     @Test
@@ -238,5 +245,32 @@ public class OrderMockingTest {
 
         OrderDetailDataResponseForAdminForm result = mockOrderService.orderDetailDataCombineForAdmin(orderId);
         assertTrue(result != null);
+    }
+
+    @Test
+    @DisplayName("payment mocking test: kakao payment waiting refund")
+    public void 사용자가_환불을_신청하면_환불대기_상태가_됩니다() {
+        final Long orderId = 1L;
+        final Long productOptionId = 1L;
+        final String userToken = "userToken";
+
+        OrderedProductChangeStatusRequestForm requestForm = new OrderedProductChangeStatusRequestForm(userToken, orderId, List.of(productOptionId));
+
+        Admin admin = new Admin();
+        when(mockAdminService.findAdminByUserToken(userToken)).thenReturn(admin);
+
+        ProductOrder order = new ProductOrder();
+        order.setId(1L);
+
+        OrderAmount orderAmount = new OrderAmount(100, 100);
+        order.setAmount(orderAmount);
+        when(mockOrderRepository.findById(orderId)).thenReturn(Optional.of(order));
+
+        OrderedProduct orderedProduct = new OrderedProduct();
+        orderedProduct.setProductOptionId(1L);
+        when(mockOrderedProductRepository.findAllByProductOrder(order)).thenReturn(List.of(orderedProduct));
+
+        boolean result = mockOrderService.orderedProductWaitingRefund(requestForm);
+        assertTrue(result);
     }
 }
