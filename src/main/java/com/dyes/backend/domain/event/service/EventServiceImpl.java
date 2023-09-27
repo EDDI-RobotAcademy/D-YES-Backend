@@ -242,7 +242,7 @@ public class EventServiceImpl implements EventService{
                     product.getId(), product.getProductName(), product.getProductDescription(), product.getCultivationMethod()
             );
             ProductOptionResponseForUser productOptionResponseForUser = new ProductOptionResponseForUser(
-                    productOption.getId(),productOption.getOptionName(), productOption.getOptionPrice(),
+                    productOption.getId(),productOption.getOptionName(), productOption.getOptionPrice(), productOption.getOptionSaleStatus(),
                     productOption.getStock(), productOption.getAmount().getValue(), productOption.getAmount().getUnit()
             );
             ProductMainImageResponseForUser productMainImageResponseForUser = new ProductMainImageResponseForUser(
