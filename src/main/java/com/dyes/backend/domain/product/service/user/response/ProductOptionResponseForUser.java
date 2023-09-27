@@ -1,6 +1,7 @@
 package com.dyes.backend.domain.product.service.user.response;
 
 import com.dyes.backend.domain.product.entity.ProductOption;
+import com.dyes.backend.domain.product.entity.SaleStatus;
 import com.dyes.backend.domain.product.entity.Unit;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,6 +17,7 @@ public class ProductOptionResponseForUser {
     public Long optionId;
     private String optionName;
     private Long optionPrice;
+    private SaleStatus optionSaleStatus;
     private int stock;
     private Long value;
     private Unit unit;
@@ -24,6 +26,7 @@ public class ProductOptionResponseForUser {
         this.optionId = productOption.getId();
         this.optionName = productOption.getOptionName();
         this.optionPrice = productOption.getOptionPrice();
+        this.optionSaleStatus = productOption.getOptionSaleStatus();
         this.stock = productOption.getStock();
         this.value = productOption.getAmount().getValue();
         this.unit = productOption.getAmount().getUnit();
