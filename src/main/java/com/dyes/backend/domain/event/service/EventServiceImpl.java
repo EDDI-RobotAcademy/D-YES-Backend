@@ -319,31 +319,48 @@ public class EventServiceImpl implements EventService{
             productRepository.save(product);
 
             Optional<ProductMainImage> maybeMainImage = productMainImageRepository.findByProduct(product);
-            if (maybeMainImage.isEmpty()){
-                return false;
-            }
-            ProductMainImage mainImage = maybeMainImage.get();
+            if (maybeMainImage.isPresent()){
+                ProductMainImage mainImage = maybeMainImage.get();
 
-            mainImage.setMainImg(productMainImageModifyRequest.getMainImg());
-            mainImage.setProduct(product);
-            productMainImageRepository.save(mainImage);
+                mainImage.setMainImg(productMainImageModifyRequest.getMainImg());
+                mainImage.setProduct(product);
+                productMainImageRepository.save(mainImage);
+            } else {
+                ProductMainImage mainImage = ProductMainImage.builder()
+                        .mainImg(productMainImageModifyRequest.getMainImg())
+                        .product(product)
+                        .build();
+
+                productMainImageRepository.save(mainImage);
+            }
 
             // DB에 저장된 상품 상세 이미지 가져오기
             List<ProductDetailImages> productDetailImagesList = productDetailImagesRepository.findByProductWithProduct(product);
 
-            for (ProductDetailImages productDetailImages : productDetailImagesList) {
-                for (ProductDetailImagesModifyRequest detailImagesModifyRequest : productDetailImagesModifyRequest) {
-                    if (!productDetailImages.getId().equals(detailImagesModifyRequest.getDetailImageId())) {
-                        productDetailImagesRepository.delete(productDetailImages);
-                    } else if (detailImagesModifyRequest.getDetailImgs() != null) {
-                        ProductDetailImages detailImages = ProductDetailImages.builder()
-                                .detailImgs(detailImagesModifyRequest.getDetailImgs())
-                                .product(product)
-                                .build();
-                        productDetailImagesRepository.save(detailImages);
+            if (productDetailImagesList.size() != 0) {
+                for (ProductDetailImages productDetailImages : productDetailImagesList) {
+                    for (ProductDetailImagesModifyRequest detailImagesModifyRequest : productDetailImagesModifyRequest) {
+                        if (!productDetailImages.getId().equals(detailImagesModifyRequest.getDetailImageId())) {
+                            productDetailImagesRepository.delete(productDetailImages);
+                        } else if (detailImagesModifyRequest.getDetailImageId() == 0) {
+                            ProductDetailImages detailImages = ProductDetailImages.builder()
+                                    .detailImgs(detailImagesModifyRequest.getDetailImgs())
+                                    .product(product)
+                                    .build();
+                            productDetailImagesRepository.save(detailImages);
+                        }
                     }
                 }
+            } else {
+                for (ProductDetailImagesModifyRequest detailImagesModifyRequest : productDetailImagesModifyRequest) {
+                    ProductDetailImages detailImages = ProductDetailImages.builder()
+                            .detailImgs(detailImagesModifyRequest.getDetailImgs())
+                            .product(product)
+                            .build();
+                    productDetailImagesRepository.save(detailImages);
+                }
             }
+
 
             ProductOption productOption = eventProduct.getProductOption();
 
