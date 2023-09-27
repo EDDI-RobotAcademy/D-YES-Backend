@@ -68,7 +68,7 @@ public class RecipeServiceImpl implements RecipeService {
                     .build();
             recipeMainIngredientRepository.save(recipeMainIngredient);
 
-            List<RecipeIngredientInfoForm> otherIngredienList = recipeIngredientRegisterRequest.getOtherIngredienList();
+            List<RecipeIngredientInfoForm> otherIngredienList = recipeIngredientRegisterRequest.getOtherIngredientList();
             for (RecipeIngredientInfoForm recipeIngredientInfoForm : otherIngredienList) {
                 RecipeSubIngredient recipeSubIngredient = RecipeSubIngredient.builder()
                         .ingredientName(recipeIngredientInfoForm.getIngredientName())
