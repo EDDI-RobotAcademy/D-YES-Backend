@@ -5,6 +5,5 @@ import com.dyes.backend.domain.recipe.entity.RecipeCategory;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface RecipeCategoryRepository extends JpaRepository<RecipeCategory, Long> {
-    RecipeCategory findByRecipe(Recipe recipe);
     RecipeCategory findByRecipe(Recipe deleteRecipe);
 }
