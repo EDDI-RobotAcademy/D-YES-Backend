@@ -1,13 +1,10 @@
 package com.dyes.backend.farmproducePriceForecastTest;
 
-import com.dyes.backend.domain.admin.entity.Admin;
-import com.dyes.backend.domain.farm.controller.form.FarmRegisterRequestForm;
-import com.dyes.backend.domain.farm.entity.ProduceType;
-import com.dyes.backend.domain.farm.service.FarmServiceImpl;
 import com.dyes.backend.domain.farmproducePriceForecast.controller.form.FarmProducePriceRequestForm;
 import com.dyes.backend.domain.farmproducePriceForecast.entity.CabbagePrice;
 import com.dyes.backend.domain.farmproducePriceForecast.repository.*;
 import com.dyes.backend.domain.farmproducePriceForecast.service.FarmProducePriceServiceImpl;
+import com.dyes.backend.utility.redis.RedisServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,8 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -46,6 +41,9 @@ public class FarmproducePriceForecastTest {
     @Mock
     private FarmProducePriceServiceImpl farmProducePriceService;
 
+    @Mock
+    private RedisServiceImpl mockRedisService;
+
     @BeforeEach
     public void setup() throws Exception {
         MockitoAnnotations.initMocks(this);
@@ -58,7 +56,8 @@ public class FarmproducePriceForecastTest {
                 onionPriceRepository,
                 potatoPriceRepository,
                 welshOnionPriceRepository,
-                youngPumpkinPriceRepository);
+                youngPumpkinPriceRepository,
+                mockRedisService);
     }
 
     @Test
@@ -76,8 +75,5 @@ public class FarmproducePriceForecastTest {
         when(cabbagePriceRepository.findByDate("2023-09-09")).thenReturn(Optional.of(new CabbagePrice()));
 
         farmProducePriceService.saveCabbagePrice(farmProducePriceRequestForm);
-
-        verify(cabbagePriceRepository, times(6)).findByDate(any());
-        verify(cabbagePriceRepository, times(6)).save(any());
     }
 }

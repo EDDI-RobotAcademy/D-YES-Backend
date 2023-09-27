@@ -6,26 +6,21 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Entity
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RecipeContent {
+public class RecipeCategory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private List<String> recipeDetails;   // 조리법
-
-    private String recipeDescription; // 레시피 설명
-
-    private String cookingTime;        // 조리시간
+    @Enumerated(EnumType.STRING)
+    private RecipeMainCategory recipeMainCategory;
 
     @Enumerated(EnumType.STRING)
-    private Difficulty difficulty;  // 난이도
+    private RecipeSubCategory recipeSubCategory;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "recipe_id")
