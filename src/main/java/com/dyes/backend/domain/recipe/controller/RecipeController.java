@@ -1,5 +1,6 @@
 package com.dyes.backend.domain.recipe.controller;
 
+import com.dyes.backend.domain.recipe.controller.form.MyRecipeCheckForm;
 import com.dyes.backend.domain.recipe.controller.form.RecipeDeleteForm;
 import com.dyes.backend.domain.recipe.controller.form.RecipeRegisterForm;
 import com.dyes.backend.domain.recipe.service.RecipeService;
@@ -27,6 +28,11 @@ public class RecipeController {
     @GetMapping("/list")
     public List<RecipeListResponseForm> getRecipeList() {
         return recipeService.getRecipeList();
+    }
+
+    @PostMapping("/my_recipe/{recipeId}")
+    public boolean isMyRecipe (@PathVariable("recipeId") Long recipeId, @RequestBody MyRecipeCheckForm myRecipeCheckForm) {
+        return recipeService.isMyRecipe(recipeId, myRecipeCheckForm);
     }
 
     @DeleteMapping("/delete/{recipeId}")

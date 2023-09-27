@@ -1,6 +1,7 @@
 package com.dyes.backend.domain.recipe.service;
 
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
+import com.dyes.backend.domain.recipe.controller.form.MyRecipeCheckForm;
 import com.dyes.backend.domain.recipe.controller.form.RecipeDeleteForm;
 import com.dyes.backend.domain.recipe.controller.form.RecipeIngredientInfoForm;
 import com.dyes.backend.domain.recipe.controller.form.RecipeRegisterForm;
@@ -207,7 +208,7 @@ public class RecipeServiceImpl implements RecipeService {
                 recipeSeasoningIngredientRepository.delete(recipeSeasoningIngredient);
             }
             recipeRepository.delete(deleteRecipe);
-            log.info("Recipe deletion successful for farm with ID: {}", recipeId);
+            log.info("Recipe deletion successful for recipe with ID: {}", recipeId);
             return true;
 
         } catch (Exception e) {
@@ -251,15 +252,40 @@ public class RecipeServiceImpl implements RecipeService {
                     recipeInfoResponse, recipeContentResponse, recipeCategoryResponse, recipeMainImageResponse,
                     recipeMainIngredientResponse, recipeSubIngredientResponse, recipeSeasoningIngredientResponse);
 
-            log.info("Recipe read successful for farm with ID: {}", recipeId);
+            log.info("Recipe read successful for recipe with ID: {}", recipeId);
             return recipeInfoReadResponseForm;
 
         } catch (Exception e) {
             log.error("Failed to read the recipe: {}", e.getMessage(), e);
             return null;
         }
+    }
 
+    @Override
+    public Boolean isMyRecipe(Long recipeId, MyRecipeCheckForm myRecipeCheckForm) {
+        log.info("Reading my recipe with ID: {}", recipeId);
 
+        String userToken = myRecipeCheckForm.getUserToken();
+        User user = authenticationService.findUserByUserToken(userToken);
+
+        if (user == null) {
+            log.info("Unable to find user with user token: {}", userToken);
+            return false;
+        }
+
+        Optional<Recipe> maybeRecipe = recipeRepository.findById(recipeId);
+        if (maybeRecipe.isEmpty()) {
+            log.info("Recipe is empty");
+            return false;
+        }
+
+        Recipe isMyRecipe = maybeRecipe.get();
+        if (!isMyRecipe.getUser().getId().equals(user.getId())) {
+            log.info("UserId do not match");
+            return false;
+        }
+
+       return true;
     }
 
 }
