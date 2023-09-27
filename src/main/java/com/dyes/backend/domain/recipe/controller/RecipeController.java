@@ -20,27 +20,32 @@ import java.util.List;
 public class RecipeController {
     final private RecipeService recipeService;
 
+    // 레시피 등록
     @PostMapping("/register")
     public boolean registerRecipe(@RequestBody RecipeRegisterForm registerForm) {
         return recipeService.registerRecipe(registerForm);
     }
 
+    // 레시피 목록 조회
     @GetMapping("/list")
     public List<RecipeListResponseForm> getRecipeList() {
         return recipeService.getRecipeList();
     }
 
+    // 사용자의 레시피인지 확인
     @PostMapping("/my_recipe/{recipeId}")
     public boolean isMyRecipe (@PathVariable("recipeId") Long recipeId, @RequestBody MyRecipeCheckForm myRecipeCheckForm) {
         return recipeService.isMyRecipe(recipeId, myRecipeCheckForm);
     }
 
+    // 레시피 삭제
     @DeleteMapping("/delete/{recipeId}")
     public boolean deleteRecipe (@PathVariable("recipeId") Long recipeId,
                                  @RequestBody RecipeDeleteForm deleteForm) {
         return recipeService.deleteRecipe(recipeId, deleteForm);
     }
 
+    // 레시피 상세 읽기
     @GetMapping("/read/{recipeId}")
     public RecipeInfoReadResponseForm readRecipe(@PathVariable("recipeId") Long recipeId) {
         return recipeService.readRecipe(recipeId);

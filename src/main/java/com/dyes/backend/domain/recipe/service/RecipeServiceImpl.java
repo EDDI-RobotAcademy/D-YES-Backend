@@ -8,7 +8,6 @@ import com.dyes.backend.domain.recipe.controller.form.RecipeRegisterForm;
 import com.dyes.backend.domain.recipe.entity.*;
 import com.dyes.backend.domain.recipe.repository.*;
 import com.dyes.backend.domain.recipe.service.request.*;
-import com.dyes.backend.domain.recipe.service.response.*;
 import com.dyes.backend.domain.recipe.service.response.form.RecipeListResponseForm;
 import com.dyes.backend.domain.recipe.service.response.form.RecipeInfoReadResponseForm;
 import com.dyes.backend.domain.user.entity.User;
@@ -125,7 +124,7 @@ public class RecipeServiceImpl implements RecipeService {
         }
     }
 
-    // 레시피 목록
+    // 레시피 목록 조회
     @Override
     public List<RecipeListResponseForm> getRecipeList() {
         log.info("Reading recipe list");
@@ -165,6 +164,7 @@ public class RecipeServiceImpl implements RecipeService {
         }
     }
 
+    // 레시피 삭제
     @Override
     public Boolean deleteRecipe(Long recipeId, RecipeDeleteForm deleteForm) {
         log.info("Deleting recipe with ID: {}", recipeId);
@@ -217,11 +217,12 @@ public class RecipeServiceImpl implements RecipeService {
         }
     }
 
+    // 레시피 상세 읽기
     @Override
     public RecipeInfoReadResponseForm readRecipe(Long recipeId) {
         log.info("Reading recipe with ID: {}", recipeId);
 
-        Optional<Recipe> maybeRecipe = recipeRepository.findById(recipeId);
+        Optional<Recipe> maybeRecipe = recipeRepository.findByIdWithUser(recipeId);
         if (maybeRecipe.isEmpty()) {
             log.info("Recipe is empty");
             return null;
@@ -229,28 +230,84 @@ public class RecipeServiceImpl implements RecipeService {
 
         try {
             Recipe recipe = maybeRecipe.get();
+            User user = recipe.getUser();
+            Optional<UserProfile> maybeUserProfile = userProfileRepository.findByUser(user);
+
+            String nickName = null;
+            if (maybeUserProfile.isPresent()) {
+                UserProfile userProfile = maybeUserProfile.get();
+                nickName = userProfile.getNickName();
+            }
+
             RecipeContent recipeContent = recipeContentRepository.findByRecipe(recipe);
             RecipeCategory recipeCategory = recipeCategoryRepository.findByRecipe(recipe);
             RecipeMainImage recipeMainImage = recipeMainImageRepository.findByRecipe(recipe);
             RecipeMainIngredient recipeMainIngredient = recipeMainIngredientRepository.findByRecipe(recipe);
-            RecipeSubIngredient recipeSubIngredient = recipeSubIngredientRepository.findByRecipe(recipe);
-            RecipeSeasoningIngredient recipeSeasoningIngredient = recipeSeasoningIngredientRepository.findByRecipe(recipe);
+            List<RecipeSubIngredient> recipeSubIngredientList = recipeSubIngredientRepository.findAllByRecipe(recipe);
+            List<RecipeSeasoningIngredient> recipeSeasoningIngredientList = recipeSeasoningIngredientRepository.findAllByRecipe(recipe);
 
-            RecipeInfoResponse recipeInfoResponse = new RecipeInfoResponse().recipeInfoResponse(recipe);
-            RecipeContentResponse recipeContentResponse = new RecipeContentResponse().recipeContentResponse(recipeContent);
-            RecipeCategoryResponse recipeCategoryResponse = new RecipeCategoryResponse().recipeCategoryResponse(recipeCategory);
-            RecipeMainImageResponse recipeMainImageResponse = new RecipeMainImageResponse().recipeMainImageResponse(recipeMainImage);
-            RecipeMainIngredientResponse recipeMainIngredientResponse =
-                    new RecipeMainIngredientResponse().recipeMainIngredientResponse(recipeMainIngredient);
-            RecipeSubIngredientResponse recipeSubIngredientResponse =
-                    new RecipeSubIngredientResponse().recipeSubIngredientResponse(recipeSubIngredient);
-            RecipeSeasoningIngredientResponse recipeSeasoningIngredientResponse =
-                    new RecipeSeasoningIngredientResponse().recipeSeasoningIngredientResponse(recipeSeasoningIngredient);
+            // 레시피 이름
+            RecipeRegisterRequest recipeRegisterRequest
+                    = new RecipeRegisterRequest(recipe.getRecipeName());
 
+            // 레시피 내용
+            RecipeContentRegisterRequest recipeContentRegisterRequest
+                    = new RecipeContentRegisterRequest(
+                    recipeContent.getRecipeDetails(),
+                    recipeContent.getRecipeDescription(),
+                    recipeContent.getCookingTime(),
+                    recipeContent.getDifficulty());
 
-            RecipeInfoReadResponseForm recipeInfoReadResponseForm = new RecipeInfoReadResponseForm(
-                    recipeInfoResponse, recipeContentResponse, recipeCategoryResponse, recipeMainImageResponse,
-                    recipeMainIngredientResponse, recipeSubIngredientResponse, recipeSeasoningIngredientResponse);
+            // 레시피 카테고리
+            RecipeCategoryRegisterRequest recipeCategoryRegisterRequest
+                    = new RecipeCategoryRegisterRequest(
+                    recipeCategory.getRecipeMainCategory(),
+                    recipeCategory.getRecipeSubCategory());
+
+            // 레시피 부재료
+            List<RecipeIngredientInfoForm> otherIngredientList = new ArrayList<>();
+            for (RecipeSubIngredient recipeSubIngredient : recipeSubIngredientList) {
+                RecipeIngredientInfoForm subRecipeIngredientInfoForm
+                        = new RecipeIngredientInfoForm(
+                        recipeSubIngredient.getIngredientName(),
+                        recipeSubIngredient.getIngredientAmount());
+
+                otherIngredientList.add(subRecipeIngredientInfoForm);
+            }
+
+            // 레시피 기타 재료
+            List<RecipeIngredientInfoForm> seasoningList = new ArrayList<>();
+            for (RecipeSeasoningIngredient recipeSeasoningIngredient : recipeSeasoningIngredientList) {
+                RecipeIngredientInfoForm subRecipeIngredientInfoForm
+                        = new RecipeIngredientInfoForm(
+                        recipeSeasoningIngredient.getSeasoningName(),
+                        recipeSeasoningIngredient.getSeasoningAmount());
+
+                seasoningList.add(subRecipeIngredientInfoForm);
+            }
+
+            // 레시피 전체 재료
+            RecipeIngredientRegisterRequest recipeIngredientRegisterRequest
+                    = new RecipeIngredientRegisterRequest(
+                    recipeMainIngredient.getServingSize(),
+                    recipeMainIngredient.getMainIngredient(),
+                    recipeMainIngredient.getMainIngredientAmount(),
+                    otherIngredientList,
+                    seasoningList);
+
+            // 레시피 이미지
+            RecipeMainImageRegisterRequest recipeMainImageRegisterRequest
+                    = new RecipeMainImageRegisterRequest(recipeMainImage.getRecipeMainImage());
+
+            // 전체 정보 담기
+            RecipeInfoReadResponseForm recipeInfoReadResponseForm
+                    = new RecipeInfoReadResponseForm(
+                    nickName,
+                    recipeRegisterRequest,
+                    recipeContentRegisterRequest,
+                    recipeCategoryRegisterRequest,
+                    recipeIngredientRegisterRequest,
+                    recipeMainImageRegisterRequest);
 
             log.info("Recipe read successful for recipe with ID: {}", recipeId);
             return recipeInfoReadResponseForm;
@@ -261,6 +318,7 @@ public class RecipeServiceImpl implements RecipeService {
         }
     }
 
+    // 사용자의 레시피인지 확인
     @Override
     public Boolean isMyRecipe(Long recipeId, MyRecipeCheckForm myRecipeCheckForm) {
         log.info("Reading my recipe with ID: {}", recipeId);
@@ -285,7 +343,7 @@ public class RecipeServiceImpl implements RecipeService {
             return false;
         }
 
-       return true;
+        return true;
     }
 
 }
