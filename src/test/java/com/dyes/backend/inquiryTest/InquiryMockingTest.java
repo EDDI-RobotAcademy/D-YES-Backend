@@ -11,12 +11,14 @@ import com.dyes.backend.domain.inquiry.entity.InquiryStatus;
 import com.dyes.backend.domain.inquiry.entity.InquiryType;
 import com.dyes.backend.domain.inquiry.repository.InquiryContentRepository;
 import com.dyes.backend.domain.inquiry.repository.InquiryRepository;
+import com.dyes.backend.domain.inquiry.repository.ReplyRepository;
 import com.dyes.backend.domain.inquiry.service.InquiryServiceImpl;
 import com.dyes.backend.domain.inquiry.service.request.InquiryRegisterRequest;
 import com.dyes.backend.domain.inquiry.service.request.InquiryReplyRequest;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserProfile;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
+import com.dyes.backend.utility.provider.NaverStmpSecretsProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -47,6 +49,10 @@ public class InquiryMockingTest {
     private AdminService mockAdminService;
     @Mock
     private JavaMailSender mockJavaMailSender;
+    @Mock
+    private ReplyRepository mockReplyRepository;
+    @Mock
+    private NaverStmpSecretsProvider mockNaverStmpSecretsProvider;
 
     @InjectMocks
     private InquiryServiceImpl mockService;
@@ -61,7 +67,9 @@ public class InquiryMockingTest {
                 mockAuthenticationService,
                 mockUserProfileRepository,
                 mockAdminService,
-                mockJavaMailSender
+                mockJavaMailSender,
+                mockReplyRepository,
+                mockNaverStmpSecretsProvider
         );
     }
     @Test
@@ -70,16 +78,18 @@ public class InquiryMockingTest {
         final String userToken = "userToken";
         final String title = "title";
         final String content = "content";
+        final String email = "email";
 
-        InquiryRegisterRequest request = new InquiryRegisterRequest(userToken, title, content, InquiryType.PURCHASE);
+        InquiryRegisterRequest request = new InquiryRegisterRequest(userToken, title, content, email, InquiryType.PURCHASE);
 
         User user = new User();
         when(mockAuthenticationService.findUserByUserToken(userToken)).thenReturn(user);
 
         InquiryContent inquiryContent = new InquiryContent();
-        inquiryContent.setContent(content);
+        inquiryContent.setContent(request.getContent());
         Inquiry inquiry = Inquiry.builder()
-                .title(title)
+                .title(request.getTitle())
+                .email(request.getEmail())
                 .user(user)
                 .inquiryStatus(InquiryStatus.WAITING)
                 .content(inquiryContent)
@@ -132,9 +142,7 @@ public class InquiryMockingTest {
         inquiry.setContent(new InquiryContent());
         when(mockInquiryRepository.findByIdWithUserContent(inquiryId)).thenReturn(Optional.of(inquiry));
 
-        UserProfile userProfile = new UserProfile();
-        when(mockUserProfileRepository.findByUser(inquiry.getUser())).thenReturn(Optional.of(userProfile));
-
-
+        boolean result = mockService.replyInquiry(request);
+        assertTrue(result);
     }
 }

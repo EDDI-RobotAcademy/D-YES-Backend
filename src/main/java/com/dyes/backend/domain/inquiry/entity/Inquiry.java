@@ -22,6 +22,7 @@ public class Inquiry {
     @JoinColumn(name = "user_id")
     private User user;
     private String title;
+    private String email;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "content_id")
     private InquiryContent content;

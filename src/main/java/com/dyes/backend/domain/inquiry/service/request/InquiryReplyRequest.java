@@ -10,6 +10,4 @@ import lombok.NoArgsConstructor;
 public class InquiryReplyRequest {
     private String userToken;
     private Long inquiryId;
-    private String title;
-    private String content;
 }

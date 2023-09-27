@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class InquiryRegisterRequest {
     private String userToken;
+    private String email;
     private String title;
     private String content;
     private InquiryType inquiryType;
