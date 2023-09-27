@@ -311,7 +311,12 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 String formattedDate = date.format(formatter);
 
-                int price = priceListByDay.get(formattedDate);
+                int price;
+                if(priceListByDay.get(formattedDate) == null) {
+                    price = 0;
+                } else {
+                    price = priceListByDay.get(formattedDate);
+                }
                 Map<LocalDate, Integer> priceByDay = new HashMap<>();
                 priceByDay.put(date, price);
                 cabbagePriceList.add(priceByDay);
@@ -337,7 +342,12 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 String formattedDate = date.format(formatter);
 
-                int price = priceListByDay.get(formattedDate);
+                int price;
+                if(priceListByDay.get(formattedDate) == null) {
+                    price = 0;
+                } else {
+                    price = priceListByDay.get(formattedDate);
+                }
                 Map<LocalDate, Integer> priceByDay = new HashMap<>();
                 priceByDay.put(date, price);
                 carrotPriceList.add(priceByDay);
@@ -363,7 +373,12 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 String formattedDate = date.format(formatter);
 
-                int price = priceListByDay.get(formattedDate);
+                int price;
+                if(priceListByDay.get(formattedDate) == null) {
+                    price = 0;
+                } else {
+                    price = priceListByDay.get(formattedDate);
+                }
                 Map<LocalDate, Integer> priceByDay = new HashMap<>();
                 priceByDay.put(date, price);
                 cucumberPriceList.add(priceByDay);
@@ -389,7 +404,12 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 String formattedDate = date.format(formatter);
 
-                int price = priceListByDay.get(formattedDate);
+                int price;
+                if(priceListByDay.get(formattedDate) == null) {
+                    price = 0;
+                } else {
+                    price = priceListByDay.get(formattedDate);
+                }
                 Map<LocalDate, Integer> priceByDay = new HashMap<>();
                 priceByDay.put(date, price);
                 kimchiCabbagePriceList.add(priceByDay);
@@ -415,7 +435,12 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 String formattedDate = date.format(formatter);
 
-                int price = priceListByDay.get(formattedDate);
+                int price;
+                if(priceListByDay.get(formattedDate) == null) {
+                    price = 0;
+                } else {
+                    price = priceListByDay.get(formattedDate);
+                }
                 Map<LocalDate, Integer> priceByDay = new HashMap<>();
                 priceByDay.put(date, price);
                 onionPriceList.add(priceByDay);
@@ -441,7 +466,12 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 String formattedDate = date.format(formatter);
 
-                int price = priceListByDay.get(formattedDate);
+                int price;
+                if(priceListByDay.get(formattedDate) == null) {
+                    price = 0;
+                } else {
+                    price = priceListByDay.get(formattedDate);
+                }
                 Map<LocalDate, Integer> priceByDay = new HashMap<>();
                 priceByDay.put(date, price);
                 potatoPriceList.add(priceByDay);
@@ -467,7 +497,12 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 String formattedDate = date.format(formatter);
 
-                int price = priceListByDay.get(formattedDate);
+                int price;
+                if(priceListByDay.get(formattedDate) == null) {
+                    price = 0;
+                } else {
+                    price = priceListByDay.get(formattedDate);
+                }
                 Map<LocalDate, Integer> priceByDay = new HashMap<>();
                 priceByDay.put(date, price);
                 welshOnionPriceList.add(priceByDay);
@@ -493,7 +528,12 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 String formattedDate = date.format(formatter);
 
-                int price = priceListByDay.get(formattedDate);
+                int price;
+                if(priceListByDay.get(formattedDate) == null) {
+                    price = 0;
+                } else {
+                    price = priceListByDay.get(formattedDate);
+                }
                 Map<LocalDate, Integer> priceByDay = new HashMap<>();
                 priceByDay.put(date, price);
                 youngPumpkinPriceList.add(priceByDay);
