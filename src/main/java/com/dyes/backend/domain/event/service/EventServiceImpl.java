@@ -53,6 +53,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.dyes.backend.domain.product.entity.MaybeEventProduct.YES;
 import static com.dyes.backend.domain.product.entity.SaleStatus.AVAILABLE;
@@ -307,6 +309,7 @@ public class EventServiceImpl implements EventService{
 
             Optional<EventProduct> maybeEventProduct = eventProductRepository.findByIdProductOptionDeadLineCount(eventProductId);
             if (maybeEventProduct.isEmpty()){
+                log.info("maybeEventProduct: " + maybeEventProduct.get().getId());
                 return false;
             }
             EventProduct eventProduct = maybeEventProduct.get();
@@ -336,20 +339,29 @@ public class EventServiceImpl implements EventService{
 
             // DB에 저장된 상품 상세 이미지 가져오기
             List<ProductDetailImages> productDetailImagesList = productDetailImagesRepository.findByProductWithProduct(product);
-
             if (productDetailImagesList.size() != 0) {
-                for (ProductDetailImages productDetailImages : productDetailImagesList) {
-                    for (ProductDetailImagesModifyRequest detailImagesModifyRequest : productDetailImagesModifyRequest) {
-                        if (!productDetailImages.getId().equals(detailImagesModifyRequest.getDetailImageId())) {
-                            productDetailImagesRepository.delete(productDetailImages);
-                        } else if (detailImagesModifyRequest.getDetailImageId() == 0) {
-                            ProductDetailImages detailImages = ProductDetailImages.builder()
-                                    .detailImgs(detailImagesModifyRequest.getDetailImgs())
-                                    .product(product)
-                                    .build();
-                            productDetailImagesRepository.save(detailImages);
-                        }
+
+                Set<Long> requestImages = productDetailImagesModifyRequest.stream()
+                        .map(ProductDetailImagesModifyRequest :: getDetailImageId)
+                        .collect(Collectors.toSet());
+
+                for (ProductDetailImagesModifyRequest detailImagesModifyRequest : productDetailImagesModifyRequest) {
+                    if (detailImagesModifyRequest.getDetailImageId() == 0) {
+                        ProductDetailImages detailImages = ProductDetailImages.builder()
+                                .detailImgs(detailImagesModifyRequest.getDetailImgs())
+                                .product(product)
+                                .build();
+                        productDetailImagesRepository.save(detailImages);
                     }
+                }
+                List<ProductDetailImages> deleteImages = new ArrayList<>();
+                for (ProductDetailImages productDetailImages : productDetailImagesList) {
+                    if (!requestImages.contains(productDetailImages.getId())) {
+                        deleteImages.add(productDetailImages);
+                    }
+                }
+                for (ProductDetailImages deleteImage : deleteImages) {
+                    productDetailImagesRepository.delete(deleteImage);
                 }
             } else {
                 for (ProductDetailImagesModifyRequest detailImagesModifyRequest : productDetailImagesModifyRequest) {
