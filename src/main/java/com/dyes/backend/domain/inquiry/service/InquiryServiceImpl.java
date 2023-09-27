@@ -1,5 +1,6 @@
 package com.dyes.backend.domain.inquiry.service;
 
+import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.service.AdminService;
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
 import com.dyes.backend.domain.inquiry.controller.form.InquiryListResponseForm;
@@ -7,10 +8,12 @@ import com.dyes.backend.domain.inquiry.controller.form.InquiryReadResponseForm;
 import com.dyes.backend.domain.inquiry.entity.Inquiry;
 import com.dyes.backend.domain.inquiry.entity.InquiryContent;
 import com.dyes.backend.domain.inquiry.entity.InquiryType;
+import com.dyes.backend.domain.inquiry.entity.Reply;
 import com.dyes.backend.domain.inquiry.repository.InquiryContentRepository;
 import com.dyes.backend.domain.inquiry.repository.InquiryRepository;
 import com.dyes.backend.domain.inquiry.repository.ReplyRepository;
 import com.dyes.backend.domain.inquiry.service.request.InquiryRegisterRequest;
+import com.dyes.backend.domain.inquiry.service.request.InquiryReplyRequest;
 import com.dyes.backend.domain.inquiry.service.response.read.InquiryReadInquiryInfoResponse;
 import com.dyes.backend.domain.inquiry.service.response.read.InquiryReadUserResponse;
 import com.dyes.backend.domain.user.entity.User;
@@ -139,6 +142,48 @@ public class InquiryServiceImpl implements InquiryService{
         } catch (Exception e) {
             log.error("Error occurred while get inquiry list", e);
             return null;
+        }
+    }
+    public boolean replyInquiry(InquiryReplyRequest request) {
+        log.info("inquiry reply start");
+        final String userToken = request.getUserToken();
+        final Long inquiryId = request.getInquiryId();
+        final String content = request.getContent();
+        try {
+            Admin admin = adminService.findAdminByUserToken(userToken);
+            if (admin == null) {
+                log.info("admin null");
+                return false;
+            }
+
+            Optional<Inquiry> maybeInquiry = inquiryRepository.findByIdWithUserContent(inquiryId);
+            if (maybeInquiry.isEmpty()){
+                log.info("inquiry null");
+                return false;
+            }
+            Inquiry inquiry = maybeInquiry.get();
+
+            Reply reply = Reply.builder()
+                    .admin(admin)
+                    .user(inquiry.getUser())
+                    .replyContent(content)
+                    .createDate(LocalDate.now())
+                    .build();
+            replyRepository.save(reply);
+
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(secretsProvider.getSTMP_EMAIL());
+            message.setSubject("답변이 등록 되었습니다");
+            message.setText(secretsProvider.getINQUIRY_LINK() + inquiry.getId());
+            message.setTo(inquiry.getEmail());
+
+            javaMailSender.send(message);
+            log.info("inquiry reply end");
+
+            return true;
+        } catch (Exception e) {
+            log.error("Error occurred while get inquiry reply", e);
+            return false;
         }
     }
 }
