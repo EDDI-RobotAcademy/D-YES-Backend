@@ -1,5 +1,6 @@
 package com.dyes.backend.utility.redis;
 
+import com.dyes.backend.domain.farmproducePriceForecast.service.request.FarmProducePriceForecastData;
 import com.dyes.backend.domain.payment.service.request.PaymentTemporarySaveRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -84,5 +85,33 @@ public class RedisServiceImpl implements RedisService{
             log.error("Error while deleting payment temporary save data: {}", e.getMessage(), e);
             return false;
         }
+    }
+
+    @Override
+    public void setFarmProducePrice (String farmProduceName, FarmProducePriceForecastData saveRequest) throws JsonProcessingException{
+        log.info("farmProducePriceForecastData start");
+        ValueOperations<String, String> value = redisTemplate.opsForValue();
+        String saveData = objectMapper.writeValueAsString(saveRequest);
+        value.set(farmProduceName, saveData);
+        log.info("farmProducePriceForecastData end");
+    }
+
+    @Override
+    public FarmProducePriceForecastData getFarmProducePriceForecastData (String farmProduceName) throws JsonProcessingException {
+        log.info("getFarmProducePriceForecastData start");
+
+        ValueOperations<String, String> value = redisTemplate.opsForValue();
+
+        String savedData = value.get(farmProduceName);
+
+        if (savedData == null) {
+            log.info("getFarmProducePriceForecastData end");
+
+            return null;
+        }
+        FarmProducePriceForecastData saveData = objectMapper.readValue(savedData, FarmProducePriceForecastData.class);
+        log.info("getFarmProducePriceForecastData end");
+
+        return saveData;
     }
 }

@@ -13,7 +13,7 @@ public class RecipeListResponseForm {
     private String recipeName;
     private String recipeMainImage;
     private String recipeDescription;
-    private int cookingTime;
+    private String cookingTime;
     private Difficulty difficulty;
     private String nickName;
 }
