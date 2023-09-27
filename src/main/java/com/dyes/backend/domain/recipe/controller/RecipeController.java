@@ -4,6 +4,7 @@ import com.dyes.backend.domain.recipe.controller.form.RecipeDeleteForm;
 import com.dyes.backend.domain.recipe.controller.form.RecipeRegisterForm;
 import com.dyes.backend.domain.recipe.service.RecipeService;
 
+import com.dyes.backend.domain.recipe.service.response.form.RecipeInfoReadResponseForm;
 import com.dyes.backend.domain.recipe.service.response.form.RecipeListResponseForm;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,5 +35,8 @@ public class RecipeController {
         return recipeService.deleteRecipe(recipeId, deleteForm);
     }
 
-    //read
+    @GetMapping("/read/{recipeId}")
+    public RecipeInfoReadResponseForm readRecipe(@PathVariable("recipeId") Long recipeId) {
+        return recipeService.readRecipe(recipeId);
+    }
 }
