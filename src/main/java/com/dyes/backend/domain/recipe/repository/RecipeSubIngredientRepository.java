@@ -7,6 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface RecipeSubIngredientRepository extends JpaRepository<RecipeSubIngredient, Long> {
-    RecipeSubIngredient findByRecipe(Recipe recipe);
     List<RecipeSubIngredient> findAllByRecipe(Recipe deleteRecipe);
 }
