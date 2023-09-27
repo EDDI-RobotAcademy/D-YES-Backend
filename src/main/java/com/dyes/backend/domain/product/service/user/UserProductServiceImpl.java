@@ -84,18 +84,18 @@ public class UserProductServiceImpl implements UserProductService {
             int totalReviewCount = 0;
             double averageRating = 0;
             int totalRating = 0;
-            for(Review review : reviewList) {
+            for (Review review : reviewList) {
                 totalReviewCount = totalReviewCount + 1;
                 Optional<ReviewRating> maybeReviewRating = reviewRatingRepository.findByReview(review);
-                if(maybeReviewRating.isPresent()) {
+                if (maybeReviewRating.isPresent()) {
                     ReviewRating reviewRating = maybeReviewRating.get();
                     totalRating = totalRating + reviewRating.getRating();
                 }
             }
-            if(totalReviewCount == 0) {
+            if (totalReviewCount == 0) {
                 averageRating = totalRating;
             } else {
-                averageRating = totalRating/totalReviewCount;
+                averageRating = totalRating / totalReviewCount;
             }
 
             ProductResponseForUser productResponseForUser
@@ -145,8 +145,11 @@ public class UserProductServiceImpl implements UserProductService {
         try {
             List<Product> productList = productRepository.findAllWithFarm();
             for (Product product : productList) {
-                ProductListResponseFormForUser productListResponseFormForUser = createUserProductListResponseForm(product);
-                productListResponseFormListForUser.add(productListResponseFormForUser);
+                if (product.getMaybeEventProduct().equals(MaybeEventProduct.NO)
+                        && product.getProductSaleStatus().equals(SaleStatus.AVAILABLE)) {
+                    ProductListResponseFormForUser productListResponseFormForUser = createUserProductListResponseForm(product);
+                    productListResponseFormListForUser.add(productListResponseFormForUser);
+                }
             }
 
             log.info("Product list read successful");
@@ -351,18 +354,18 @@ public class UserProductServiceImpl implements UserProductService {
         int totalReviewCount = 0;
         double averageRating = 0;
         int totalRating = 0;
-        for(Review review : reviewList) {
+        for (Review review : reviewList) {
             totalReviewCount = totalReviewCount + 1;
             Optional<ReviewRating> maybeReviewRating = reviewRatingRepository.findByReview(review);
-            if(maybeReviewRating.isPresent()) {
+            if (maybeReviewRating.isPresent()) {
                 ReviewRating reviewRating = maybeReviewRating.get();
                 totalRating = totalRating + reviewRating.getRating();
             }
         }
-        if(totalReviewCount == 0) {
+        if (totalReviewCount == 0) {
             averageRating = totalRating;
         } else {
-            averageRating = totalRating/totalReviewCount;
+            averageRating = totalRating / totalReviewCount;
         }
 
         ProductResponseForListForUser productResponseForListForUser
@@ -381,7 +384,7 @@ public class UserProductServiceImpl implements UserProductService {
                 = new ProductReviewResponseForUser(totalReviewCount, averageRating);
 
         FarmProducePriceChangeInfoForListForUser farmProducePriceChangeInfoForListForUser
-                =  new FarmProducePriceChangeInfoForListForUser(roundedPriceChangePercentage);
+                = new FarmProducePriceChangeInfoForListForUser(roundedPriceChangePercentage);
 
         return new ProductListResponseFormForUser(
                 productResponseForListForUser,
