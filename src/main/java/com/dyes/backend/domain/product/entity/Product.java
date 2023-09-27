@@ -28,4 +28,6 @@ public class Product {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "farm_id")
     private Farm farm;
+    @Enumerated(EnumType.STRING)
+    private MaybeEventProduct maybeEventProduct;
 }

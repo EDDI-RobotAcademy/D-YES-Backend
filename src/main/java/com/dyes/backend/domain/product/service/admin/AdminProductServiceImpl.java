@@ -42,6 +42,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.*;
 
+import static com.dyes.backend.domain.product.entity.MaybeEventProduct.NO;
 import static com.dyes.backend.domain.product.entity.SaleStatus.AVAILABLE;
 
 @Service
@@ -113,6 +114,7 @@ public class AdminProductServiceImpl implements AdminProductService {
                     .cultivationMethod(productRequest.getCultivationMethod())
                     .produceType(productRequest.getProduceType())
                     .productSaleStatus(AVAILABLE)
+                    .maybeEventProduct(NO)
                     .farm(farm)
                     .build();
 
