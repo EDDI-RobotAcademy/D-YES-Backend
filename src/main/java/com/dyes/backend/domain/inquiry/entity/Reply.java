@@ -25,6 +25,9 @@ public class Reply {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id")
     private User user;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "inquiry_id")
+    private Inquiry inquiry;
     private String replyContent;
     private LocalDate createDate;
 }

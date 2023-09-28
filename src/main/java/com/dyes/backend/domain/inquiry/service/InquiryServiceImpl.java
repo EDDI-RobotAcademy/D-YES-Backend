@@ -15,6 +15,7 @@ import com.dyes.backend.domain.inquiry.repository.ReplyRepository;
 import com.dyes.backend.domain.inquiry.service.request.InquiryRegisterRequest;
 import com.dyes.backend.domain.inquiry.service.request.InquiryReplyRequest;
 import com.dyes.backend.domain.inquiry.service.response.read.InquiryReadInquiryInfoResponse;
+import com.dyes.backend.domain.inquiry.service.response.read.InquiryReadReplyResponse;
 import com.dyes.backend.domain.inquiry.service.response.read.InquiryReadUserResponse;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserProfile;
@@ -116,7 +117,17 @@ public class InquiryServiceImpl implements InquiryService{
                     .inquiryType(inquiry.getInquiryType())
                     .build();
 
-            InquiryReadResponseForm responseForm = new InquiryReadResponseForm(userResponse, infoResponse);
+            Optional<Reply> maybeReply = replyRepository.findByInquiry(inquiry);
+            InquiryReadReplyResponse replyResponse = new InquiryReadReplyResponse();
+            if (maybeReply.isPresent()) {
+                Reply reply = maybeReply.get();
+                replyResponse = InquiryReadReplyResponse.builder()
+                        .replyContent(reply.getReplyContent())
+                        .createDate(reply.getCreateDate())
+                        .build();
+            }
+
+            InquiryReadResponseForm responseForm = new InquiryReadResponseForm(userResponse, infoResponse, replyResponse);
             return responseForm;
         } catch (Exception e) {
             log.error("Error occurred while read inquiry", e);
@@ -153,6 +164,7 @@ public class InquiryServiceImpl implements InquiryService{
 
             Reply reply = Reply.builder()
                     .admin(admin)
+                    .inquiry(inquiry)
                     .user(inquiry.getUser())
                     .replyContent(content)
                     .createDate(LocalDate.now())

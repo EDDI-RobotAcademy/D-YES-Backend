@@ -5,10 +5,7 @@ import com.dyes.backend.domain.admin.service.AdminService;
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
 import com.dyes.backend.domain.inquiry.controller.form.InquiryListResponseForm;
 import com.dyes.backend.domain.inquiry.controller.form.InquiryReadResponseForm;
-import com.dyes.backend.domain.inquiry.entity.Inquiry;
-import com.dyes.backend.domain.inquiry.entity.InquiryContent;
-import com.dyes.backend.domain.inquiry.entity.InquiryStatus;
-import com.dyes.backend.domain.inquiry.entity.InquiryType;
+import com.dyes.backend.domain.inquiry.entity.*;
 import com.dyes.backend.domain.inquiry.repository.InquiryContentRepository;
 import com.dyes.backend.domain.inquiry.repository.InquiryRepository;
 import com.dyes.backend.domain.inquiry.repository.ReplyRepository;
@@ -112,6 +109,9 @@ public class InquiryMockingTest {
 
         UserProfile userProfile = new UserProfile();
         when(mockUserProfileRepository.findByUser(inquiry.getUser())).thenReturn(Optional.of(userProfile));
+
+        Reply reply = new Reply();
+        when(mockReplyRepository.findByInquiry(inquiry)).thenReturn(Optional.of(reply));
 
         InquiryReadResponseForm result = mockService.readInquiry(inquiryId);
         assertTrue(result != null);
