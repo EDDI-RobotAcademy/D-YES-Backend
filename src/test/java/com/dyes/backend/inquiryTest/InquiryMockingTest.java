@@ -145,4 +145,18 @@ public class InquiryMockingTest {
         boolean result = mockService.replyInquiry(request);
         assertTrue(result);
     }
+    @Test
+    @DisplayName("inquiry mocking test: user inquiry list")
+    public void 사용자는_자신의_문의글_페이지에서_문의글_리스틀_볼_수_있습니다() {
+        final String userToken = "userToken";
+
+        User user = new User();
+        when(mockAuthenticationService.findUserByUserToken(userToken)).thenReturn(user);
+
+        Inquiry inquiry = new Inquiry();
+        when(mockInquiryRepository.findAllByUser(user)).thenReturn(List.of(inquiry));
+
+        List<InquiryListResponseForm> result = mockService.userInquiryList(userToken);
+        assertTrue(result != null);
+    }
 }

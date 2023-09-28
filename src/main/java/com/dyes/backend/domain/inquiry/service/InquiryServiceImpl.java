@@ -126,19 +126,7 @@ public class InquiryServiceImpl implements InquiryService{
     public List<InquiryListResponseForm> listInquiry() {
         try {
             List<Inquiry> inquiryList = inquiryRepository.findAll();
-
-            List<InquiryListResponseForm> responseFormList = new ArrayList<>();
-            for (Inquiry inquiry : inquiryList) {
-                InquiryListResponseForm responseForm = InquiryListResponseForm.builder()
-                        .inquiryId(inquiry.getId())
-                        .title(inquiry.getTitle())
-                        .inquiryType(inquiry.getInquiryType())
-                        .inquiryStatus(inquiry.getInquiryStatus())
-                        .createDate(inquiry.getCreateDate())
-                        .build();
-                responseFormList.add(responseForm);
-            }
-            return responseFormList;
+            return inquiryTransferDto(inquiryList);
         } catch (Exception e) {
             log.error("Error occurred while get inquiry list", e);
             return null;
@@ -185,5 +173,33 @@ public class InquiryServiceImpl implements InquiryService{
             log.error("Error occurred while get inquiry reply", e);
             return false;
         }
+    }
+    public List<InquiryListResponseForm> userInquiryList(String userToken) {
+        try {
+            User user = authenticationService.findUserByUserToken(userToken);
+            if (user == null) {
+                log.info("no user, please login again");
+                return null;
+            }
+            List<Inquiry> inquiryList = inquiryRepository.findAllByUser(user);
+            return inquiryTransferDto(inquiryList);
+        } catch (Exception e) {
+            log.error("Error occurred while get inquiry reply", e);
+            return null;
+        }
+    }
+    public List<InquiryListResponseForm> inquiryTransferDto(List<Inquiry> inquiryList) {
+        List<InquiryListResponseForm> responseFormList = new ArrayList<>();
+        for (Inquiry inquiry : inquiryList) {
+            InquiryListResponseForm responseForm = InquiryListResponseForm.builder()
+                    .inquiryId(inquiry.getId())
+                    .title(inquiry.getTitle())
+                    .inquiryType(inquiry.getInquiryType())
+                    .inquiryStatus(inquiry.getInquiryStatus())
+                    .createDate(inquiry.getCreateDate())
+                    .build();
+            responseFormList.add(responseForm);
+        }
+        return responseFormList;
     }
 }
