@@ -133,7 +133,7 @@ public class InquiryMockingTest {
         final String title = "title";
         final String content = "content";
 
-        InquiryReplyRequest request = new InquiryReplyRequest(userToken, inquiryId, title, content);
+        InquiryReplyRequest request = new InquiryReplyRequest(userToken, inquiryId, content);
 
         Admin admin = new Admin();
         when(mockAdminService.findAdminByUserToken(request.getUserToken())).thenReturn(admin);
