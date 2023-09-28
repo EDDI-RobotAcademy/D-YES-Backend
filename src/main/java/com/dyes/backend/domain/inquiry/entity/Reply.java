@@ -1,5 +1,6 @@
 package com.dyes.backend.domain.inquiry.entity;
 
+import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -14,21 +15,16 @@ import java.time.LocalDate;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Inquiry {
+public class Reply {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "admin_id")
+    private Admin admin;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id")
     private User user;
-    private String title;
-    private String email;
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "content_id")
-    private InquiryContent content;
+    private String replyContent;
     private LocalDate createDate;
-    @Enumerated
-    private InquiryType inquiryType;
-    @Enumerated
-    private InquiryStatus inquiryStatus;
 }

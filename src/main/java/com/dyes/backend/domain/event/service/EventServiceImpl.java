@@ -53,6 +53,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.dyes.backend.domain.product.entity.MaybeEventProduct.YES;
 import static com.dyes.backend.domain.product.entity.SaleStatus.AVAILABLE;
@@ -307,6 +309,7 @@ public class EventServiceImpl implements EventService{
 
             Optional<EventProduct> maybeEventProduct = eventProductRepository.findByIdProductOptionDeadLineCount(eventProductId);
             if (maybeEventProduct.isEmpty()){
+                log.info("maybeEventProduct: " + maybeEventProduct.get().getId());
                 return false;
             }
             EventProduct eventProduct = maybeEventProduct.get();
@@ -319,23 +322,31 @@ public class EventServiceImpl implements EventService{
             productRepository.save(product);
 
             Optional<ProductMainImage> maybeMainImage = productMainImageRepository.findByProduct(product);
-            if (maybeMainImage.isEmpty()){
-                return false;
-            }
-            ProductMainImage mainImage = maybeMainImage.get();
+            if (maybeMainImage.isPresent()){
+                ProductMainImage mainImage = maybeMainImage.get();
 
-            mainImage.setMainImg(productMainImageModifyRequest.getMainImg());
-            mainImage.setProduct(product);
-            productMainImageRepository.save(mainImage);
+                mainImage.setMainImg(productMainImageModifyRequest.getMainImg());
+                mainImage.setProduct(product);
+                productMainImageRepository.save(mainImage);
+            } else {
+                ProductMainImage mainImage = ProductMainImage.builder()
+                        .mainImg(productMainImageModifyRequest.getMainImg())
+                        .product(product)
+                        .build();
+
+                productMainImageRepository.save(mainImage);
+            }
 
             // DB에 저장된 상품 상세 이미지 가져오기
             List<ProductDetailImages> productDetailImagesList = productDetailImagesRepository.findByProductWithProduct(product);
+            if (productDetailImagesList.size() != 0) {
 
-            for (ProductDetailImages productDetailImages : productDetailImagesList) {
+                Set<Long> requestImages = productDetailImagesModifyRequest.stream()
+                        .map(ProductDetailImagesModifyRequest :: getDetailImageId)
+                        .collect(Collectors.toSet());
+
                 for (ProductDetailImagesModifyRequest detailImagesModifyRequest : productDetailImagesModifyRequest) {
-                    if (!productDetailImages.getId().equals(detailImagesModifyRequest.getDetailImageId())) {
-                        productDetailImagesRepository.delete(productDetailImages);
-                    } else if (detailImagesModifyRequest.getDetailImgs() != null) {
+                    if (detailImagesModifyRequest.getDetailImageId() == 0) {
                         ProductDetailImages detailImages = ProductDetailImages.builder()
                                 .detailImgs(detailImagesModifyRequest.getDetailImgs())
                                 .product(product)
@@ -343,7 +354,25 @@ public class EventServiceImpl implements EventService{
                         productDetailImagesRepository.save(detailImages);
                     }
                 }
+                List<ProductDetailImages> deleteImages = new ArrayList<>();
+                for (ProductDetailImages productDetailImages : productDetailImagesList) {
+                    if (!requestImages.contains(productDetailImages.getId())) {
+                        deleteImages.add(productDetailImages);
+                    }
+                }
+                for (ProductDetailImages deleteImage : deleteImages) {
+                    productDetailImagesRepository.delete(deleteImage);
+                }
+            } else {
+                for (ProductDetailImagesModifyRequest detailImagesModifyRequest : productDetailImagesModifyRequest) {
+                    ProductDetailImages detailImages = ProductDetailImages.builder()
+                            .detailImgs(detailImagesModifyRequest.getDetailImgs())
+                            .product(product)
+                            .build();
+                    productDetailImagesRepository.save(detailImages);
+                }
             }
+
 
             ProductOption productOption = eventProduct.getProductOption();
 

@@ -1,6 +1,5 @@
 package com.dyes.backend.domain.inquiry.service.request;
 
-import com.dyes.backend.domain.inquiry.entity.InquiryType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,10 +7,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class InquiryRegisterRequest {
+public class InquiryReplyRequest {
     private String userToken;
-    private String email;
-    private String title;
+    private Long inquiryId;
     private String content;
-    private InquiryType inquiryType;
 }
