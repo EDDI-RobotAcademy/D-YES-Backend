@@ -32,6 +32,7 @@ jobs:
           echo "${{ secrets.DEVELOPMENT_NAVER_CONFIG }}" >> application.properties
           echo "${{ secrets.DEVELOPMENT_KAKAO_PAYMENT_PROPERTIES }}" >> application.properties
           echo "${{ secrets.DEVELOPMENT_FASTAPI_CONFIG }}" >> application.properties
+          echo "${{ secrets.DEVELOPMENT_NAVER_EMAIL_CONFIG }}" >> application.properties
           ls
 
       # CI Test에서 사용할 MySQL 설정
