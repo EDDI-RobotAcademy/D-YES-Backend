@@ -178,6 +178,7 @@ public class EventServiceImpl implements EventService{
                     );
                     EventProductDeadLineResponse deadLineResponse = new EventProductDeadLineResponse(deadLine.getStartLine(), deadLine.getDeadLine());
                     EventProductPurchaseCountResponse countResponse = new EventProductPurchaseCountResponse(count.getTargetCount(), count.getNowCount());
+                    EventProductIdResponse eventProductIdResponse = new EventProductIdResponse(eventProduct.getId());
 
 
                     EventProductListResponse response = EventProductListResponse.builder()
@@ -188,6 +189,7 @@ public class EventServiceImpl implements EventService{
                             .productReviewResponseForUser(reviewResponse)
                             .countResponse(countResponse)
                             .deadLineResponse(deadLineResponse)
+                            .eventProductIdResponse(eventProductIdResponse)
                             .build();
                     responseList.add(response);
                 }

@@ -34,4 +34,8 @@ public class ReviewController {
     public List<ReviewRequestResponseForm> readReviewRequest(@PathVariable("productId") Long productId) {
         return reviewService.listReview(productId);
     }
+    @GetMapping("user-list/{userToken}")
+    public List<ReviewRequestResponseForm> userReviewList(@PathVariable("userToken") String userToken) {
+        return reviewService.userListReview(userToken);
+    }
 }

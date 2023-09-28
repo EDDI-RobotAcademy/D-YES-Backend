@@ -12,4 +12,5 @@ public interface ReviewService {
     boolean beforeMakeReview(ReviewOrderedCheckRequestForm requestForm);
     boolean registerReview(ReviewRegisterRequest reviewRegisterRequest, List<ReviewImagesRegisterRequest> reviewImagesRegisterRequestList);
     List<ReviewRequestResponseForm> listReview(Long productId);
+    List<ReviewRequestResponseForm> userListReview(String userToken);
 }

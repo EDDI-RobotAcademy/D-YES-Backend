@@ -144,4 +144,21 @@ public class ReviewMockingTest {
         List<ReviewRequestResponseForm> result = mockService.listReview(productId);
         assertTrue(result != null);
     }
+    @Test
+    @DisplayName("review mocking test: user list review")
+    public void 사용자가_작성한_리뷰_목록을_볼_수_있습니다() {
+        final String userToken = "유저 토큰";
+
+        User user = new User();
+        when(mockAuthenticationService.findUserByUserToken(userToken)).thenReturn(user);
+        Review review = new Review();
+        when(mockReviewRepository.findAllByUserWithProductAndOrder(user)).thenReturn(List.of(review));
+        ReviewImages reviewImages = new ReviewImages();
+        when(mockReviewImagesRepository.findAllByReview(review)).thenReturn(List.of(reviewImages));
+        ReviewRating reviewRating = new ReviewRating();
+        when(mockReviewRatingRepository.findByReview(review)).thenReturn(Optional.of(reviewRating));
+
+        List<ReviewRequestResponseForm> result = mockService.userListReview(userToken);
+        assertTrue(result != null);
+    }
 }

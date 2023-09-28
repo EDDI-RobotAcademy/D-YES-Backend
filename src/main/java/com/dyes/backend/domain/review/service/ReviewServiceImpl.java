@@ -162,51 +162,72 @@ public class ReviewServiceImpl implements ReviewService{
         }
         Product product = maybeProduct.get();
 
-        List<Review> reviewList = reviewRepository.findAllByProduct(product);
         try {
-            for (Review review : reviewList) {
-                List<ReviewImages> imagesList = reviewImagesRepository.findAllByReview(review);
-                Optional<ReviewRating> maybeReviewRating = reviewRatingRepository.findByReview(review);
+            List<Review> reviewList = reviewRepository.findAllByProduct(product);
 
-                ReviewRating reviewRating = new ReviewRating();
-                if (maybeReviewRating.isEmpty()) {
-                    reviewRating.setRating(0);
-                } else {
-                    reviewRating = maybeReviewRating.get();
-                }
-
-                ReviewRequestResponse response = ReviewRequestResponse.builder()
-                        .userNickName(review.getUserNickName())
-                        .productName(review.getProductName())
-                        .optionNameList(review.getOptionNameList())
-                        .content(review.getContent())
-                        .rating(reviewRating.getRating())
-                        .createDate(review.getReviewDate())
-                        .purchaseDate(review.getPurchaseDate())
-                        .build();
-
-                List<ReviewRequestImagesResponse> imagesResponseList = new ArrayList<>();
-                for (ReviewImages reviewImages : imagesList) {
-                    ReviewRequestImagesResponse imagesResponse = ReviewRequestImagesResponse.builder()
-                            .reviewImageId(reviewImages.getId())
-                            .reviewImages(reviewImages.getImg())
-                            .build();
-                    imagesResponseList.add(imagesResponse);
-                }
-
-                ReviewRequestResponseForm responseForm = ReviewRequestResponseForm.builder()
-                        .reviewRequestResponse(response)
-                        .imagesResponseList(imagesResponseList)
-                        .build();
-
-                responseFormList.add(responseForm);
-            }
-            log.info("listReview end");
-            return responseFormList;
+            return reviewTransferDto(reviewList);
         } catch (Exception e) {
             log.error("Failed connect to server: {}", e.getMessage(), e);
             return null;
         }
     }
+    public List<ReviewRequestResponseForm> userListReview(String userToken) {
+        log.info("userListReview start");
+        try {
+            User user = authenticationService.findUserByUserToken(userToken);
+            if (user == null) {
+                log.info("no exist user");
+                return null;
+            }
+            List<Review> reviewList = reviewRepository.findAllByUserWithProductAndOrder(user);
+            return reviewTransferDto(reviewList);
+        } catch (Exception e) {
+            log.error("Failed connect to server: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+    public List<ReviewRequestResponseForm> reviewTransferDto (List<Review> reviewList) {
 
+        List<ReviewRequestResponseForm> responseFormList = new ArrayList<>();
+
+        for (Review review : reviewList) {
+            List<ReviewImages> imagesList = reviewImagesRepository.findAllByReview(review);
+            Optional<ReviewRating> maybeReviewRating = reviewRatingRepository.findByReview(review);
+
+            ReviewRating reviewRating = new ReviewRating();
+            if (maybeReviewRating.isEmpty()) {
+                reviewRating.setRating(0);
+            } else {
+                reviewRating = maybeReviewRating.get();
+            }
+
+            ReviewRequestResponse response = ReviewRequestResponse.builder()
+                    .userNickName(review.getUserNickName())
+                    .productName(review.getProductName())
+                    .optionNameList(review.getOptionNameList())
+                    .content(review.getContent())
+                    .rating(reviewRating.getRating())
+                    .createDate(review.getReviewDate())
+                    .purchaseDate(review.getPurchaseDate())
+                    .build();
+
+            List<ReviewRequestImagesResponse> imagesResponseList = new ArrayList<>();
+            for (ReviewImages reviewImages : imagesList) {
+                ReviewRequestImagesResponse imagesResponse = ReviewRequestImagesResponse.builder()
+                        .reviewImageId(reviewImages.getId())
+                        .reviewImages(reviewImages.getImg())
+                        .build();
+                imagesResponseList.add(imagesResponse);
+            }
+
+            ReviewRequestResponseForm responseForm = ReviewRequestResponseForm.builder()
+                    .reviewRequestResponse(response)
+                    .imagesResponseList(imagesResponseList)
+                    .build();
+
+            responseFormList.add(responseForm);
+        }
+        log.info("listReview end");
+        return responseFormList;
+    }
 }
