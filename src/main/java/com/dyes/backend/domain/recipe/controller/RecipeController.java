@@ -65,4 +65,11 @@ public class RecipeController {
                                                               @RequestBody MyRecipeCheckForm myRecipeCheckForm) {
         return recipeService.getRecipeCommentList(recipeId, myRecipeCheckForm);
     }
+
+    // 나의 레시피 댓글 삭제
+    @DeleteMapping("/comment/delete/{commentId}")
+    public Boolean deleteRecipeComment(@PathVariable("commentId") Long commentId,
+                                       @RequestBody MyRecipeCheckForm myRecipeCheckForm) {
+        return recipeService.deleteRecipeComment(commentId, myRecipeCheckForm);
+    }
 }

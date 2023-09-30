@@ -24,4 +24,6 @@ public interface RecipeService {
     boolean registerRecipeComment(RecipeCommentRegisterRequestForm registerForm);
 
     RecipeCommentListResponseForm getRecipeCommentList(Long recipeId, MyRecipeCheckForm myRecipeCheckForm);
+
+    Boolean deleteRecipeComment(Long commentId, MyRecipeCheckForm myRecipeCheckForm);
 }

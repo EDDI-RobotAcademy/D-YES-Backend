@@ -449,4 +449,31 @@ public class RecipeServiceImpl implements RecipeService {
         }
         return null;
     }
+
+    // 나의 레시피 댓글 삭제
+    @Override
+    public Boolean deleteRecipeComment(Long commentId, MyRecipeCheckForm myRecipeCheckForm) {
+        String userToken = myRecipeCheckForm.getUserToken();
+        User user = authenticationService.findUserByUserToken(userToken);
+
+        if (user == null) {
+            log.info("Unable to find user with user token: {}", userToken);
+            return false;
+        }
+
+        Optional<RecipeComment> maybeRecipeComment = recipeCommentRepository.findById(commentId);
+        if (maybeRecipeComment.isEmpty()) {
+            log.info("Unable to find RecipeComment with commentId: {}", commentId);
+            return false;
+        }
+
+        RecipeComment recipeComment = maybeRecipeComment.get();
+        if (!recipeComment.getUser().getId().equals(user.getId())) {
+            return false;
+        }
+        recipeComment.setIsDeleted(true);
+        recipeCommentRepository.save(recipeComment);
+
+        return true;
+    }
 }
