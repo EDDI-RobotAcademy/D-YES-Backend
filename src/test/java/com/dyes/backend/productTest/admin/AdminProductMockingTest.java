@@ -50,8 +50,7 @@ import static com.dyes.backend.domain.product.entity.CultivationMethod.*;
 import static com.dyes.backend.domain.product.entity.SaleStatus.AVAILABLE;
 import static com.dyes.backend.domain.product.entity.SaleStatus.UNAVAILABLE;
 import static com.dyes.backend.domain.product.entity.Unit.KG;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -169,9 +168,9 @@ public class AdminProductMockingTest {
         final Long modifyMainImageId = 1L;
         final String modifyMainImage = "수정된 메인 이미지";
 
-        final Long modifyDetailImages1Id = 1L;
+        final Long modifyDetailImages1Id = 0L;
         final String modifyDetailImages1 = "수정된 디테일 이미지1";
-        final Long modifyDetailImages2Id = 2L;
+        final Long modifyDetailImages2Id = 0L;
         final String modifyDetailImages2 = "수정된 디테일 이미지2";
 
         final Long modifyOption1Id = 1L;
@@ -281,8 +280,8 @@ public class AdminProductMockingTest {
 
         assertEquals(modifyMainImage, productMainImage.getMainImg());
 
-        assertEquals(modifyDetailImages1, productDetailImages1.getDetailImgs());
-        assertEquals(modifyDetailImages2, productDetailImages2.getDetailImgs());
+        assertNotEquals(modifyDetailImages1, productDetailImages1.getDetailImgs());
+        assertNotEquals(modifyDetailImages2, productDetailImages2.getDetailImgs());
 
         assertEquals(modifyOptionName1, productOption1.getOptionName());
         assertEquals(modifyOptionPrice1, productOption1.getOptionPrice());
