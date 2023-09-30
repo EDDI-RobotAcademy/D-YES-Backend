@@ -50,6 +50,7 @@ import com.dyes.backend.domain.user.repository.AddressBookRepository;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import com.dyes.backend.utility.redis.RedisService;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import jakarta.persistence.criteria.Order;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -63,9 +64,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static com.dyes.backend.domain.delivery.entity.DeliveryStatus.PREPARING;
-import static com.dyes.backend.domain.order.entity.OrderStatus.CANCEL_PAYMENT;
-import static com.dyes.backend.domain.order.entity.OrderStatus.SUCCESS_PAYMENT;
-import static com.dyes.backend.domain.order.entity.OrderedProductStatus.WAITING_REFUND;
+import static com.dyes.backend.domain.order.entity.OrderStatus.*;
+import static com.dyes.backend.domain.order.entity.OrderedProductStatus.*;
 import static com.dyes.backend.domain.user.entity.AddressBookOption.DEFAULT_OPTION;
 
 @Service
@@ -818,7 +818,7 @@ public class OrderServiceImpl implements OrderService {
         int totalPreviousOrdersAmount = 0;
         double monthOverMonthGrowthRate = 0;
         List<Integer> orderCountListByDay = new ArrayList<>();
-        
+
         // 당월 주문 내역 가져오기
         List<ProductOrder> productOrderList
                 = orderRepository.findByOrderedTimeBetween(firstDayOfCurrentMonth, lastDayOfCurrentMonth);
@@ -869,9 +869,9 @@ public class OrderServiceImpl implements OrderService {
                 = new MonthlyOrdersStatisticsResponseForm(
                 totalOrdersCount,
                 completedOrders,
-                cancelledOrders, 
-                totalOrdersAmount, 
-                monthOverMonthGrowthRate, 
+                cancelledOrders,
+                totalOrdersAmount,
+                monthOverMonthGrowthRate,
                 orderCountListByDay);
         return monthlyOrdersStatisticsResponseForm;
     }
@@ -881,7 +881,7 @@ public class OrderServiceImpl implements OrderService {
     public List<OrderRefundListResponseFormForAdmin> getAllOrderRefundListForAdmin() {
 
         // 환불 상태인 주문 목록 가져오기
-        List<ProductOrder> orderList = orderRepository.findAllWithUserAndOrderStatus();
+        List<ProductOrder> orderList = orderRepository.findAllWithUser();
 
         List<OrderRefundListResponseFormForAdmin> orderRefundListResponseFormForAdminList = new ArrayList<>();
 
@@ -910,14 +910,29 @@ public class OrderServiceImpl implements OrderService {
             Long productOrderId = order.getId();
             Delivery delivery = order.getDelivery();
             DeliveryStatus deliveryStatus = delivery.getDeliveryStatus();
-            OrderStatus orderStatus = order.getOrderStatus();
             LocalDate orderedTime = order.getOrderedTime();
 
-            OrderRefundDetailInfoResponse orderRefundDetailInfoResponse
-                    = new OrderRefundDetailInfoResponse(productOrderId, totalPrice, refundPrice, orderedTime, deliveryStatus, orderStatus);
-            OrderRefundListResponseFormForAdmin orderRefundListResponseFormForAdmin
-                    = new OrderRefundListResponseFormForAdmin(orderUserInfoResponse, orderRefundDetailInfoResponse);
-            orderRefundListResponseFormForAdminList.add(orderRefundListResponseFormForAdmin);
+            OrderedProductStatus orderedProductStatus = null;
+            List<OrderedProductStatus> orderedProductStatusList = new ArrayList<>();
+            List<OrderedProduct> orderedProductList = orderedProductRepository.findAllByProductOrderAndStatus(order);
+            for (OrderedProduct orderedProduct : orderedProductList) {
+                orderedProductStatusList.add(orderedProduct.getOrderedProductStatus());
+                for (OrderedProductStatus orderedProductStatus1 : orderedProductStatusList) {
+                    if (orderedProductStatus1.equals(PURCHASED) && !orderedProductStatus1.equals(WAITING_REFUND) && !orderedProductStatus1.equals(REFUNDED)) {
+                        orderedProductStatus = PURCHASED;
+                    } else if (orderedProductStatus1.equals(WAITING_REFUND)) {
+                        orderedProductStatus = WAITING_REFUND;
+                    } else if (orderedProductStatus1.equals(REFUNDED) && !orderedProductStatus1.equals(WAITING_REFUND)) {
+                        orderedProductStatus = REFUNDED;
+                    }
+                }
+
+                OrderRefundDetailInfoResponse orderRefundDetailInfoResponse
+                        = new OrderRefundDetailInfoResponse(productOrderId, totalPrice, refundPrice, orderedTime, deliveryStatus, orderedProductStatus);
+                OrderRefundListResponseFormForAdmin orderRefundListResponseFormForAdmin
+                        = new OrderRefundListResponseFormForAdmin(orderUserInfoResponse, orderRefundDetailInfoResponse);
+                orderRefundListResponseFormForAdminList.add(orderRefundListResponseFormForAdmin);
+            }
         }
         return orderRefundListResponseFormForAdminList;
     }

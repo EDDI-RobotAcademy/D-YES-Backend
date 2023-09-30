@@ -2,6 +2,7 @@ package com.dyes.backend.domain.order.service.admin.response;
 
 import com.dyes.backend.domain.delivery.entity.DeliveryStatus;
 import com.dyes.backend.domain.order.entity.OrderStatus;
+import com.dyes.backend.domain.order.entity.OrderedProductStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,5 +18,5 @@ public class OrderRefundDetailInfoResponse {
     private int cancelPrice;
     private LocalDate orderedTime;
     private DeliveryStatus deliveryStatus;
-    private OrderStatus orderStatus;
+    private OrderedProductStatus orderedProductStatus;
 }
