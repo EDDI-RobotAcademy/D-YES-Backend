@@ -47,8 +47,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static com.dyes.backend.domain.order.entity.OrderStatus.CANCEL_PAYMENT;
-import static com.dyes.backend.domain.order.entity.OrderStatus.PART_CANCEL_PAYMENT;
+import static com.dyes.backend.domain.order.entity.OrderStatus.*;
 
 @Service
 @Slf4j
@@ -311,11 +310,9 @@ public class PaymentServiceImpl implements PaymentService{
                     order.setAmount(orderAmount);
 
                     if (response.getStatus().equals(CANCEL_PAYMENT)) {
-                        order.setOrderStatus(CANCEL_PAYMENT);
-                    } else if (order.getAmount().getTotalAmount() == 0) {
-                        order.setOrderStatus(CANCEL_PAYMENT);
+                        order.setOrderStatus(EVENT_PAYBACK);
                     } else {
-                        order.setOrderStatus(PART_CANCEL_PAYMENT);
+                        order.setOrderStatus(EVENT_PAYBACK);
                     }
 
                     RefundedPayment refundedPayment = RefundedPayment.builder()
