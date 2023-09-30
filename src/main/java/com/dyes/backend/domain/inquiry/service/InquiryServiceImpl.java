@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static com.dyes.backend.domain.inquiry.entity.InquiryStatus.DONE;
 import static com.dyes.backend.domain.inquiry.entity.InquiryStatus.WAITING;
 
 @Service
@@ -170,6 +171,9 @@ public class InquiryServiceImpl implements InquiryService{
                     .createDate(LocalDate.now())
                     .build();
             replyRepository.save(reply);
+
+            inquiry.setInquiryStatus(DONE);
+            inquiryRepository.save(inquiry);
 
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(secretsProvider.getSTMP_EMAIL());
