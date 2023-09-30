@@ -237,7 +237,7 @@ public class AdminProductServiceImpl implements AdminProductService {
 
             // 삭제 요청된 이미지 삭제
             List<Long> needRemoveProductDetailImagesList = new ArrayList<>(savedProductDetailImagesList);
-            if (savedProductDetailImagesList.size() > modifyProductDetailImagesList.size()) {
+            if (savedProductDetailImagesList.size() >= modifyProductDetailImagesList.size()) {
                 needRemoveProductDetailImagesList.removeAll(modifyProductDetailImagesList);
                 for (Long removeProductDetailImages : needRemoveProductDetailImagesList) {
                     productDetailImagesRepository.deleteById(removeProductDetailImages);
