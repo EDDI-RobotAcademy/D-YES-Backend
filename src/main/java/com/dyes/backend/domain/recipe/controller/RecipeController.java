@@ -1,6 +1,7 @@
 package com.dyes.backend.domain.recipe.controller;
 
 import com.dyes.backend.domain.recipe.controller.form.MyRecipeCheckForm;
+import com.dyes.backend.domain.recipe.controller.form.RecipeCommentRegisterRequestForm;
 import com.dyes.backend.domain.recipe.controller.form.RecipeDeleteForm;
 import com.dyes.backend.domain.recipe.controller.form.RecipeRegisterForm;
 import com.dyes.backend.domain.recipe.service.RecipeService;
@@ -49,5 +50,11 @@ public class RecipeController {
     @GetMapping("/read/{recipeId}")
     public RecipeInfoReadResponseForm readRecipe(@PathVariable("recipeId") Long recipeId) {
         return recipeService.readRecipe(recipeId);
+    }
+
+    // 레시피에 댓글 달기
+    @PostMapping("/comment/register")
+    public boolean registerRecipeComment(@RequestBody RecipeCommentRegisterRequestForm registerForm) {
+        return recipeService.registerRecipeComment(registerForm);
     }
 }

@@ -1,10 +1,7 @@
 package com.dyes.backend.domain.recipe.service;
 
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
-import com.dyes.backend.domain.recipe.controller.form.MyRecipeCheckForm;
-import com.dyes.backend.domain.recipe.controller.form.RecipeDeleteForm;
-import com.dyes.backend.domain.recipe.controller.form.RecipeIngredientInfoForm;
-import com.dyes.backend.domain.recipe.controller.form.RecipeRegisterForm;
+import com.dyes.backend.domain.recipe.controller.form.*;
 import com.dyes.backend.domain.recipe.entity.*;
 import com.dyes.backend.domain.recipe.repository.*;
 import com.dyes.backend.domain.recipe.service.request.*;
@@ -13,6 +10,7 @@ import com.dyes.backend.domain.recipe.service.response.form.RecipeInfoReadRespon
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.entity.UserProfile;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
+import com.dyes.backend.domain.user.service.request.UserAuthenticationRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,6 +30,7 @@ public class RecipeServiceImpl implements RecipeService {
     final private RecipeSeasoningIngredientRepository recipeSeasoningIngredientRepository;
     final private RecipeCategoryRepository recipeCategoryRepository;
     final private RecipeMainImageRepository recipeMainImageRepository;
+    final private RecipeCommentRepository recipeCommentRepository;
     final private AuthenticationService authenticationService;
     final private UserProfileRepository userProfileRepository;
 
@@ -346,4 +345,41 @@ public class RecipeServiceImpl implements RecipeService {
         return true;
     }
 
+    // 레시피에 댓글 달기
+    @Override
+    public boolean registerRecipeComment(RecipeCommentRegisterRequestForm registerForm) {
+        log.info("Registering a new recipe comment");
+
+        UserAuthenticationRequest userAuthenticationRequest = registerForm.toUserAuthenticationRequest();
+        String userToken = userAuthenticationRequest.getUserToken();
+        User user = authenticationService.findUserByUserToken(userToken);
+
+        if (user == null) {
+            log.info("Unable to find user with user token: {}", userToken);
+            return false;
+        }
+
+        RecipeCommentRegisterRequest recipeCommentRegisterRequest = registerForm.toRecipeCommentRegisterRequest();
+        Long recipeId = recipeCommentRegisterRequest.getRecipeId();
+        String comment = recipeCommentRegisterRequest.getCommentContent();
+
+        try {
+            Optional<Recipe> maybeRecipe = recipeRepository.findById(recipeId);
+            if (maybeRecipe.isEmpty()) {
+                return false;
+            }
+            Recipe recipe = maybeRecipe.get();
+            RecipeComment recipeComment = RecipeComment.builder()
+                    .commentContent(comment)
+                    .user(user)
+                    .recipe(recipe)
+                    .build();
+            recipeCommentRepository.save((recipeComment));
+            log.info("Recipe comment register successful");
+            return true;
+        } catch (Exception e) {
+            log.error("Failed to register the recipe comment: {}", e.getMessage(), e);
+            return false;
+        }
+    }
 }
