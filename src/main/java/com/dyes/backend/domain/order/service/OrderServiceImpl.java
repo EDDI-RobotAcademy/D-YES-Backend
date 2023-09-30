@@ -765,6 +765,7 @@ public class OrderServiceImpl implements OrderService {
         final String userToken = requestForm.getUserToken();
         final Long orderId = requestForm.getOrderId();
         final List<Long> productOptionIdList = requestForm.getProductOptionId();
+        final String refundReason = requestForm.getRefundReason();
 
         try {
             final Admin admin = adminService.findAdminByUserToken(userToken);
@@ -785,6 +786,7 @@ public class OrderServiceImpl implements OrderService {
                 for (Long productOptionId : productOptionIdList) {
                     if (orderedProduct.getProductOptionId().equals(productOptionId)) {
                         orderedProduct.setOrderedProductStatus(WAITING_REFUND);
+                        orderedProduct.setRefundReason(refundReason);
                         orderedProductRepository.save(orderedProduct);
                     }
                 }
