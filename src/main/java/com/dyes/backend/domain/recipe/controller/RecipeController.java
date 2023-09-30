@@ -1,9 +1,6 @@
 package com.dyes.backend.domain.recipe.controller;
 
-import com.dyes.backend.domain.recipe.controller.form.MyRecipeCheckForm;
-import com.dyes.backend.domain.recipe.controller.form.RecipeCommentRegisterRequestForm;
-import com.dyes.backend.domain.recipe.controller.form.RecipeDeleteForm;
-import com.dyes.backend.domain.recipe.controller.form.RecipeRegisterForm;
+import com.dyes.backend.domain.recipe.controller.form.*;
 import com.dyes.backend.domain.recipe.service.RecipeService;
 
 import com.dyes.backend.domain.recipe.service.response.form.RecipeCommentListResponseForm;
@@ -71,5 +68,12 @@ public class RecipeController {
     public Boolean deleteRecipeComment(@PathVariable("commentId") Long commentId,
                                        @RequestBody MyRecipeCheckForm myRecipeCheckForm) {
         return recipeService.deleteRecipeComment(commentId, myRecipeCheckForm);
+    }
+
+    // 나의 레시피 댓글 수정
+    @PutMapping("/comment/modify/{commentId}")
+    public Boolean modifyRecipeComment(@PathVariable("commentId") Long commentId,
+                                       @RequestBody MyRecipeCommentModifyRequestForm myRecipeCommentModifyForm) {
+        return recipeService.modifyRecipeComment(commentId, myRecipeCommentModifyForm);
     }
 }

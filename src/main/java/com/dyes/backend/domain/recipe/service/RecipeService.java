@@ -1,9 +1,6 @@
 package com.dyes.backend.domain.recipe.service;
 
-import com.dyes.backend.domain.recipe.controller.form.MyRecipeCheckForm;
-import com.dyes.backend.domain.recipe.controller.form.RecipeCommentRegisterRequestForm;
-import com.dyes.backend.domain.recipe.controller.form.RecipeDeleteForm;
-import com.dyes.backend.domain.recipe.controller.form.RecipeRegisterForm;
+import com.dyes.backend.domain.recipe.controller.form.*;
 import com.dyes.backend.domain.recipe.service.response.form.RecipeCommentListResponseForm;
 import com.dyes.backend.domain.recipe.service.response.form.RecipeInfoReadResponseForm;
 import com.dyes.backend.domain.recipe.service.response.form.RecipeListResponseForm;
@@ -26,4 +23,6 @@ public interface RecipeService {
     RecipeCommentListResponseForm getRecipeCommentList(Long recipeId, MyRecipeCheckForm myRecipeCheckForm);
 
     Boolean deleteRecipeComment(Long commentId, MyRecipeCheckForm myRecipeCheckForm);
+
+    Boolean modifyRecipeComment(Long commentId, MyRecipeCommentModifyRequestForm myRecipeCommentModifyRequestForm);
 }

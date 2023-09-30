@@ -476,4 +476,39 @@ public class RecipeServiceImpl implements RecipeService {
 
         return true;
     }
+
+    @Override
+    public Boolean modifyRecipeComment(Long commentId, MyRecipeCommentModifyRequestForm myRecipeCommentModifyRequestForm) {
+        UserAuthenticationRequest userAuthenticationRequest = myRecipeCommentModifyRequestForm.toUserAuthenticationRequest();
+        String userToken = userAuthenticationRequest.getUserToken();
+        User user = authenticationService.findUserByUserToken(userToken);
+
+        if (user == null) {
+            log.info("Unable to find user with user token: {}", userToken);
+            return false;
+        }
+
+        Optional<RecipeComment> maybeRecipeComment = recipeCommentRepository.findById(commentId);
+        if (maybeRecipeComment.isEmpty()) {
+            log.info("Unable to find RecipeComment with commentId: {}", commentId);
+            return false;
+        }
+
+        RecipeComment recipeComment = maybeRecipeComment.get();
+        if (!recipeComment.getUser().getId().equals(user.getId())) {
+            log.info("Unable to modify RecipeComment with commentId: {} as the user is different.", commentId);
+            return false;
+        }
+
+        if(recipeComment.getIsDeleted().equals(true)) {
+            log.info("Unable to modify RecipeComment with commentId: {} as the comment has been deleted.", commentId);
+            return false;
+        }
+
+        MyRecipeCommentModifyRequest myRecipeCommentModifyRequest = myRecipeCommentModifyRequestForm.toMyRecipeCommentModifyRequest();
+        String modifyCommentContent = myRecipeCommentModifyRequest.getModifyCommentContent();
+        recipeComment.setCommentContent(modifyCommentContent);
+        recipeCommentRepository.save(recipeComment);
+        return true;
+    }
 }
