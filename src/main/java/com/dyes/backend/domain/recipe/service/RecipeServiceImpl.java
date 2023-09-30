@@ -410,11 +410,12 @@ public class RecipeServiceImpl implements RecipeService {
             boolean isMyRecipeComment = false;
             String commentContent;
             LocalDate commentDate;
-
+            Boolean isDeleted;
             for (RecipeComment recipeComment : recipeCommentList) {
                 commentId = recipeComment.getCommentId();
                 commentContent = recipeComment.getCommentContent();
                 commentDate = recipeComment.getRegisteredDate();
+                isDeleted = recipeComment.getIsDeleted();
 
                 User userByRecipeComment = recipeComment.getUser();
                 Optional<UserProfile> maybeUserProfile = userProfileRepository.findByUser(userByRecipeComment);
@@ -437,6 +438,7 @@ public class RecipeServiceImpl implements RecipeService {
                         nickName,
                         isMyRecipeComment,
                         commentContent,
+                        isDeleted,
                         commentDate);
                 recipeCommentInfoResponseList.add(recipeCommentInfoResponse);
             }

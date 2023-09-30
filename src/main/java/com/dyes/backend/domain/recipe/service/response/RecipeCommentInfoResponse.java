@@ -14,5 +14,6 @@ public class RecipeCommentInfoResponse {
     private String nickName;
     private boolean isMyRecipeComment;
     private String content;
+    private Boolean isDeleted;
     private LocalDate commentDate;
 }
