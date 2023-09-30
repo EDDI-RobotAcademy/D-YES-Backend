@@ -4,6 +4,7 @@ import com.dyes.backend.domain.recipe.controller.form.MyRecipeCheckForm;
 import com.dyes.backend.domain.recipe.controller.form.RecipeCommentRegisterRequestForm;
 import com.dyes.backend.domain.recipe.controller.form.RecipeDeleteForm;
 import com.dyes.backend.domain.recipe.controller.form.RecipeRegisterForm;
+import com.dyes.backend.domain.recipe.service.response.form.RecipeCommentListResponseForm;
 import com.dyes.backend.domain.recipe.service.response.form.RecipeInfoReadResponseForm;
 import com.dyes.backend.domain.recipe.service.response.form.RecipeListResponseForm;
 
@@ -21,4 +22,6 @@ public interface RecipeService {
     Boolean isMyRecipe(Long recipeId, MyRecipeCheckForm myRecipeCheckForm);
 
     boolean registerRecipeComment(RecipeCommentRegisterRequestForm registerForm);
+
+    RecipeCommentListResponseForm getRecipeCommentList(Long recipeId, MyRecipeCheckForm myRecipeCheckForm);
 }

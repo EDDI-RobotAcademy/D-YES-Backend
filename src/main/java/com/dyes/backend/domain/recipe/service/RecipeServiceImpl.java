@@ -5,6 +5,8 @@ import com.dyes.backend.domain.recipe.controller.form.*;
 import com.dyes.backend.domain.recipe.entity.*;
 import com.dyes.backend.domain.recipe.repository.*;
 import com.dyes.backend.domain.recipe.service.request.*;
+import com.dyes.backend.domain.recipe.service.response.RecipeCommentInfoResponse;
+import com.dyes.backend.domain.recipe.service.response.form.RecipeCommentListResponseForm;
 import com.dyes.backend.domain.recipe.service.response.form.RecipeListResponseForm;
 import com.dyes.backend.domain.recipe.service.response.form.RecipeInfoReadResponseForm;
 import com.dyes.backend.domain.user.entity.User;
@@ -15,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -381,5 +384,67 @@ public class RecipeServiceImpl implements RecipeService {
             log.error("Failed to register the recipe comment: {}", e.getMessage(), e);
             return false;
         }
+    }
+
+    // 레시피 댓글 목록 조회
+    @Override
+    public RecipeCommentListResponseForm getRecipeCommentList(Long recipeId, MyRecipeCheckForm myRecipeCheckForm) {
+        log.info("Reading comments with recipe id: {}", recipeId);
+
+        Optional<Recipe> maybeRecipe = recipeRepository.findById(recipeId);
+        if (maybeRecipe.isEmpty()) {
+            log.info("Unable to find recipe with recipe id: {}", recipeId);
+            return null;
+        } else if (maybeRecipe.isPresent()) {
+            Recipe recipe = maybeRecipe.get();
+
+            // 해당 레시피에 연결된 Recipe Comment를 모두 가져오기
+            List<RecipeComment> recipeCommentList = recipeCommentRepository.findAllByRecipe(recipe);
+            List<RecipeCommentInfoResponse> recipeCommentInfoResponseList = new ArrayList<>();
+
+            String userToken = myRecipeCheckForm.getUserToken();
+            User user = authenticationService.findUserByUserToken(userToken);
+
+            Long commentId;
+            String nickName = "";
+            boolean isMyRecipeComment = false;
+            String commentContent;
+            LocalDate commentDate;
+
+            for (RecipeComment recipeComment : recipeCommentList) {
+                commentId = recipeComment.getCommentId();
+                commentContent = recipeComment.getCommentContent();
+                commentDate = recipeComment.getRegisteredDate();
+
+                User userByRecipeComment = recipeComment.getUser();
+                Optional<UserProfile> maybeUserProfile = userProfileRepository.findByUser(userByRecipeComment);
+                if (maybeUserProfile.isPresent()) {
+                    UserProfile userProfile = maybeUserProfile.get();
+                    nickName = userProfile.getNickName();
+                }
+                if (user == null) {
+                    log.info("Unable to find user with user token: {}", userToken);
+                    isMyRecipeComment = false;
+
+                } else if (user != null) {
+                    if (user.getId().equals(userByRecipeComment.getId())) {
+                        isMyRecipeComment = true;
+                    }
+                }
+                RecipeCommentInfoResponse recipeCommentInfoResponse
+                        = new RecipeCommentInfoResponse(
+                        commentId,
+                        nickName,
+                        isMyRecipeComment,
+                        commentContent,
+                        commentDate);
+                recipeCommentInfoResponseList.add(recipeCommentInfoResponse);
+            }
+
+            RecipeCommentListResponseForm responseForm
+                    = new RecipeCommentListResponseForm(recipeId, recipeCommentInfoResponseList);
+            return responseForm;
+        }
+        return null;
     }
 }
