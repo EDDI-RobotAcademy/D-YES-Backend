@@ -27,8 +27,8 @@ public class Inquiry {
     @JoinColumn(name = "content_id")
     private InquiryContent content;
     private LocalDate createDate;
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     private InquiryType inquiryType;
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     private InquiryStatus inquiryStatus;
 }
