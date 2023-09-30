@@ -93,6 +93,7 @@ public class OrderServiceImpl implements OrderService {
     final private EventPurchaseCountRepository eventPurchaseCountRepository;
     final private AdminService adminService;
 
+    // 카카오로 상품 구매
     public String purchaseReadyWithKakao(OrderProductRequestForm requestForm) throws JsonProcessingException {
         log.info("purchaseKakao start");
 
@@ -180,7 +181,7 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    // 상품을 주문하기 전에 확인하기
+    // 결제 전 주문 요청내역 확인
     @Override
     public OrderConfirmResponseFormForUser orderConfirm(OrderConfirmRequestForm requestForm) {
         try {
@@ -588,6 +589,8 @@ public class OrderServiceImpl implements OrderService {
 
     }
 
+    // 관리자의 주문 내역 상세 읽기
+    @Override
     public OrderDetailDataResponseForAdminForm orderDetailDataCombineForAdmin(Long orderId) {
         try {
             log.info("orderDetailDataCombineForAdmin start");
@@ -672,6 +675,8 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
+    // 사용자의 주문 내역 상세 읽기
+    @Override
     public OrderDetailDataResponseForUserForm orderDetailDataCombineForUser(Long orderId) {
         try {
             log.info("orderDetailDataCombineForUser start");
@@ -754,6 +759,7 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
+    // 배송완료 주문은 환불 신청시 환불 대기 상태로 변경
     @Override
     public boolean orderedProductWaitingRefund(OrderedProductChangeStatusRequestForm requestForm) {
         final String userToken = requestForm.getUserToken();
@@ -866,6 +872,52 @@ public class OrderServiceImpl implements OrderService {
                 monthOverMonthGrowthRate, 
                 orderCountListByDay);
         return monthlyOrdersStatisticsResponseForm;
+    }
+
+    // 관리자의 환불 목록 확인
+    @Override
+    public List<OrderRefundListResponseFormForAdmin> getAllOrderRefundListForAdmin() {
+
+        // 환불 상태인 주문 목록 가져오기
+        List<ProductOrder> orderList = orderRepository.findAllWithUserAndOrderStatus();
+
+        List<OrderRefundListResponseFormForAdmin> orderRefundListResponseFormForAdminList = new ArrayList<>();
+
+        for (ProductOrder order : orderList) {
+
+            // 주문자 정보 가져오기
+            User user = order.getUser();
+            String userId = user.getId();
+
+            Optional<OrderedPurchaserProfile> maybeOrderedPurchaserProfile = orderedPurchaserProfileRepository.findByProductOrder(order);
+            if (maybeOrderedPurchaserProfile.isEmpty()) {
+                log.info("Profile with order ID '{}' not found", order.getId());
+                return null;
+            }
+
+            OrderedPurchaserProfile purchaserProfile = maybeOrderedPurchaserProfile.get();
+            String contactNumber = purchaserProfile.getOrderedPurchaseContactNumber();
+            Address address = purchaserProfile.getOrderedPurchaseProfileAddress();
+
+            OrderUserInfoResponse orderUserInfoResponse = new OrderUserInfoResponse(userId, contactNumber, address);
+
+            // 주문 정보 가져오기
+            int totalPrice = order.getAmount().getTotalAmount();
+            int refundPrice = order.getAmount().getRefundedAmount();
+
+            Long productOrderId = order.getId();
+            Delivery delivery = order.getDelivery();
+            DeliveryStatus deliveryStatus = delivery.getDeliveryStatus();
+            OrderStatus orderStatus = order.getOrderStatus();
+            LocalDate orderedTime = order.getOrderedTime();
+
+            OrderRefundDetailInfoResponse orderRefundDetailInfoResponse
+                    = new OrderRefundDetailInfoResponse(productOrderId, totalPrice, refundPrice, orderedTime, deliveryStatus, orderStatus);
+            OrderRefundListResponseFormForAdmin orderRefundListResponseFormForAdmin
+                    = new OrderRefundListResponseFormForAdmin(orderUserInfoResponse, orderRefundDetailInfoResponse);
+            orderRefundListResponseFormForAdminList.add(orderRefundListResponseFormForAdmin);
+        }
+        return orderRefundListResponseFormForAdminList;
     }
 
     public class OverMaxStockException extends RuntimeException {
