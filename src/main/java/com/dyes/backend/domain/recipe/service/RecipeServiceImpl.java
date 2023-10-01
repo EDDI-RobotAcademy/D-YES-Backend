@@ -500,7 +500,7 @@ public class RecipeServiceImpl implements RecipeService {
             return false;
         }
 
-        if(recipeComment.getIsDeleted().equals(true)) {
+        if(recipeComment.getIsDeleted() != null && recipeComment.getIsDeleted().equals(true)) {
             log.info("Unable to modify RecipeComment with commentId: {} as the comment has been deleted.", commentId);
             return false;
         }
