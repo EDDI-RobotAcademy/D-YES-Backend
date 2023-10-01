@@ -145,9 +145,14 @@ public class GoogleAuthenticationServiceImpl implements GoogleAuthenticationServ
         HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(body, headers);
 
         ResponseEntity<GoogleOauthAccessTokenResponse> accessTokenResponse = restTemplate.postForEntity(googleRefreshTokenRequestUrl, requestEntity, GoogleOauthAccessTokenResponse.class);
+        log.info("새로운 액세스 : " + accessTokenResponse.getBody().getAccessToken());
+        log.info("새로운 리프래쉬 : " + accessTokenResponse.getBody().getRefreshToken());
+
         if(accessTokenResponse.getStatusCode() == HttpStatus.OK){
             user.setAccessToken(accessTokenResponse.getBody().getAccessToken());
             userRepository.save(user);
+            log.info("DB에 변경된 액세스 : " + user.getAccessToken());
+            log.info("DB에 변경된 리프래쉬 : " + user.getRefreshToken());
             log.info("expiredGoogleAccessTokenRequester end");
             return user.getAccessToken();
         }

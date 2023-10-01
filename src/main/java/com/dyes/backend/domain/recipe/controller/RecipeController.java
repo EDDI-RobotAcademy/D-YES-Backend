@@ -1,10 +1,9 @@
 package com.dyes.backend.domain.recipe.controller;
 
-import com.dyes.backend.domain.recipe.controller.form.MyRecipeCheckForm;
-import com.dyes.backend.domain.recipe.controller.form.RecipeDeleteForm;
-import com.dyes.backend.domain.recipe.controller.form.RecipeRegisterForm;
+import com.dyes.backend.domain.recipe.controller.form.*;
 import com.dyes.backend.domain.recipe.service.RecipeService;
 
+import com.dyes.backend.domain.recipe.service.response.form.RecipeCommentListResponseForm;
 import com.dyes.backend.domain.recipe.service.response.form.RecipeInfoReadResponseForm;
 import com.dyes.backend.domain.recipe.service.response.form.RecipeListResponseForm;
 import lombok.RequiredArgsConstructor;
@@ -49,5 +48,32 @@ public class RecipeController {
     @GetMapping("/read/{recipeId}")
     public RecipeInfoReadResponseForm readRecipe(@PathVariable("recipeId") Long recipeId) {
         return recipeService.readRecipe(recipeId);
+    }
+
+    // 레시피에 댓글 달기
+    @PostMapping("/comment/register")
+    public boolean registerRecipeComment(@RequestBody RecipeCommentRegisterRequestForm registerForm) {
+        return recipeService.registerRecipeComment(registerForm);
+    }
+
+    // 레시피 댓글 목록 조회
+    @PostMapping("/comment/list/{recipeId}")
+    public RecipeCommentListResponseForm getRecipeCommentList(@PathVariable("recipeId") Long recipeId,
+                                                              @RequestBody MyRecipeCheckForm myRecipeCheckForm) {
+        return recipeService.getRecipeCommentList(recipeId, myRecipeCheckForm);
+    }
+
+    // 나의 레시피 댓글 삭제
+    @DeleteMapping("/comment/delete/{commentId}")
+    public Boolean deleteRecipeComment(@PathVariable("commentId") Long commentId,
+                                       @RequestBody MyRecipeCheckForm myRecipeCheckForm) {
+        return recipeService.deleteRecipeComment(commentId, myRecipeCheckForm);
+    }
+
+    // 나의 레시피 댓글 수정
+    @PutMapping("/comment/modify/{commentId}")
+    public Boolean modifyRecipeComment(@PathVariable("commentId") Long commentId,
+                                       @RequestBody MyRecipeCommentModifyRequestForm myRecipeCommentModifyForm) {
+        return recipeService.modifyRecipeComment(commentId, myRecipeCommentModifyForm);
     }
 }
