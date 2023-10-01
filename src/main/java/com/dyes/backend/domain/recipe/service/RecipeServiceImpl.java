@@ -405,13 +405,13 @@ public class RecipeServiceImpl implements RecipeService {
             String userToken = myRecipeCheckForm.getUserToken();
             User user = authenticationService.findUserByUserToken(userToken);
 
-            Long commentId;
-            String nickName = "";
-            boolean isMyRecipeComment = false;
-            String commentContent;
-            LocalDate commentDate;
-            Boolean isDeleted;
             for (RecipeComment recipeComment : recipeCommentList) {
+                Long commentId;
+                String nickName = "";
+                String commentContent;
+                LocalDate commentDate;
+                Boolean isDeleted;
+                boolean isMyRecipeComment = false;
                 commentId = recipeComment.getCommentId();
                 commentContent = recipeComment.getCommentContent();
                 commentDate = recipeComment.getRegisteredDate();
