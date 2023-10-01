@@ -283,6 +283,7 @@ public class OrderServiceImpl implements OrderService {
             Long productOrderId = order.getId();
             Delivery delivery = order.getDelivery();
             DeliveryStatus deliveryStatus = delivery.getDeliveryStatus();
+            OrderStatus orderStatus = order.getOrderStatus();
             LocalDate orderedTime = order.getOrderedTime();
             List<OrderProductListResponse> orderProductList = new ArrayList<>();
 
@@ -319,7 +320,7 @@ public class OrderServiceImpl implements OrderService {
             }
 
             OrderDetailInfoResponse orderDetailInfoResponse
-                    = new OrderDetailInfoResponse(productOrderId, totalPrice, orderedTime, deliveryStatus);
+                    = new OrderDetailInfoResponse(productOrderId, totalPrice, orderedTime, deliveryStatus, orderStatus);
             OrderListResponseFormForAdmin orderListResponseFormForAdmin
                     = new OrderListResponseFormForAdmin(orderUserInfoResponse, orderProductList, orderDetailInfoResponse);
             orderListResponseFormForAdmins.add(orderListResponseFormForAdmin);
@@ -434,6 +435,7 @@ public class OrderServiceImpl implements OrderService {
             Long productOrderId = order.getId();
             Delivery delivery = order.getDelivery();
             DeliveryStatus deliveryStatus = delivery.getDeliveryStatus();
+            OrderStatus orderStatus = order.getOrderStatus();
             LocalDate orderedTime = order.getOrderedTime();
             List<OrderProductListResponseForUser> orderProductList = new ArrayList<>();
 
@@ -481,7 +483,7 @@ public class OrderServiceImpl implements OrderService {
             }
 
             OrderDetailInfoResponse orderDetailInfoResponse
-                    = new OrderDetailInfoResponse(productOrderId, totalPrice, orderedTime, deliveryStatus);
+                    = new OrderDetailInfoResponse(productOrderId, totalPrice, orderedTime, deliveryStatus, orderStatus);
             OrderListResponseFormForUser orderListResponseFormForUser
                     = new OrderListResponseFormForUser(orderProductList, orderDetailInfoResponse);
             orderListResponseFormForUsers.add(orderListResponseFormForUser);
@@ -637,6 +639,7 @@ public class OrderServiceImpl implements OrderService {
                             .productOptionCount(orderedProduct.getProductOptionCount())
                             .productOptionPrice(productOption.getOptionPrice())
                             .productName(orderedProduct.getProductName())
+                            .orderedProductStatus(orderedProduct.getOrderedProductStatus())
                             .build();
                     productDataList.add(productData);
                 }
