@@ -21,6 +21,8 @@ public class OrderedProduct {
     private int productOptionCount;
     @Enumerated(EnumType.STRING)
     private OrderedProductStatus orderedProductStatus;
+    @Column(nullable = true)
+    private String refundReason;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_order_id")
     private ProductOrder productOrder;

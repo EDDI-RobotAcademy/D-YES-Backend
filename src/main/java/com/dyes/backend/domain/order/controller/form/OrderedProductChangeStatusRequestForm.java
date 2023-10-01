@@ -13,4 +13,5 @@ public class OrderedProductChangeStatusRequestForm {
     private String userToken;
     private Long orderId;
     private List<Long> productOptionId;
+    private String refundReason;
 }
