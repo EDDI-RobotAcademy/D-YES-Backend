@@ -243,6 +243,7 @@ public class PaymentServiceImpl implements PaymentService{
                                 if(orderedProduct.getProductOptionId().equals(productOptionId) && orderedProduct.getOrderedProductStatus() != OrderedProductStatus.REFUNDED){
 
                                     orderedProduct.setOrderedProductStatus(OrderedProductStatus.REFUNDED);
+                                    orderedProduct.setRefundReason(refundReason);
                                     orderedProductRepository.save(orderedProduct);
                                     }
                             }
