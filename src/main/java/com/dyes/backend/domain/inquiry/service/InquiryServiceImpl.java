@@ -112,6 +112,7 @@ public class InquiryServiceImpl implements InquiryService{
                     .build();
 
             InquiryReadInquiryInfoResponse infoResponse = InquiryReadInquiryInfoResponse.builder()
+                    .inquiryId(inquiry.getId())
                     .title(inquiry.getTitle())
                     .content(inquiry.getContent().getContent())
                     .createDate(inquiry.getCreateDate())
