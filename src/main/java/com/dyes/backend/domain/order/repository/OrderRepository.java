@@ -26,4 +26,7 @@ public interface OrderRepository extends JpaRepository<ProductOrder, Long> {
     List<ProductOrder> findAllByOrderedTimeAfterOrderByOrderedTimeDesc(@Param("startDate") LocalDate startDate);
 
     List<ProductOrder> findByOrderedTimeBetween(LocalDate firstDayOfMonth, LocalDate lastDayOfMonth);
+
+    @Query("SELECT po FROM ProductOrder po JOIN FETCH po.user WHERE po.id = :orderId")
+    Optional<ProductOrder> findByIdWithUser(@Param("orderId") Long orderId);
 }

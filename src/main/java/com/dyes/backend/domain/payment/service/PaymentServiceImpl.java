@@ -1,5 +1,7 @@
 package com.dyes.backend.domain.payment.service;
 
+import com.dyes.backend.domain.admin.entity.Admin;
+import com.dyes.backend.domain.admin.repository.AdminRepository;
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
 import com.dyes.backend.domain.event.entity.EventOrder;
 import com.dyes.backend.domain.event.entity.EventPurchaseCount;
@@ -63,6 +65,7 @@ public class PaymentServiceImpl implements PaymentService{
     final private OrderRepository orderRepository;
     final private RefundedPaymentRepository refundedPaymentRepository;
     final private OrderedProductRepository orderedProductRepository;
+    final private AdminRepository adminRepository;
     public KakaoPaymentReadyResponse paymentRequest(KakaoPaymentRequest request) {
         log.info("paymentRequest start");
         try{
@@ -173,13 +176,25 @@ public class PaymentServiceImpl implements PaymentService{
         try {
             User user = authenticationService.findUserByUserToken(userToken);
             if (user == null) {
+                log.info("There are no matching users");
                 return false;
             }
-            Optional<ProductOrder> maybeOrder = orderRepository.findById(orderId);
+
+            Optional<Admin> maybeAdmin = adminRepository.findByUser(user);
+
+            Optional<ProductOrder> maybeOrder = orderRepository.findByIdWithUser(orderId);
             if (maybeOrder.isEmpty()) {
+                log.info("There are no matching orders");
                 return false;
             }
             ProductOrder order = maybeOrder.get();
+
+            User userInOrder = order.getUser();
+
+            if (!user.getId().equals(userInOrder.getId()) || maybeAdmin.isEmpty()) {
+                log.info("There are no matching user and user in order");
+                return false;
+            }
 
             final String cid = kakaoPaymentSecretsProvider.getCid();
             final String tid = order.getTid();
@@ -192,6 +207,7 @@ public class PaymentServiceImpl implements PaymentService{
                 Long productOptionId = optionRequest.getProductOptionId();
                 Optional<ProductOption> maybeProductOption = productOptionRepository.findById(productOptionId);
                 if (maybeProductOption.isEmpty()) {
+                    log.info("There are no matching options");
                     return false;
                 }
                 ProductOption productOption = maybeProductOption.get();
