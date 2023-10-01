@@ -929,9 +929,15 @@ public class OrderServiceImpl implements OrderService {
                         orderedProductStatus = REFUNDED;
                     }
                 }
+                OrderRefundDetailInfoResponse orderRefundDetailInfoResponse;
+                if(orderedProductStatus.equals(WAITING_REFUND)) {
+                     orderRefundDetailInfoResponse
+                            = new OrderRefundDetailInfoResponse(order.getId(), productOrderId, totalPrice, refundPrice, orderedTime, deliveryStatus, orderedProductStatus, orderedProduct.getRefundReason());
+                } else {
+                    orderRefundDetailInfoResponse
+                            = new OrderRefundDetailInfoResponse(order.getId(), productOrderId, totalPrice, refundPrice, orderedTime, deliveryStatus, orderedProductStatus);
+                }
 
-                OrderRefundDetailInfoResponse orderRefundDetailInfoResponse
-                        = new OrderRefundDetailInfoResponse(productOrderId, totalPrice, refundPrice, orderedTime, deliveryStatus, orderedProductStatus);
                 OrderRefundListResponseFormForAdmin orderRefundListResponseFormForAdmin
                         = new OrderRefundListResponseFormForAdmin(orderUserInfoResponse, orderRefundDetailInfoResponse);
                 orderRefundListResponseFormForAdminList.add(orderRefundListResponseFormForAdmin);
