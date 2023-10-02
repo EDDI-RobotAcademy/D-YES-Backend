@@ -13,6 +13,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class InquiryReadInquiryInfoResponse {
+    private Long inquiryId;
     private String title;
     private String content;
     private LocalDate createDate;
