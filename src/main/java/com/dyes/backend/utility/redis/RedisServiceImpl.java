@@ -11,6 +11,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -49,7 +51,7 @@ public class RedisServiceImpl implements RedisService{
         log.info("paymentTemporarySaveData start");
         ValueOperations<String, String> value = redisTemplate.opsForValue();
         String saveData = objectMapper.writeValueAsString(saveRequest);
-        value.set(id, saveData);
+        value.set(id, saveData, Duration.ofMinutes(15));
         log.info("paymentTemporarySaveData end");
 
     }
