@@ -1,6 +1,7 @@
 package com.dyes.backend.domain.order.service;
 
 import com.dyes.backend.domain.order.controller.form.*;
+import com.dyes.backend.domain.order.service.admin.response.OrderProductListResponse;
 import com.dyes.backend.domain.order.service.admin.response.form.*;
 import com.dyes.backend.domain.order.service.user.request.KakaoPaymentRefundProductOptionRequest;
 import com.dyes.backend.domain.order.service.user.response.form.OrderConfirmResponseFormForUser;
@@ -28,4 +29,5 @@ public interface OrderService {
     boolean orderedProductWaitingRefund(OrderedProductChangeStatusRequestForm requestForm);
     MonthlyOrdersStatisticsResponseForm getMonthlyOrders();
     List<OrderRefundListResponseFormForAdmin> getAllOrderRefundListForAdmin();
+    OrderProductListResponse getRefundSummaryInfo(Long productOrderId);
 }
