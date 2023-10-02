@@ -949,6 +949,50 @@ public class OrderServiceImpl implements OrderService {
         return orderRefundListResponseFormForAdminList;
     }
 
+    // 관리자의 환불 주문건의 간략한 정보 확인
+    @Override
+    public OrderProductListResponse getRefundSummaryInfo(Long productOrderId) {
+        try {
+            log.info("getRefundSummaryInfo start");
+
+            Optional<ProductOrder> maybeOrder = orderRepository.findByStringIdWithDelivery(productOrderId);
+            if (maybeOrder.isEmpty()) {
+                log.info("no order data");
+                return null;
+            }
+            ProductOrder order = maybeOrder.get();
+
+            List<OrderedProduct> orderedProductList = orderedProductRepository.findAllByProductOrder(order);
+
+            List<OrderOptionListResponse> orderOptionListResponseList = new ArrayList<>();
+            Long productId = 0L;
+            String productName = "";
+            for (OrderedProduct orderedProduct : orderedProductList) {
+                Optional<ProductOption> maybeProductOption = productOptionRepository.findById(orderedProduct.getProductOptionId());
+                if (maybeOrder.isPresent()) {
+                    ProductOption productOption = maybeProductOption.get();
+                    OrderOptionListResponse orderOptionListResponse
+                            = OrderOptionListResponse.builder()
+                            .optionId(productOption.getId())
+                            .optionName(productOption.getOptionName())
+                            .optionCount(orderedProduct.getProductOptionCount())
+                            .orderProductStatus(orderedProduct.getOrderedProductStatus())
+                            .build();
+                    orderOptionListResponseList.add(orderOptionListResponse);
+                }
+                productId = orderedProduct.getProductId();
+                productName = orderedProduct.getProductName();
+            }
+            OrderProductListResponse orderProductListResponse = new OrderProductListResponse(productId, productName, orderOptionListResponseList);
+
+            log.info("getRefundSummaryInfo end");
+            return orderProductListResponse;
+        } catch (Exception e) {
+            log.error("Error occurred while get order summary Info", e);
+            return null;
+        }
+    }
+
     public class OverMaxStockException extends RuntimeException {
         public OverMaxStockException(String message) {
             super(message);

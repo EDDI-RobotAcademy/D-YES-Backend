@@ -2,6 +2,7 @@ package com.dyes.backend.domain.order.controller;
 
 import com.dyes.backend.domain.order.controller.form.*;
 import com.dyes.backend.domain.order.service.OrderService;
+import com.dyes.backend.domain.order.service.admin.response.OrderProductListResponse;
 import com.dyes.backend.domain.order.service.admin.response.form.*;
 import com.dyes.backend.domain.order.service.user.request.KakaoPaymentRefundProductOptionRequest;
 import com.dyes.backend.domain.order.service.user.response.form.OrderConfirmResponseFormForUser;
@@ -94,5 +95,11 @@ public class OrderController {
     @GetMapping("/admin/refund-list")
     public List<OrderRefundListResponseFormForAdmin> getAllOrderRefundListForAdmin() {
         return orderService.getAllOrderRefundListForAdmin();
+    }
+
+    // 관리자의 환불 주문건의 간략한 정보 확인
+    @GetMapping("/admin/refund/read/{productOrderId}")
+    public OrderProductListResponse getRefundSummaryInfo(@PathVariable("productOrderId") Long productOrderId) {
+        return orderService.getRefundSummaryInfo(productOrderId);
     }
 }
