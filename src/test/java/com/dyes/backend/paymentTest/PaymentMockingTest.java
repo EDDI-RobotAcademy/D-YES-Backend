@@ -1,5 +1,7 @@
 package com.dyes.backend.paymentTest;
 
+import com.dyes.backend.domain.admin.entity.Admin;
+import com.dyes.backend.domain.admin.repository.AdminRepository;
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
 import com.dyes.backend.domain.order.controller.form.KakaoPaymentRefundRequestForm;
 import com.dyes.backend.domain.order.controller.form.KakaoPaymentRejectRequestForm;
@@ -73,6 +75,8 @@ public class PaymentMockingTest {
     private RefundedPaymentRepository mockRefundedPaymentRepository;
     @Mock
     private OrderedProductRepository mockOrderedProductRepository;
+    @Mock
+    private AdminRepository mockAdminRepository;
     @InjectMocks
     private PaymentServiceImpl mockService;
 
@@ -88,7 +92,8 @@ public class PaymentMockingTest {
                 mockAuthenticationService,
                 mockOrderRepository,
                 mockRefundedPaymentRepository,
-                mockOrderedProductRepository
+                mockOrderedProductRepository,
+                mockAdminRepository
         );
     }
 
@@ -297,9 +302,13 @@ public class PaymentMockingTest {
         order.setId(1L);
         order.setTid(tid);
 
+        Admin admin = new Admin();
+        when(mockAdminRepository.findByUser(user)).thenReturn(Optional.of(admin));
+
         OrderAmount orderAmount = new OrderAmount(100, 100);
         order.setAmount(orderAmount);
-        when(mockOrderRepository.findById(orderAndTokenAndReasonRequest.getOrderId())).thenReturn(Optional.of(order));
+        order.setUser(user);
+        when(mockOrderRepository.findByIdWithUser(orderAndTokenAndReasonRequest.getOrderId())).thenReturn(Optional.of(order));
 
         final String refundUrl = "refund_url";
         final String cid = "cid";

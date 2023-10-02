@@ -79,8 +79,8 @@ public class InquiryServiceImpl implements InquiryService{
 
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(secretsProvider.getSTMP_EMAIL());
-            message.setSubject("문의가 등록 되었습니다");
-            message.setText(secretsProvider.getINQUIRY_LINK() + inquiry.getId());
+            message.setSubject("문의가 등록 되었습니다.");
+            message.setText("아래 링크에서 로그인 후 확인하세요. " + "\n" +secretsProvider.getINQUIRY_LINK());
             message.setTo(inquiry.getEmail());
 
             javaMailSender.send(message);
@@ -177,8 +177,8 @@ public class InquiryServiceImpl implements InquiryService{
 
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(secretsProvider.getSTMP_EMAIL());
-            message.setSubject("답변이 등록 되었습니다");
-            message.setText(secretsProvider.getINQUIRY_LINK() + inquiry.getId());
+            message.setSubject("답변이 등록 되었습니다.");
+            message.setText("아래 링크에서 로그인 후 확인하세요. " + "\n" +secretsProvider.getINQUIRY_LINK());
             message.setTo(inquiry.getEmail());
 
             javaMailSender.send(message);

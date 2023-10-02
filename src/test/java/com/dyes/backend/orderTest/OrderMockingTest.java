@@ -257,8 +257,8 @@ public class OrderMockingTest {
 
         OrderedProductChangeStatusRequestForm requestForm = new OrderedProductChangeStatusRequestForm(userToken, orderId, List.of(productOptionId), refundReason);
 
-        Admin admin = new Admin();
-        when(mockAdminService.findAdminByUserToken(userToken)).thenReturn(admin);
+        User user = new User();
+        when(mockAuthenticationService.findUserByUserToken(userToken)).thenReturn(user);
 
         ProductOrder order = new ProductOrder();
         order.setId(1L);
