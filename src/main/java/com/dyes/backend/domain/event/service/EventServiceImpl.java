@@ -423,7 +423,7 @@ public class EventServiceImpl implements EventService{
             EventPurchaseCount count = eventProduct.getEventPurchaseCount();
             EventDeadLine deadLine = eventProduct.getEventDeadLine();
 
-            if (LocalDate.now().isBefore(deadLine.getDeadLine())) {
+            if (LocalDate.now().isAfter(deadLine.getStartLine())) {
                 log.info("Cannot be deleted before event closes");
                 return false;
             }
