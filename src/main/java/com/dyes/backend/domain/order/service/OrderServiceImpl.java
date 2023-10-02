@@ -311,7 +311,7 @@ public class OrderServiceImpl implements OrderService {
                 totalPrice = totalPrice + totalOptionPrice;
 
                 OrderOptionListResponse orderOptionListResponse
-                        = new OrderOptionListResponse(productOptionId, optionName, productOptionCount);
+                        = new OrderOptionListResponse(productOptionId, optionName, productOptionCount, orderedProduct.getOrderedProductStatus());
                 orderOptionList.add(orderOptionListResponse);
 
                 OrderProductListResponse orderProductListResponse
@@ -474,7 +474,7 @@ public class OrderServiceImpl implements OrderService {
                 totalPrice = totalPrice + totalOptionPrice;
 
                 OrderOptionListResponse orderOptionListResponse
-                        = new OrderOptionListResponse(productOptionId, optionName, productOptionCount);
+                        = new OrderOptionListResponse(productOptionId, optionName, productOptionCount, orderedProduct.getOrderedProductStatus());
                 orderOptionList.add(orderOptionListResponse);
 
                 OrderProductListResponseForUser orderProductListResponse
