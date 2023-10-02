@@ -190,7 +190,7 @@ public class PaymentServiceImpl implements PaymentService{
 
             User userInOrder = order.getUser();
 
-            if (!user.getId().equals(userInOrder.getId()) || maybeAdmin.isEmpty()) {
+            if (!user.getId().equals(userInOrder.getId()) && maybeAdmin.isEmpty()) {
                 log.info("There are no matching user and user in order");
                 return false;
             }
