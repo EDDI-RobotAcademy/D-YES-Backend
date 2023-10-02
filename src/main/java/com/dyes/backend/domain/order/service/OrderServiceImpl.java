@@ -771,15 +771,15 @@ public class OrderServiceImpl implements OrderService {
         final String refundReason = requestForm.getRefundReason();
 
         try {
-            final Admin admin = adminService.findAdminByUserToken(userToken);
-
-            if (admin == null) {
-                log.info("Unable to find admin with user token: {}", userToken);
+            final User user = authenticationService.findUserByUserToken(userToken);
+            if (user == null) {
+                log.info("There are no matching users");
                 return false;
             }
 
             Optional<ProductOrder> maybeOrder = orderRepository.findById(orderId);
             if (maybeOrder.isEmpty()) {
+                log.info("There are no matching orders");
                 return false;
             }
             ProductOrder order = maybeOrder.get();
