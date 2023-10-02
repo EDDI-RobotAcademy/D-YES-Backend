@@ -27,7 +27,7 @@ public interface EventService {
                                       ProductModifyRequest productModifyRequest, ProductOptionModifyRequest productOptionModifyRequest,
                                       ProductMainImageModifyRequest productMainImageModifyRequest, List<ProductDetailImagesModifyRequest> productDetailImagesModifyRequest,
                                       EventProductModifyDeadLineRequest eventProductModifyDeadLineRequest, EventProductModifyPurchaseCountRequest eventProductModifyPurchaseCountRequest);
-    boolean eventProductDelete(EventProductDeleteRequest request);
+    boolean eventProductDelete(Long eventProductId, String userToken);
     List<EventProductAdminListResponse> eventProductAdminList();
     void eventProductRefund();
 }

@@ -351,7 +351,7 @@ public class EventMockingTest {
         detailImages.setProduct(product);
         when(mockProductDetailImagesRepository.findByProduct(product)).thenReturn(List.of(detailImages));
 
-        boolean result = mockService.eventProductDelete(deleteRequest);
+        boolean result = mockService.eventProductDelete(eventProductId, userToken);
         assertTrue(result);
     }
     @Test

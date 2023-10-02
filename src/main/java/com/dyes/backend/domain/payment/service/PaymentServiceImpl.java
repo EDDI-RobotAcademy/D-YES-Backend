@@ -48,6 +48,8 @@ import org.springframework.web.servlet.view.RedirectView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.dyes.backend.domain.order.entity.OrderStatus.*;
 
@@ -235,14 +237,6 @@ public class PaymentServiceImpl implements PaymentService{
                     orderAmount.setRefundedAmount(existingRefundAmount + cancelAmount);
                     order.setAmount(orderAmount);
 
-                    if (response.getStatus().equals(CANCEL_PAYMENT)) {
-                        order.setOrderStatus(CANCEL_PAYMENT);
-                    } else if (order.getAmount().getTotalAmount() == 0) {
-                        order.setOrderStatus(CANCEL_PAYMENT);
-                    } else {
-                        order.setOrderStatus(PART_CANCEL_PAYMENT);
-                    }
-
                     RefundedPayment refundedPayment = RefundedPayment.builder()
                             .aid(response.getAid())
                             .tid(response.getTid())
@@ -253,17 +247,30 @@ public class PaymentServiceImpl implements PaymentService{
                             .build();
 
                     List<OrderedProduct> productList = orderedProductRepository.findAllByProductOrder(order);
-                        for (KakaoPaymentRefundProductOptionRequest optionRequest : requestList){
-                            Long productOptionId = optionRequest.getProductOptionId();
-                            for (OrderedProduct orderedProduct : productList) {
-                                if(orderedProduct.getProductOptionId().equals(productOptionId) && orderedProduct.getOrderedProductStatus() != OrderedProductStatus.REFUNDED){
+                    Set<Long> refundRequestOptionIdStream = requestList.stream()
+                            .map(KakaoPaymentRefundProductOptionRequest :: getProductOptionId)
+                            .collect(Collectors.toSet());
 
-                                    orderedProduct.setOrderedProductStatus(OrderedProductStatus.REFUNDED);
-                                    orderedProduct.setRefundReason(refundReason);
-                                    orderedProductRepository.save(orderedProduct);
-                                    }
+                    for (OrderedProduct orderedProduct : productList) {
+                        if(refundRequestOptionIdStream.contains(orderedProduct.getProductOptionId()) && orderedProduct.getOrderedProductStatus() != OrderedProductStatus.REFUNDED){
+
+                            orderedProduct.setOrderedProductStatus(OrderedProductStatus.REFUNDED);
+                            orderedProduct.setRefundReason(refundReason);
+                            orderedProductRepository.save(orderedProduct);
                             }
-                        }
+                    }
+                    boolean isAllRefunded = productList.stream().allMatch(orderedProduct -> orderedProduct.getOrderedProductStatus() == OrderedProductStatus.REFUNDED);
+
+                    if (response.getStatus().equals(CANCEL_PAYMENT)) {
+                        order.setOrderStatus(CANCEL_PAYMENT);
+                    } else if (order.getAmount().getTotalAmount() == 0) {
+                        order.setOrderStatus(CANCEL_PAYMENT);
+                    } else if (isAllRefunded) {
+                        order.setOrderStatus(CANCEL_PAYMENT);
+                    }
+                    else {
+                        order.setOrderStatus(PART_CANCEL_PAYMENT);
+                    }
 
                     orderRepository.save(order);
                     refundedPaymentRepository.save(refundedPayment);
@@ -479,6 +486,11 @@ public class PaymentServiceImpl implements PaymentService{
             log.error("Failed connect to server: {}", e.getMessage(), e);
             return null;
         }
+    }
+    public boolean isEveryOptionRefund(List<ProductOption> refundProductOptionList) {
+        for (ProductOption productOption : refundProductOptionList) {
+        }
+        return false;
     }
 
     public HttpHeaders getHeaders() {
