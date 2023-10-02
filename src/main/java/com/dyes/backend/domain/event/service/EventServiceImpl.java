@@ -402,10 +402,7 @@ public class EventServiceImpl implements EventService{
         }
 
     }
-    public boolean eventProductDelete(EventProductDeleteRequest request) {
-        final String userToken = request.getUserToken();
-        final Long eventProductId = request.getEventProductId();
-
+    public boolean eventProductDelete(Long eventProductId, String userToken) {
         try {
             Admin admin = adminService.findAdminByUserToken(userToken);
 
@@ -416,6 +413,7 @@ public class EventServiceImpl implements EventService{
 
             Optional<EventProduct> maybeEventProduct = eventProductRepository.findByIdProductOptionDeadLineCount(eventProductId);
             if (maybeEventProduct.isEmpty()){
+                log.info("There are no matching event product");
                 return false;
             }
 
@@ -425,6 +423,10 @@ public class EventServiceImpl implements EventService{
             EventPurchaseCount count = eventProduct.getEventPurchaseCount();
             EventDeadLine deadLine = eventProduct.getEventDeadLine();
 
+            if (LocalDate.now().isBefore(deadLine.getDeadLine())) {
+                log.info("Cannot be deleted before event closes");
+                return false;
+            }
 
             Optional<ProductMainImage> maybeMainImage = productMainImageRepository.findByProduct(product);
             if (maybeMainImage.isPresent()){
