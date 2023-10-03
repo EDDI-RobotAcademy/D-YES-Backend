@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import static com.dyes.backend.domain.product.entity.MaybeEventProduct.NO;
 import static com.dyes.backend.utility.number.NumberUtils.findMinValue;
 
 @Service
@@ -145,7 +146,7 @@ public class UserProductServiceImpl implements UserProductService {
         try {
             List<Product> productList = productRepository.findAllWithFarm();
             for (Product product : productList) {
-                if (product.getMaybeEventProduct().equals(MaybeEventProduct.NO)
+                if (product.getMaybeEventProduct().equals(NO)
                         && product.getProductSaleStatus().equals(SaleStatus.AVAILABLE)) {
                     ProductListResponseFormForUser productListResponseFormForUser = createUserProductListResponseForm(product);
                     productListResponseFormListForUser.add(productListResponseFormForUser);
@@ -170,7 +171,7 @@ public class UserProductServiceImpl implements UserProductService {
 
         // 랜덤 상품 목록 조회 진행
         try {
-            List<Product> productList = productRepository.findAll();
+            List<Product> productList = productRepository.findByMaybeEventProduct(NO);
             Collections.shuffle(productList);
             for (Product product : productList) {
 
