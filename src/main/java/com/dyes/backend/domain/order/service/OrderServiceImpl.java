@@ -884,7 +884,7 @@ public class OrderServiceImpl implements OrderService {
     public List<OrderRefundListResponseFormForAdmin> getAllOrderRefundListForAdmin() {
 
         // 환불 상태인 주문 목록 가져오기
-        List<ProductOrder> orderList = orderRepository.findAllWithUser();
+        List<ProductOrder> orderList = orderRepository.findAllWithUserAndOrderStatus();
 
         List<OrderRefundListResponseFormForAdmin> orderRefundListResponseFormForAdminList = new ArrayList<>();
 
