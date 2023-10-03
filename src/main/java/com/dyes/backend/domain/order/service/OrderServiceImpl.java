@@ -932,7 +932,6 @@ public class OrderServiceImpl implements OrderService {
 
                 OrderRefundDetailInfoResponse orderRefundDetailInfoResponse
                         = new OrderRefundDetailInfoResponse(
-                        order.getId(),
                         productOrderId,
                         totalPrice,
                         refundPrice,
