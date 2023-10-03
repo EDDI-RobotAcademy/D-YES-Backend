@@ -882,70 +882,83 @@ public class OrderServiceImpl implements OrderService {
     // 관리자의 환불 목록 확인
     @Override
     public List<OrderRefundListResponseFormForAdmin> getAllOrderRefundListForAdmin() {
+        log.info("Finding Refund Order List start");
 
-        // 환불 상태인 주문 목록 가져오기
-        List<ProductOrder> orderList = orderRepository.findAllWithUserAndOrderStatus();
+        try {
 
-        List<OrderRefundListResponseFormForAdmin> orderRefundListResponseFormForAdminList = new ArrayList<>();
+            List<OrderRefundListResponseFormForAdmin> orderRefundListResponseFormForAdminList = new ArrayList<>();
 
-        for (ProductOrder order : orderList) {
+            // 주문 목록 가져오기
+            List<ProductOrder> orderList = orderRepository.findAllWithUser();
+            for (ProductOrder order : orderList) {
 
-            // 주문자 정보 가져오기
-            User user = order.getUser();
-            String userId = user.getId();
+                // 주문자 정보 가져오기
+                User user = order.getUser();
+                String userId = user.getId();
 
-            Optional<OrderedPurchaserProfile> maybeOrderedPurchaserProfile = orderedPurchaserProfileRepository.findByProductOrder(order);
-            if (maybeOrderedPurchaserProfile.isEmpty()) {
-                log.info("Profile with order ID '{}' not found", order.getId());
-                return null;
-            }
+                Optional<OrderedPurchaserProfile> maybeOrderedPurchaserProfile = orderedPurchaserProfileRepository.findByProductOrder(order);
+                if (maybeOrderedPurchaserProfile.isEmpty()) {
+                    log.info("Profile with order ID '{}' not found", order.getId());
+                    return null;
+                }
 
-            OrderedPurchaserProfile purchaserProfile = maybeOrderedPurchaserProfile.get();
-            String contactNumber = purchaserProfile.getOrderedPurchaseContactNumber();
-            Address address = purchaserProfile.getOrderedPurchaseProfileAddress();
+                OrderedPurchaserProfile purchaserProfile = maybeOrderedPurchaserProfile.get();
+                String contactNumber = purchaserProfile.getOrderedPurchaseContactNumber();
+                Address address = purchaserProfile.getOrderedPurchaseProfileAddress();
 
-            OrderUserInfoResponse orderUserInfoResponse = new OrderUserInfoResponse(userId, contactNumber, address);
+                OrderUserInfoResponse orderUserInfoResponse = new OrderUserInfoResponse(userId, contactNumber, address);
 
-            // 주문 정보 가져오기
-            int totalPrice = order.getAmount().getTotalAmount();
-            int refundPrice = order.getAmount().getRefundedAmount();
+                // 주문 정보 가져오기
+                int totalPrice = order.getAmount().getTotalAmount();
+                int refundPrice = order.getAmount().getRefundedAmount();
 
-            Long productOrderId = order.getId();
-            Delivery delivery = order.getDelivery();
-            DeliveryStatus deliveryStatus = delivery.getDeliveryStatus();
-            LocalDate orderedTime = order.getOrderedTime();
-            String refundReason = "";
-            OrderedProductStatus orderedProductStatus = null;
-            List<OrderedProductStatus> orderedProductStatusList = new ArrayList<>();
-            List<OrderedProduct> orderedProductList = orderedProductRepository.findAllByProductOrderAndStatus(order);
-            for (OrderedProduct orderedProduct : orderedProductList) {
-                refundReason = orderedProduct.getRefundReason();
-                orderedProductStatusList.add(orderedProduct.getOrderedProductStatus());
-                for (OrderedProductStatus orderedProductStatus1 : orderedProductStatusList) {
-                    if (orderedProductStatus1.equals(PURCHASED) && !orderedProductStatus1.equals(WAITING_REFUND) && !orderedProductStatus1.equals(REFUNDED)) {
-                        orderedProductStatus = PURCHASED;
-                    } else if (orderedProductStatus1.equals(WAITING_REFUND)) {
-                        orderedProductStatus = WAITING_REFUND;
-                    } else if (orderedProductStatus1.equals(REFUNDED) && !orderedProductStatus1.equals(WAITING_REFUND)) {
-                        orderedProductStatus = REFUNDED;
+                Long productOrderId = order.getId();
+                Delivery delivery = order.getDelivery();
+                DeliveryStatus deliveryStatus = delivery.getDeliveryStatus();
+                LocalDate orderedTime = order.getOrderedTime();
+                String refundReason = "";
+                OrderedProductStatus orderedProductStatus = null;
+
+                // 주문 상품 옵션 가져오기
+                List<OrderedProduct> orderedProductList = orderedProductRepository.findAllByProductOrderAndStatus(order);
+                List<OrderedProductStatus> orderedProductStatusList = new ArrayList<>();
+                for (OrderedProduct orderedProduct : orderedProductList) {
+                    refundReason = orderedProduct.getRefundReason();
+                    orderedProductStatusList.add(orderedProduct.getOrderedProductStatus());
+                }
+
+                if (orderedProductStatusList.contains(WAITING_REFUND)) {
+                    orderedProductStatus = WAITING_REFUND;
+                } else if (orderedProductStatusList.contains(REFUNDED) && !orderedProductStatusList.contains(WAITING_REFUND)) {
+                    orderedProductStatus = REFUNDED;
+                } else if ((orderedProductStatusList.contains(PAYBACK))) {
+                    orderedProductStatus = PAYBACK;
+                }
+
+                if (orderedProductStatus != null) {
+                    if (orderedProductStatus.equals(WAITING_REFUND) || orderedProductStatus.equals(REFUNDED) || orderedProductStatus.equals(PAYBACK)) {
+                        OrderRefundDetailInfoResponse orderRefundDetailInfoResponse
+                                = new OrderRefundDetailInfoResponse(
+                                productOrderId,
+                                totalPrice,
+                                refundPrice,
+                                orderedTime,
+                                deliveryStatus,
+                                orderedProductStatus,
+                                refundReason);
+
+                        OrderRefundListResponseFormForAdmin orderRefundListResponseFormForAdmin
+                                = new OrderRefundListResponseFormForAdmin(orderUserInfoResponse, orderRefundDetailInfoResponse);
+                        orderRefundListResponseFormForAdminList.add(orderRefundListResponseFormForAdmin);
                     }
                 }
             }
-            OrderRefundDetailInfoResponse orderRefundDetailInfoResponse
-                    = new OrderRefundDetailInfoResponse(
-                    productOrderId,
-                    totalPrice,
-                    refundPrice,
-                    orderedTime,
-                    deliveryStatus,
-                    orderedProductStatus,
-                    refundReason);
-
-            OrderRefundListResponseFormForAdmin orderRefundListResponseFormForAdmin
-                    = new OrderRefundListResponseFormForAdmin(orderUserInfoResponse, orderRefundDetailInfoResponse);
-            orderRefundListResponseFormForAdminList.add(orderRefundListResponseFormForAdmin);
+            log.info("Finding Refund Order List end");
+            return orderRefundListResponseFormForAdminList;
+        } catch (Exception e) {
+            log.error("Error occurred while find refunded order list", e);
+            return null;
         }
-        return orderRefundListResponseFormForAdminList;
     }
 
     // 관리자의 환불 주문건의 간략한 정보 확인
