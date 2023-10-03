@@ -914,11 +914,12 @@ public class OrderServiceImpl implements OrderService {
             Delivery delivery = order.getDelivery();
             DeliveryStatus deliveryStatus = delivery.getDeliveryStatus();
             LocalDate orderedTime = order.getOrderedTime();
-
+            String refundReason = "";
             OrderedProductStatus orderedProductStatus = null;
             List<OrderedProductStatus> orderedProductStatusList = new ArrayList<>();
             List<OrderedProduct> orderedProductList = orderedProductRepository.findAllByProductOrderAndStatus(order);
             for (OrderedProduct orderedProduct : orderedProductList) {
+                refundReason = orderedProduct.getRefundReason();
                 orderedProductStatusList.add(orderedProduct.getOrderedProductStatus());
                 for (OrderedProductStatus orderedProductStatus1 : orderedProductStatusList) {
                     if (orderedProductStatus1.equals(PURCHASED) && !orderedProductStatus1.equals(WAITING_REFUND) && !orderedProductStatus1.equals(REFUNDED)) {
@@ -929,21 +930,20 @@ public class OrderServiceImpl implements OrderService {
                         orderedProductStatus = REFUNDED;
                     }
                 }
-
-                OrderRefundDetailInfoResponse orderRefundDetailInfoResponse
-                        = new OrderRefundDetailInfoResponse(
-                        productOrderId,
-                        totalPrice,
-                        refundPrice,
-                        orderedTime,
-                        deliveryStatus,
-                        orderedProductStatus,
-                        orderedProduct.getRefundReason());
-
-                OrderRefundListResponseFormForAdmin orderRefundListResponseFormForAdmin
-                        = new OrderRefundListResponseFormForAdmin(orderUserInfoResponse, orderRefundDetailInfoResponse);
-                orderRefundListResponseFormForAdminList.add(orderRefundListResponseFormForAdmin);
             }
+            OrderRefundDetailInfoResponse orderRefundDetailInfoResponse
+                    = new OrderRefundDetailInfoResponse(
+                    productOrderId,
+                    totalPrice,
+                    refundPrice,
+                    orderedTime,
+                    deliveryStatus,
+                    orderedProductStatus,
+                    refundReason);
+
+            OrderRefundListResponseFormForAdmin orderRefundListResponseFormForAdmin
+                    = new OrderRefundListResponseFormForAdmin(orderUserInfoResponse, orderRefundDetailInfoResponse);
+            orderRefundListResponseFormForAdminList.add(orderRefundListResponseFormForAdmin);
         }
         return orderRefundListResponseFormForAdminList;
     }
