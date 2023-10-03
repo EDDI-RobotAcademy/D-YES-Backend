@@ -976,6 +976,7 @@ public class OrderServiceImpl implements OrderService {
                             .optionName(productOption.getOptionName())
                             .optionCount(orderedProduct.getProductOptionCount())
                             .orderProductStatus(orderedProduct.getOrderedProductStatus())
+                            .refundReason(orderedProduct.getRefundReason())
                             .build();
                     orderOptionListResponseList.add(orderOptionListResponse);
                 }
