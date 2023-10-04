@@ -17,5 +17,5 @@ public interface UserProductService {
 
     List<ProductListResponseFormForUser> getProductListByRegionForUser(String region);
 
-    List<ProductListResponseFormForUser> getNew10ProductListForUser();
+    List<ProductListResponseFormForUser> getNewProductListForUser();
 }

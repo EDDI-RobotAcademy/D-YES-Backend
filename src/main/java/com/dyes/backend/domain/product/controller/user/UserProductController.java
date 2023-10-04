@@ -50,9 +50,9 @@ public class UserProductController {
         return userProductService.getProductListByRegionForUser(region);
     }
 
-    // 6. 신규 상품 10개 목록 조회
+    // 6. 최근 7일 이내 등록된 신규 상품
     @GetMapping("/user/list/new")
     public List<ProductListResponseFormForUser> getNew10ProductListForUser() {
-        return userProductService.getNew10ProductListForUser();
+        return userProductService.getNewProductListForUser();
     }
 }

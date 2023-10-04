@@ -14,7 +14,7 @@ import java.util.Optional;
 
 public interface ProductManagementRepository extends JpaRepository<ProductManagement, Long> {
     @Query("select pm FROM ProductManagement pm join fetch pm.product p join fetch p.farm where pm.createdDate between :startDate and :endDate")
-    Page<ProductManagement> findByCreatedDateBetween(LocalDate startDate, LocalDate endDate, Pageable pageable);
+    List<ProductManagement> findAllByCreatedDateBetween(LocalDate startDate, LocalDate endDate);
 
     Optional<ProductManagement> findByProduct(Product product);
   

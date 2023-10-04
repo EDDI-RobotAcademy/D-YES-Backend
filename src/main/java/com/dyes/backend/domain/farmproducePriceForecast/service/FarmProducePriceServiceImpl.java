@@ -550,7 +550,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
         return farmProducePriceForecastResponseFormList;
     }
 
-    @Scheduled(cron = "0 10 00 * * ?")
+    @Scheduled(cron = "00 45 14 * * ?")
     public String getCabbagePriceFromFastAPI() {
         log.info("Starting cabbage price prediction request...");
         String url = "http://" + fastapi_url + "/ai-request-command";
@@ -605,7 +605,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
         }
     }
 
-    @Scheduled(cron = "15 10 00 * * ?")
+    @Scheduled(cron = "15 45 14 * * ?")
     public String getGreenOnionPriceFromFastAPI() {
         log.info("Starting green onion price prediction request...");
         String url = "http://" + fastapi_url + "/ai-request-command";
@@ -660,7 +660,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
         }
     }
 
-    @Scheduled(cron = "30 10 00 * * ?")
+    @Scheduled(cron = "30 45 14 * * ?")
     public String getGreenPumpkinPriceFromFastAPI() {
         log.info("Starting green pumpkin price prediction request...");
         String url = "http://" + fastapi_url + "/ai-request-command";
@@ -715,7 +715,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
         }
     }
 
-    @Scheduled(cron = "45 10 00 * * ?")
+    @Scheduled(cron = "45 45 14 * * ?")
     public String getKimchiCabbagePriceFromFastAPI() {
         log.info("Starting kimchi cabbage price prediction request...");
         String url = "http://" + fastapi_url + "/ai-request-command";
@@ -770,7 +770,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
         }
     }
 
-    @Scheduled(cron = "0 11 00 * * ?")
+    @Scheduled(cron = "0 46 14 * * ?")
     public String getOnionPriceFromFastAPI() {
         log.info("Starting onion price prediction request...");
         String url = "http://" + fastapi_url + "/ai-request-command";
@@ -825,7 +825,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
         }
     }
 
-    @Scheduled(cron = "15 11 00 * * ?")
+    @Scheduled(cron = "15 46 14 * * ?")
     public String getCarrotPriceFromFastAPI() {
         log.info("Starting carrot price prediction request...");
         String url = "http://" + fastapi_url + "/ai-request-command";
@@ -880,7 +880,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
         }
     }
 
-    @Scheduled(cron = "30 11 00 * * ?")
+    @Scheduled(cron = "30 46 14 * * ?")
     public String getPotatoPriceFromFastAPI() {
         log.info("Starting potato price prediction request...");
         String url = "http://" + fastapi_url + "/ai-request-command";
@@ -935,7 +935,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
         }
     }
 
-    @Scheduled(cron = "0 12 00 * * ?")
+    @Scheduled(cron = "45 46 14 * * ?")
     public String getCucumberPriceFromFastAPI() {
         log.info("Starting cucumber price prediction request...");
         String url = "http://" + fastapi_url + "/ai-request-command";
@@ -996,7 +996,7 @@ public class FarmProducePriceServiceImpl implements FarmProducePriceService {
         RestTemplate restTemplate = new RestTemplate();
 
         try {
-            Thread.sleep(3000); // 8초 대기
+            Thread.sleep(8000); // 8초 대기
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

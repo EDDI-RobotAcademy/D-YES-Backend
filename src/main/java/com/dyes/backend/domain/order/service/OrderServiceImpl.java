@@ -819,7 +819,7 @@ public class OrderServiceImpl implements OrderService {
         int cancelledOrders = 0;
         int totalOrdersAmount = 0;
         int totalPreviousOrdersAmount = 0;
-        double monthOverMonthGrowthRate = 0;
+        Long monthOverMonthGrowthRate = 0L;
         List<Integer> orderCountListByDay = new ArrayList<>();
 
         // 당월 주문 내역 가져오기
@@ -862,10 +862,10 @@ public class OrderServiceImpl implements OrderService {
 
         if (totalPreviousOrdersAmount != 0) {
             monthOverMonthGrowthRate
-                    = ((double) (totalOrdersAmount - totalPreviousOrdersAmount) / totalPreviousOrdersAmount) * 100;
+                    = Math.round(((double) (totalOrdersAmount - totalPreviousOrdersAmount) / totalPreviousOrdersAmount) * 100);
         } else {
             log.info("Previous data does not exist, previous total amount: " + totalPreviousOrdersAmount);
-            monthOverMonthGrowthRate = 0;
+            monthOverMonthGrowthRate = 0L;
         }
 
         MonthlyOrdersStatisticsResponseForm monthlyOrdersStatisticsResponseForm
