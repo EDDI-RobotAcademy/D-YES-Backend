@@ -2,7 +2,6 @@ package com.dyes.backend.domain.event.service;
 
 import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.service.AdminService;
-import com.dyes.backend.domain.event.controller.form.EventProductModifyRequestForm;
 import com.dyes.backend.domain.event.controller.form.EventProductReadResponseForm;
 import com.dyes.backend.domain.event.entity.EventDeadLine;
 import com.dyes.backend.domain.event.entity.EventOrder;
@@ -42,7 +41,6 @@ import com.dyes.backend.domain.review.entity.Review;
 import com.dyes.backend.domain.review.entity.ReviewRating;
 import com.dyes.backend.domain.review.repository.ReviewRatingRepository;
 import com.dyes.backend.domain.review.repository.ReviewRepository;
-import com.dyes.backend.domain.user.service.request.UserAuthenticationRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;

@@ -569,7 +569,7 @@ public class OrderServiceImpl implements OrderService {
                     eventOrderRepository.save(eventOrder);
 
                     EventPurchaseCount count = maybeEventProduct.get().getEventPurchaseCount();
-                    Integer nowCount = count.getNowCount() + 1;
+                    Integer nowCount = count.getNowCount() + 20;
                     count.setNowCount(nowCount);
                     eventPurchaseCountRepository.save(count);
                 }
