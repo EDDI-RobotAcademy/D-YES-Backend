@@ -5,10 +5,7 @@ import com.dyes.backend.domain.admin.service.AdminService;
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
 import com.dyes.backend.domain.inquiry.controller.form.InquiryListResponseForm;
 import com.dyes.backend.domain.inquiry.controller.form.InquiryReadResponseForm;
-import com.dyes.backend.domain.inquiry.entity.Inquiry;
-import com.dyes.backend.domain.inquiry.entity.InquiryContent;
-import com.dyes.backend.domain.inquiry.entity.InquiryStatus;
-import com.dyes.backend.domain.inquiry.entity.InquiryType;
+import com.dyes.backend.domain.inquiry.entity.*;
 import com.dyes.backend.domain.inquiry.repository.InquiryContentRepository;
 import com.dyes.backend.domain.inquiry.repository.InquiryRepository;
 import com.dyes.backend.domain.inquiry.repository.ReplyRepository;
@@ -113,6 +110,9 @@ public class InquiryMockingTest {
         UserProfile userProfile = new UserProfile();
         when(mockUserProfileRepository.findByUser(inquiry.getUser())).thenReturn(Optional.of(userProfile));
 
+        Reply reply = new Reply();
+        when(mockReplyRepository.findByInquiry(inquiry)).thenReturn(Optional.of(reply));
+
         InquiryReadResponseForm result = mockService.readInquiry(inquiryId);
         assertTrue(result != null);
     }
@@ -133,7 +133,7 @@ public class InquiryMockingTest {
         final String title = "title";
         final String content = "content";
 
-        InquiryReplyRequest request = new InquiryReplyRequest(userToken, inquiryId, title, content);
+        InquiryReplyRequest request = new InquiryReplyRequest(userToken, inquiryId, content);
 
         Admin admin = new Admin();
         when(mockAdminService.findAdminByUserToken(request.getUserToken())).thenReturn(admin);
@@ -144,5 +144,19 @@ public class InquiryMockingTest {
 
         boolean result = mockService.replyInquiry(request);
         assertTrue(result);
+    }
+    @Test
+    @DisplayName("inquiry mocking test: user inquiry list")
+    public void 사용자는_자신의_문의글_페이지에서_문의글_리스틀_볼_수_있습니다() {
+        final String userToken = "userToken";
+
+        User user = new User();
+        when(mockAuthenticationService.findUserByUserToken(userToken)).thenReturn(user);
+
+        Inquiry inquiry = new Inquiry();
+        when(mockInquiryRepository.findAllByUser(user)).thenReturn(List.of(inquiry));
+
+        List<InquiryListResponseForm> result = mockService.userInquiryList(userToken);
+        assertTrue(result != null);
     }
 }

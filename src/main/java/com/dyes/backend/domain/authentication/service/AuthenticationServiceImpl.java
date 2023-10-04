@@ -77,13 +77,20 @@ public class AuthenticationServiceImpl implements AuthenticationService{
         }
 
         if(userId.equals(user.getId())) {
-            return user;
-        }
+            Optional<User> maybeUser = userRepository.findById(userId);
+            log.info("Original user's accessToken: " + accessToken);
+            log.info("Updated user's accessToken: " + maybeUser.get().getAccessToken());
 
-        if(!user.getAccessToken().equals(accessToken)) {
-            log.info("Access token refreshed");
-            redisService.deleteKeyAndValueWithUserToken(userToken);
-            redisService.setUserTokenAndUser(userToken, user.getAccessToken());
+            User foundUser = new User();
+            if(maybeUser.isPresent()) {
+                foundUser = maybeUser.get();
+                if(!foundUser.getAccessToken().equals(accessToken)) {
+                    log.info("Access token refreshed");
+                    redisService.deleteKeyAndValueWithUserToken(userToken);
+                    redisService.setUserTokenAndUser(userToken, foundUser.getAccessToken());
+                }
+            }
+            return foundUser;
         }
 
         return null;

@@ -41,6 +41,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.dyes.backend.domain.product.entity.MaybeEventProduct.NO;
 import static com.dyes.backend.domain.product.entity.SaleStatus.AVAILABLE;
@@ -224,43 +225,37 @@ public class AdminProductServiceImpl implements AdminProductService {
 
             // DB에 저장된 상품 상세 이미지 가져오기
             List<ProductDetailImages> productDetailImagesList = productDetailImagesRepository.findByProductWithProduct(modifyProduct);
-            List<Long> savedProductDetailImagesList = new ArrayList<>();
-            for (ProductDetailImages savedProductDetailImages : productDetailImagesList) {
-                savedProductDetailImagesList.add(savedProductDetailImages.getId());
-            }
+            if (productDetailImagesList.size() != 0) {
 
-            // 수정 요청된 상품 상세 이미지 가져오기
-            List<Long> modifyProductDetailImagesList = new ArrayList<>();
-            for (ProductDetailImagesModifyRequest modifyProductDetailImages : productDetailImagesModifyRequestList) {
-                modifyProductDetailImagesList.add(modifyProductDetailImages.getDetailImageId());
-            }
+                Set<Long> requestImages = productDetailImagesModifyRequestList.stream()
+                        .map(ProductDetailImagesModifyRequest :: getDetailImageId)
+                        .collect(Collectors.toSet());
 
-            // 삭제 요청된 이미지 삭제
-            List<Long> needRemoveProductDetailImagesList = new ArrayList<>(savedProductDetailImagesList);
-            if (savedProductDetailImagesList.size() > modifyProductDetailImagesList.size()) {
-                needRemoveProductDetailImagesList.removeAll(modifyProductDetailImagesList);
-                for (Long removeProductDetailImages : needRemoveProductDetailImagesList) {
-                    productDetailImagesRepository.deleteById(removeProductDetailImages);
+                for (ProductDetailImagesModifyRequest detailImagesModifyRequest : productDetailImagesModifyRequestList) {
+                    if (detailImagesModifyRequest.getDetailImageId() == 0) {
+                        ProductDetailImages detailImages = ProductDetailImages.builder()
+                                .detailImgs(detailImagesModifyRequest.getDetailImgs())
+                                .product(modifyProduct)
+                                .build();
+                        productDetailImagesRepository.save(detailImages);
+                    }
                 }
-            }
-
-            // 삭제 후 나머지 이미지는 수정 혹은 생성 진행
-            for (ProductDetailImagesModifyRequest productDetailImage : productDetailImagesModifyRequestList) {
-                final Long productDetailImageId = productDetailImage.getDetailImageId();
-                Optional<ProductDetailImages> maybeProductDetailImages = productDetailImagesRepository.findById(productDetailImageId);
-                if (maybeProductDetailImages.isEmpty()) {
-                    log.info("ProductDetailImages is empty, Register new ProductDetailImages");
-                    ProductDetailImages newProductDetailImages = ProductDetailImages.builder()
-                            .detailImgs(productDetailImage.getDetailImgs())
+                List<ProductDetailImages> deleteImages = new ArrayList<>();
+                for (ProductDetailImages productDetailImages : productDetailImagesList) {
+                    if (!requestImages.contains(productDetailImages.getId())) {
+                        deleteImages.add(productDetailImages);
+                    }
+                }
+                for (ProductDetailImages deleteImage : deleteImages) {
+                    productDetailImagesRepository.delete(deleteImage);
+                }
+            } else {
+                for (ProductDetailImagesModifyRequest detailImagesModifyRequest : productDetailImagesModifyRequestList) {
+                    ProductDetailImages detailImages = ProductDetailImages.builder()
+                            .detailImgs(detailImagesModifyRequest.getDetailImgs())
                             .product(modifyProduct)
                             .build();
-
-                    productDetailImagesRepository.save(newProductDetailImages);
-                } else if (maybeProductDetailImages.isPresent()) {
-                    ProductDetailImages modifyProductDetailImages = maybeProductDetailImages.get();
-                    modifyProductDetailImages.setDetailImgs(productDetailImage.getDetailImgs());
-                    modifyProductDetailImages.setProduct(modifyProduct);
-                    productDetailImagesRepository.save(modifyProductDetailImages);
+                    productDetailImagesRepository.save(detailImages);
                 }
             }
 

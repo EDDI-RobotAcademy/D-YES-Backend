@@ -16,6 +16,6 @@ public class RecipeIngredientRegisterRequest {
     private int servingSize;
     private MainIngredient mainIngredient;
     private String mainIngredientAmount;
-    private List<RecipeIngredientInfoForm> otherIngredienList = new ArrayList<>();
+    private List<RecipeIngredientInfoForm> otherIngredientList = new ArrayList<>();
     private List<RecipeIngredientInfoForm> seasoningList = new ArrayList<>();
 }

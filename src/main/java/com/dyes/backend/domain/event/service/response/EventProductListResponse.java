@@ -19,4 +19,5 @@ public class EventProductListResponse {
     private ProductReviewResponseForUser productReviewResponseForUser;
     private EventProductDeadLineResponse deadLineResponse;
     private EventProductPurchaseCountResponse countResponse;
+    private EventProductIdResponse eventProductIdResponse;
 }

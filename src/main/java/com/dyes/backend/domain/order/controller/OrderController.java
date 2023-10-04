@@ -2,10 +2,8 @@ package com.dyes.backend.domain.order.controller;
 
 import com.dyes.backend.domain.order.controller.form.*;
 import com.dyes.backend.domain.order.service.OrderService;
-import com.dyes.backend.domain.order.service.admin.response.form.MonthlyOrdersStatisticsResponseForm;
-import com.dyes.backend.domain.order.service.admin.response.form.OrderDetailDataResponseForAdminForm;
-import com.dyes.backend.domain.order.service.admin.response.form.OrderInfoResponseFormForDashBoardForAdmin;
-import com.dyes.backend.domain.order.service.admin.response.form.OrderListResponseFormForAdmin;
+import com.dyes.backend.domain.order.service.admin.response.OrderProductListResponse;
+import com.dyes.backend.domain.order.service.admin.response.form.*;
 import com.dyes.backend.domain.order.service.user.request.KakaoPaymentRefundProductOptionRequest;
 import com.dyes.backend.domain.order.service.user.response.form.OrderConfirmResponseFormForUser;
 import com.dyes.backend.domain.order.service.user.response.form.OrderDetailDataResponseForUserForm;
@@ -41,7 +39,7 @@ public class OrderController {
     @PostMapping("/payment/kakao/refund")
     public boolean refundWithKakaoPayment(@RequestBody KakaoPaymentRefundRequestForm requestForm) {
         KakaoPaymentRefundOrderAndTokenAndReasonRequest orderAndTokenAndReasonRequest = requestForm.getOrderAndTokenAndReasonRequest();
-        List<KakaoPaymentRefundProductOptionRequest> requestList =requestForm.getRequestList();
+        List<KakaoPaymentRefundProductOptionRequest> requestList = requestForm.getRequestList();
         return orderService.refundPurchaseWithKakao(orderAndTokenAndReasonRequest, requestList);
     }
 
@@ -68,15 +66,20 @@ public class OrderController {
     public List<OrderListResponseFormForUser> getMyOrderListForUser(@RequestParam("userToken") String userToken) {
         return orderService.getMyOrderListForUser(userToken);
     }
+
+    // 관리자의 주문 내역 상세 읽기
     @GetMapping("/admin/combine-order-data/{productOrderId}")
     public OrderDetailDataResponseForAdminForm getCombineOrderData(@PathVariable("productOrderId") Long productOrderId){
         return orderService.orderDetailDataCombineForAdmin(productOrderId);
     }
+
+    // 사용자의 주문 내역 상세 읽기
     @GetMapping("/user/combine-order-data/{productOrderId}")
     public OrderDetailDataResponseForUserForm getCombineOrderDataForUser(@PathVariable("productOrderId") Long productOrderId){
         return orderService.orderDetailDataCombineForUser(productOrderId);
     }
 
+    // 배송완료 주문은 환불 신청시 환불 대기 상태로 변경
     @PostMapping("/waiting-for-refund")
     public boolean waitingForRefund (@RequestBody OrderedProductChangeStatusRequestForm requestForm){
         return orderService.orderedProductWaitingRefund(requestForm);
@@ -86,5 +89,17 @@ public class OrderController {
     @GetMapping("/admin/monthly_orders")
     public MonthlyOrdersStatisticsResponseForm getMonthlyOrders(){
         return orderService.getMonthlyOrders();
+    }
+
+    // 관리자의 환불 목록 확인
+    @GetMapping("/admin/refund-list")
+    public List<OrderRefundListResponseFormForAdmin> getAllOrderRefundListForAdmin() {
+        return orderService.getAllOrderRefundListForAdmin();
+    }
+
+    // 관리자의 환불 주문건의 간략한 정보 확인
+    @GetMapping("/admin/refund/read/{productOrderId}")
+    public OrderProductListResponse getRefundSummaryInfo(@PathVariable("productOrderId") Long productOrderId) {
+        return orderService.getRefundSummaryInfo(productOrderId);
     }
 }

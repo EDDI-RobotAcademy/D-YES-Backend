@@ -1,6 +1,5 @@
 package com.dyes.backend.domain.inquiry.service.response.read;
 
-import com.dyes.backend.domain.inquiry.entity.InquiryType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,10 +11,7 @@ import java.time.LocalDate;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class InquiryReadInquiryInfoResponse {
-    private Long inquiryId;
-    private String title;
-    private String content;
+public class InquiryReadReplyResponse {
+    private String replyContent;
     private LocalDate createDate;
-    private InquiryType inquiryType;
 }

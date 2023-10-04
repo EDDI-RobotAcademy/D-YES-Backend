@@ -38,4 +38,8 @@ public class InquiryController {
         InquiryReplyRequest request = requestForm.getInquiryReplyRequest();
         return inquiryService.replyInquiry(request);
     }
+    @GetMapping("/user-list")
+    public List<InquiryListResponseForm> userInquiryList(@RequestParam String userToken) {
+        return inquiryService.userInquiryList(userToken);
+    }
 }

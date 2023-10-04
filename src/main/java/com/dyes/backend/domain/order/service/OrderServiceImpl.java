@@ -50,6 +50,7 @@ import com.dyes.backend.domain.user.repository.AddressBookRepository;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import com.dyes.backend.utility.redis.RedisService;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import jakarta.persistence.criteria.Order;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -63,9 +64,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static com.dyes.backend.domain.delivery.entity.DeliveryStatus.PREPARING;
-import static com.dyes.backend.domain.order.entity.OrderStatus.CANCEL_PAYMENT;
-import static com.dyes.backend.domain.order.entity.OrderStatus.SUCCESS_PAYMENT;
-import static com.dyes.backend.domain.order.entity.OrderedProductStatus.WAITING_REFUND;
+import static com.dyes.backend.domain.order.entity.OrderStatus.*;
+import static com.dyes.backend.domain.order.entity.OrderedProductStatus.*;
 import static com.dyes.backend.domain.user.entity.AddressBookOption.DEFAULT_OPTION;
 
 @Service
@@ -93,6 +93,7 @@ public class OrderServiceImpl implements OrderService {
     final private EventPurchaseCountRepository eventPurchaseCountRepository;
     final private AdminService adminService;
 
+    // 카카오로 상품 구매
     public String purchaseReadyWithKakao(OrderProductRequestForm requestForm) throws JsonProcessingException {
         log.info("purchaseKakao start");
 
@@ -180,7 +181,7 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    // 상품을 주문하기 전에 확인하기
+    // 결제 전 주문 요청내역 확인
     @Override
     public OrderConfirmResponseFormForUser orderConfirm(OrderConfirmRequestForm requestForm) {
         try {
@@ -282,6 +283,7 @@ public class OrderServiceImpl implements OrderService {
             Long productOrderId = order.getId();
             Delivery delivery = order.getDelivery();
             DeliveryStatus deliveryStatus = delivery.getDeliveryStatus();
+            OrderStatus orderStatus = order.getOrderStatus();
             LocalDate orderedTime = order.getOrderedTime();
             List<OrderProductListResponse> orderProductList = new ArrayList<>();
 
@@ -309,7 +311,7 @@ public class OrderServiceImpl implements OrderService {
                 totalPrice = totalPrice + totalOptionPrice;
 
                 OrderOptionListResponse orderOptionListResponse
-                        = new OrderOptionListResponse(productOptionId, optionName, productOptionCount);
+                        = new OrderOptionListResponse(productOptionId, optionName, productOptionCount, orderedProduct.getOrderedProductStatus());
                 orderOptionList.add(orderOptionListResponse);
 
                 OrderProductListResponse orderProductListResponse
@@ -318,7 +320,7 @@ public class OrderServiceImpl implements OrderService {
             }
 
             OrderDetailInfoResponse orderDetailInfoResponse
-                    = new OrderDetailInfoResponse(productOrderId, totalPrice, orderedTime, deliveryStatus);
+                    = new OrderDetailInfoResponse(productOrderId, totalPrice, orderedTime, deliveryStatus, orderStatus);
             OrderListResponseFormForAdmin orderListResponseFormForAdmin
                     = new OrderListResponseFormForAdmin(orderUserInfoResponse, orderProductList, orderDetailInfoResponse);
             orderListResponseFormForAdmins.add(orderListResponseFormForAdmin);
@@ -433,6 +435,7 @@ public class OrderServiceImpl implements OrderService {
             Long productOrderId = order.getId();
             Delivery delivery = order.getDelivery();
             DeliveryStatus deliveryStatus = delivery.getDeliveryStatus();
+            OrderStatus orderStatus = order.getOrderStatus();
             LocalDate orderedTime = order.getOrderedTime();
             List<OrderProductListResponseForUser> orderProductList = new ArrayList<>();
 
@@ -471,7 +474,7 @@ public class OrderServiceImpl implements OrderService {
                 totalPrice = totalPrice + totalOptionPrice;
 
                 OrderOptionListResponse orderOptionListResponse
-                        = new OrderOptionListResponse(productOptionId, optionName, productOptionCount);
+                        = new OrderOptionListResponse(productOptionId, optionName, productOptionCount, orderedProduct.getOrderedProductStatus());
                 orderOptionList.add(orderOptionListResponse);
 
                 OrderProductListResponseForUser orderProductListResponse
@@ -480,7 +483,7 @@ public class OrderServiceImpl implements OrderService {
             }
 
             OrderDetailInfoResponse orderDetailInfoResponse
-                    = new OrderDetailInfoResponse(productOrderId, totalPrice, orderedTime, deliveryStatus);
+                    = new OrderDetailInfoResponse(productOrderId, totalPrice, orderedTime, deliveryStatus, orderStatus);
             OrderListResponseFormForUser orderListResponseFormForUser
                     = new OrderListResponseFormForUser(orderProductList, orderDetailInfoResponse);
             orderListResponseFormForUsers.add(orderListResponseFormForUser);
@@ -588,6 +591,8 @@ public class OrderServiceImpl implements OrderService {
 
     }
 
+    // 관리자의 주문 내역 상세 읽기
+    @Override
     public OrderDetailDataResponseForAdminForm orderDetailDataCombineForAdmin(Long orderId) {
         try {
             log.info("orderDetailDataCombineForAdmin start");
@@ -634,6 +639,7 @@ public class OrderServiceImpl implements OrderService {
                             .productOptionCount(orderedProduct.getProductOptionCount())
                             .productOptionPrice(productOption.getOptionPrice())
                             .productName(orderedProduct.getProductName())
+                            .orderedProductStatus(orderedProduct.getOrderedProductStatus())
                             .build();
                     productDataList.add(productData);
                 }
@@ -672,6 +678,8 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
+    // 사용자의 주문 내역 상세 읽기
+    @Override
     public OrderDetailDataResponseForUserForm orderDetailDataCombineForUser(Long orderId) {
         try {
             log.info("orderDetailDataCombineForUser start");
@@ -754,22 +762,24 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
+    // 배송완료 주문은 환불 신청시 환불 대기 상태로 변경
     @Override
     public boolean orderedProductWaitingRefund(OrderedProductChangeStatusRequestForm requestForm) {
         final String userToken = requestForm.getUserToken();
         final Long orderId = requestForm.getOrderId();
         final List<Long> productOptionIdList = requestForm.getProductOptionId();
+        final String refundReason = requestForm.getRefundReason();
 
         try {
-            final Admin admin = adminService.findAdminByUserToken(userToken);
-
-            if (admin == null) {
-                log.info("Unable to find admin with user token: {}", userToken);
+            final User user = authenticationService.findUserByUserToken(userToken);
+            if (user == null) {
+                log.info("There are no matching users");
                 return false;
             }
 
             Optional<ProductOrder> maybeOrder = orderRepository.findById(orderId);
             if (maybeOrder.isEmpty()) {
+                log.info("There are no matching orders");
                 return false;
             }
             ProductOrder order = maybeOrder.get();
@@ -779,6 +789,7 @@ public class OrderServiceImpl implements OrderService {
                 for (Long productOptionId : productOptionIdList) {
                     if (orderedProduct.getProductOptionId().equals(productOptionId)) {
                         orderedProduct.setOrderedProductStatus(WAITING_REFUND);
+                        orderedProduct.setRefundReason(refundReason);
                         orderedProductRepository.save(orderedProduct);
                     }
                 }
@@ -810,7 +821,7 @@ public class OrderServiceImpl implements OrderService {
         int totalPreviousOrdersAmount = 0;
         double monthOverMonthGrowthRate = 0;
         List<Integer> orderCountListByDay = new ArrayList<>();
-        
+
         // 당월 주문 내역 가져오기
         List<ProductOrder> productOrderList
                 = orderRepository.findByOrderedTimeBetween(firstDayOfCurrentMonth, lastDayOfCurrentMonth);
@@ -861,11 +872,138 @@ public class OrderServiceImpl implements OrderService {
                 = new MonthlyOrdersStatisticsResponseForm(
                 totalOrdersCount,
                 completedOrders,
-                cancelledOrders, 
-                totalOrdersAmount, 
-                monthOverMonthGrowthRate, 
+                cancelledOrders,
+                totalOrdersAmount,
+                monthOverMonthGrowthRate,
                 orderCountListByDay);
         return monthlyOrdersStatisticsResponseForm;
+    }
+
+    // 관리자의 환불 목록 확인
+    @Override
+    public List<OrderRefundListResponseFormForAdmin> getAllOrderRefundListForAdmin() {
+        log.info("Finding Refund Order List start");
+
+        try {
+
+            List<OrderRefundListResponseFormForAdmin> orderRefundListResponseFormForAdminList = new ArrayList<>();
+
+            // 주문 목록 가져오기
+            List<ProductOrder> orderList = orderRepository.findAllWithUser();
+            for (ProductOrder order : orderList) {
+
+                // 주문자 정보 가져오기
+                User user = order.getUser();
+                String userId = user.getId();
+
+                Optional<OrderedPurchaserProfile> maybeOrderedPurchaserProfile = orderedPurchaserProfileRepository.findByProductOrder(order);
+                if (maybeOrderedPurchaserProfile.isEmpty()) {
+                    log.info("Profile with order ID '{}' not found", order.getId());
+                    return null;
+                }
+
+                OrderedPurchaserProfile purchaserProfile = maybeOrderedPurchaserProfile.get();
+                String contactNumber = purchaserProfile.getOrderedPurchaseContactNumber();
+                Address address = purchaserProfile.getOrderedPurchaseProfileAddress();
+
+                OrderUserInfoResponse orderUserInfoResponse = new OrderUserInfoResponse(userId, contactNumber, address);
+
+                // 주문 정보 가져오기
+                int totalPrice = order.getAmount().getTotalAmount();
+                int refundPrice = order.getAmount().getRefundedAmount();
+
+                Long productOrderId = order.getId();
+                Delivery delivery = order.getDelivery();
+                DeliveryStatus deliveryStatus = delivery.getDeliveryStatus();
+                LocalDate orderedTime = order.getOrderedTime();
+                String refundReason = "";
+                OrderedProductStatus orderedProductStatus = null;
+
+                // 주문 상품 옵션 가져오기
+                List<OrderedProduct> orderedProductList = orderedProductRepository.findAllByProductOrderAndStatus(order);
+                List<OrderedProductStatus> orderedProductStatusList = new ArrayList<>();
+                for (OrderedProduct orderedProduct : orderedProductList) {
+                    refundReason = orderedProduct.getRefundReason();
+                    orderedProductStatusList.add(orderedProduct.getOrderedProductStatus());
+                }
+
+                if (orderedProductStatusList.contains(WAITING_REFUND)) {
+                    orderedProductStatus = WAITING_REFUND;
+                } else if (orderedProductStatusList.contains(REFUNDED) && !orderedProductStatusList.contains(WAITING_REFUND)) {
+                    orderedProductStatus = REFUNDED;
+                } else if ((orderedProductStatusList.contains(PAYBACK))) {
+                    orderedProductStatus = PAYBACK;
+                }
+
+                if (orderedProductStatus != null) {
+                    if (orderedProductStatus.equals(WAITING_REFUND) || orderedProductStatus.equals(REFUNDED) || orderedProductStatus.equals(PAYBACK)) {
+                        OrderRefundDetailInfoResponse orderRefundDetailInfoResponse
+                                = new OrderRefundDetailInfoResponse(
+                                productOrderId,
+                                totalPrice,
+                                refundPrice,
+                                orderedTime,
+                                deliveryStatus,
+                                orderedProductStatus,
+                                refundReason);
+
+                        OrderRefundListResponseFormForAdmin orderRefundListResponseFormForAdmin
+                                = new OrderRefundListResponseFormForAdmin(orderUserInfoResponse, orderRefundDetailInfoResponse);
+                        orderRefundListResponseFormForAdminList.add(orderRefundListResponseFormForAdmin);
+                    }
+                }
+            }
+            log.info("Finding Refund Order List end");
+            return orderRefundListResponseFormForAdminList;
+        } catch (Exception e) {
+            log.error("Error occurred while find refunded order list", e);
+            return null;
+        }
+    }
+
+    // 관리자의 환불 주문건의 간략한 정보 확인
+    @Override
+    public OrderProductListResponse getRefundSummaryInfo(Long productOrderId) {
+        try {
+            log.info("getRefundSummaryInfo start");
+
+            Optional<ProductOrder> maybeOrder = orderRepository.findByStringIdWithDelivery(productOrderId);
+            if (maybeOrder.isEmpty()) {
+                log.info("no order data");
+                return null;
+            }
+            ProductOrder order = maybeOrder.get();
+
+            List<OrderedProduct> orderedProductList = orderedProductRepository.findAllByProductOrder(order);
+
+            List<OrderOptionListResponse> orderOptionListResponseList = new ArrayList<>();
+            Long productId = 0L;
+            String productName = "";
+            for (OrderedProduct orderedProduct : orderedProductList) {
+                Optional<ProductOption> maybeProductOption = productOptionRepository.findById(orderedProduct.getProductOptionId());
+                if (maybeOrder.isPresent()) {
+                    ProductOption productOption = maybeProductOption.get();
+                    OrderOptionListResponse orderOptionListResponse
+                            = OrderOptionListResponse.builder()
+                            .optionId(productOption.getId())
+                            .optionName(productOption.getOptionName())
+                            .optionCount(orderedProduct.getProductOptionCount())
+                            .orderProductStatus(orderedProduct.getOrderedProductStatus())
+                            .refundReason(orderedProduct.getRefundReason())
+                            .build();
+                    orderOptionListResponseList.add(orderOptionListResponse);
+                }
+                productId = orderedProduct.getProductId();
+                productName = orderedProduct.getProductName();
+            }
+            OrderProductListResponse orderProductListResponse = new OrderProductListResponse(productId, productName, orderOptionListResponseList);
+
+            log.info("getRefundSummaryInfo end");
+            return orderProductListResponse;
+        } catch (Exception e) {
+            log.error("Error occurred while get order summary Info", e);
+            return null;
+        }
     }
 
     public class OverMaxStockException extends RuntimeException {

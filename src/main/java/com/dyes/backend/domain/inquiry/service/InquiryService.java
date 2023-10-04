@@ -12,4 +12,5 @@ public interface InquiryService {
     InquiryReadResponseForm readInquiry(Long inquiryId);
     List<InquiryListResponseForm> listInquiry();
     boolean replyInquiry(InquiryReplyRequest request);
+    List<InquiryListResponseForm> userInquiryList(String userToken);
 }

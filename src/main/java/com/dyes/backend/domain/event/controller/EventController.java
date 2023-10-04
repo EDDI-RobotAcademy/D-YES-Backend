@@ -79,11 +79,11 @@ public class EventController {
 
         return result;
     }
-    @DeleteMapping("/delete")
-    public boolean eventProductModify(@RequestBody EventProductDeleteRequestForm requestForm) {
-        EventProductDeleteRequest request = requestForm.getEventProductDeleteRequest();
+    @DeleteMapping("/delete/{eventProductId}")
+    public boolean eventProductModify(@PathVariable("eventProductId") Long eventProductId,
+                                      @RequestParam("userToken") String userToken) {
 
-        boolean result = eventService.eventProductDelete(request);
+        boolean result = eventService.eventProductDelete(eventProductId, userToken);
 
         return result;
     }

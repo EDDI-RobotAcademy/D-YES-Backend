@@ -1,5 +1,7 @@
 package com.dyes.backend.domain.payment.service;
 
+import com.dyes.backend.domain.admin.entity.Admin;
+import com.dyes.backend.domain.admin.repository.AdminRepository;
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
 import com.dyes.backend.domain.event.entity.EventOrder;
 import com.dyes.backend.domain.event.entity.EventPurchaseCount;
@@ -46,9 +48,10 @@ import org.springframework.web.servlet.view.RedirectView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-import static com.dyes.backend.domain.order.entity.OrderStatus.CANCEL_PAYMENT;
-import static com.dyes.backend.domain.order.entity.OrderStatus.PART_CANCEL_PAYMENT;
+import static com.dyes.backend.domain.order.entity.OrderStatus.*;
 
 @Service
 @Slf4j
@@ -63,6 +66,7 @@ public class PaymentServiceImpl implements PaymentService{
     final private OrderRepository orderRepository;
     final private RefundedPaymentRepository refundedPaymentRepository;
     final private OrderedProductRepository orderedProductRepository;
+    final private AdminRepository adminRepository;
     public KakaoPaymentReadyResponse paymentRequest(KakaoPaymentRequest request) {
         log.info("paymentRequest start");
         try{
@@ -173,13 +177,25 @@ public class PaymentServiceImpl implements PaymentService{
         try {
             User user = authenticationService.findUserByUserToken(userToken);
             if (user == null) {
+                log.info("There are no matching users");
                 return false;
             }
-            Optional<ProductOrder> maybeOrder = orderRepository.findById(orderId);
+
+            Optional<Admin> maybeAdmin = adminRepository.findByUser(user);
+
+            Optional<ProductOrder> maybeOrder = orderRepository.findByIdWithUser(orderId);
             if (maybeOrder.isEmpty()) {
+                log.info("There are no matching orders");
                 return false;
             }
             ProductOrder order = maybeOrder.get();
+
+            User userInOrder = order.getUser();
+
+            if (!user.getId().equals(userInOrder.getId()) && maybeAdmin.isEmpty()) {
+                log.info("There are no matching user and user in order");
+                return false;
+            }
 
             final String cid = kakaoPaymentSecretsProvider.getCid();
             final String tid = order.getTid();
@@ -192,6 +208,7 @@ public class PaymentServiceImpl implements PaymentService{
                 Long productOptionId = optionRequest.getProductOptionId();
                 Optional<ProductOption> maybeProductOption = productOptionRepository.findById(productOptionId);
                 if (maybeProductOption.isEmpty()) {
+                    log.info("There are no matching options");
                     return false;
                 }
                 ProductOption productOption = maybeProductOption.get();
@@ -220,14 +237,6 @@ public class PaymentServiceImpl implements PaymentService{
                     orderAmount.setRefundedAmount(existingRefundAmount + cancelAmount);
                     order.setAmount(orderAmount);
 
-                    if (response.getStatus().equals(CANCEL_PAYMENT)) {
-                        order.setOrderStatus(CANCEL_PAYMENT);
-                    } else if (order.getAmount().getTotalAmount() == 0) {
-                        order.setOrderStatus(CANCEL_PAYMENT);
-                    } else {
-                        order.setOrderStatus(PART_CANCEL_PAYMENT);
-                    }
-
                     RefundedPayment refundedPayment = RefundedPayment.builder()
                             .aid(response.getAid())
                             .tid(response.getTid())
@@ -238,16 +247,30 @@ public class PaymentServiceImpl implements PaymentService{
                             .build();
 
                     List<OrderedProduct> productList = orderedProductRepository.findAllByProductOrder(order);
-                        for (KakaoPaymentRefundProductOptionRequest optionRequest : requestList){
-                            Long productOptionId = optionRequest.getProductOptionId();
-                            for (OrderedProduct orderedProduct : productList) {
-                                if(orderedProduct.getProductOptionId().equals(productOptionId) && orderedProduct.getOrderedProductStatus() != OrderedProductStatus.REFUNDED){
+                    Set<Long> refundRequestOptionIdStream = requestList.stream()
+                            .map(KakaoPaymentRefundProductOptionRequest :: getProductOptionId)
+                            .collect(Collectors.toSet());
 
-                                    orderedProduct.setOrderedProductStatus(OrderedProductStatus.REFUNDED);
-                                    orderedProductRepository.save(orderedProduct);
-                                    }
+                    for (OrderedProduct orderedProduct : productList) {
+                        if(refundRequestOptionIdStream.contains(orderedProduct.getProductOptionId()) && orderedProduct.getOrderedProductStatus() != OrderedProductStatus.REFUNDED){
+
+                            orderedProduct.setOrderedProductStatus(OrderedProductStatus.REFUNDED);
+                            orderedProduct.setRefundReason(refundReason);
+                            orderedProductRepository.save(orderedProduct);
                             }
-                        }
+                    }
+                    boolean isAllRefunded = productList.stream().allMatch(orderedProduct -> orderedProduct.getOrderedProductStatus() == OrderedProductStatus.REFUNDED);
+
+                    if (response.getStatus().equals(CANCEL_PAYMENT)) {
+                        order.setOrderStatus(CANCEL_PAYMENT);
+                    } else if (order.getAmount().getTotalAmount() == 0) {
+                        order.setOrderStatus(CANCEL_PAYMENT);
+                    } else if (isAllRefunded) {
+                        order.setOrderStatus(CANCEL_PAYMENT);
+                    }
+                    else {
+                        order.setOrderStatus(PART_CANCEL_PAYMENT);
+                    }
 
                     orderRepository.save(order);
                     refundedPaymentRepository.save(refundedPayment);
@@ -311,11 +334,9 @@ public class PaymentServiceImpl implements PaymentService{
                     order.setAmount(orderAmount);
 
                     if (response.getStatus().equals(CANCEL_PAYMENT)) {
-                        order.setOrderStatus(CANCEL_PAYMENT);
-                    } else if (order.getAmount().getTotalAmount() == 0) {
-                        order.setOrderStatus(CANCEL_PAYMENT);
+                        order.setOrderStatus(EVENT_PAYBACK);
                     } else {
-                        order.setOrderStatus(PART_CANCEL_PAYMENT);
+                        order.setOrderStatus(EVENT_PAYBACK);
                     }
 
                     RefundedPayment refundedPayment = RefundedPayment.builder()
@@ -465,6 +486,11 @@ public class PaymentServiceImpl implements PaymentService{
             log.error("Failed connect to server: {}", e.getMessage(), e);
             return null;
         }
+    }
+    public boolean isEveryOptionRefund(List<ProductOption> refundProductOptionList) {
+        for (ProductOption productOption : refundProductOptionList) {
+        }
+        return false;
     }
 
     public HttpHeaders getHeaders() {
