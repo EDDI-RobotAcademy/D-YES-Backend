@@ -284,14 +284,19 @@ public class UserProductServiceImpl implements UserProductService {
 
         // 상품 목록 조회 진행
         try {
-            Pageable pageable = PageRequest.of(0, 10);
             LocalDate endDate = LocalDate.now();
             LocalDate startDate = endDate.minus(7, ChronoUnit.DAYS);
+            log.info("start date : " + startDate);
+            log.info("end date : " + endDate);
 
-            Page<ProductManagement> productManagementList = productManagementRepository.findByCreatedDateBetween(startDate, endDate, pageable);
+            List<ProductManagement> productManagementList = productManagementRepository.findAllByCreatedDateBetween(startDate, endDate);
+            log.info("size : " + productManagementList.size());
             for (ProductManagement productManagement : productManagementList) {
                 Product product = productManagement.getProduct();
+                log.info("Is it Event Product? : {}", product.getMaybeEventProduct());
+                log.info("Product Id is : {}", product.getId());
                 if(product.getMaybeEventProduct().equals(NO)) {
+                    log.info("This is not Event Product");
                     ProductListResponseFormForUser productListResponseFormForUser = createUserProductListResponseForm(product);
                     productListResponseFormListForUser.add(productListResponseFormForUser);
                 }
