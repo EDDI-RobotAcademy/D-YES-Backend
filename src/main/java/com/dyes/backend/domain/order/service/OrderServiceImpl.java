@@ -1,6 +1,5 @@
 package com.dyes.backend.domain.order.service;
 
-import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.service.AdminService;
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
 import com.dyes.backend.domain.cart.entity.Cart;
@@ -50,7 +49,6 @@ import com.dyes.backend.domain.user.repository.AddressBookRepository;
 import com.dyes.backend.domain.user.repository.UserProfileRepository;
 import com.dyes.backend.utility.redis.RedisService;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import jakarta.persistence.criteria.Order;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -64,7 +62,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static com.dyes.backend.domain.delivery.entity.DeliveryStatus.PREPARING;
-import static com.dyes.backend.domain.order.entity.OrderStatus.*;
+import static com.dyes.backend.domain.order.entity.OrderStatus.CANCEL_PAYMENT;
+import static com.dyes.backend.domain.order.entity.OrderStatus.SUCCESS_PAYMENT;
 import static com.dyes.backend.domain.order.entity.OrderedProductStatus.*;
 import static com.dyes.backend.domain.user.entity.AddressBookOption.DEFAULT_OPTION;
 
@@ -492,7 +491,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     // 주문 진행
-    @Transactional(rollbackOn = Exception.class, dontRollbackOn = OverMaxStockException.class)
+    @Transactional(rollbackOn = Exception.class)
     public void saveOrderedData(OrderedPurchaserProfileRequest profileRequest,
                                 int totalAmount, String tid, User user, List<OrderedProductOptionRequest> orderedProductOptionRequestList) {
 
@@ -572,7 +571,7 @@ public class OrderServiceImpl implements OrderService {
                     eventOrderRepository.save(eventOrder);
 
                     EventPurchaseCount count = maybeEventProduct.get().getEventPurchaseCount();
-                    Integer nowCount = count.getNowCount() + 1;
+                    Integer nowCount = count.getNowCount() + 20;
                     count.setNowCount(nowCount);
                     eventPurchaseCountRepository.save(count);
                 }
