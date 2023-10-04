@@ -119,7 +119,7 @@ public class EventServiceImpl implements EventService{
 
             List<EventProductListResponse> responseList = new ArrayList<>();
             for (EventProduct eventProduct : eventProductList) {
-                if (eventProductList.size() != 0){
+                if (eventProductList.size() != 0 && LocalDate.now().isBefore(eventProduct.getEventDeadLine().getDeadLine())){
                     // 찾아온 EventProduct의 파츠들을 정의해주기
                     Product product = eventProduct.getProductOption().getProduct();
                     ProductOption productOption = eventProduct.getProductOption();
