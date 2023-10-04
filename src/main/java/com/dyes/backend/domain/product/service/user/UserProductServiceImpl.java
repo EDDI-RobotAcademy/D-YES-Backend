@@ -277,7 +277,7 @@ public class UserProductServiceImpl implements UserProductService {
 
     // 신규 상품 10개 목록 조회
     @Override
-    public List<ProductListResponseFormForUser> getNew10ProductListForUser() {
+    public List<ProductListResponseFormForUser> getNewProductListForUser() {
         log.info("Reading new product list");
 
         List<ProductListResponseFormForUser> productListResponseFormListForUser = new ArrayList<>();
@@ -291,8 +291,10 @@ public class UserProductServiceImpl implements UserProductService {
             Page<ProductManagement> productManagementList = productManagementRepository.findByCreatedDateBetween(startDate, endDate, pageable);
             for (ProductManagement productManagement : productManagementList) {
                 Product product = productManagement.getProduct();
-                ProductListResponseFormForUser productListResponseFormForUser = createUserProductListResponseForm(product);
-                productListResponseFormListForUser.add(productListResponseFormForUser);
+                if(product.getMaybeEventProduct().equals(NO)) {
+                    ProductListResponseFormForUser productListResponseFormForUser = createUserProductListResponseForm(product);
+                    productListResponseFormListForUser.add(productListResponseFormForUser);
+                }
             }
 
             log.info("New Product list read successful");
