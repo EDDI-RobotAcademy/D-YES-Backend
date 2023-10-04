@@ -669,12 +669,22 @@ public class UserServiceImpl implements UserService {
 
         // 주소록 삭제 진행
         try {
+            AddressBookOption addressBookOption = null;
             List<AddressBook> addressBookList = addressBookRepository.findAllByUser(user);
             for (AddressBook addressBook : addressBookList) {
                 if (addressBook.getId().equals(addressBookId)) {
+                    addressBookOption = addressBook.getAddressBookOption();
+                    log.info("This addressBook is DEFAULT_OPTION");
                     addressBookRepository.deleteById(addressBook.getId().toString());
                     log.info("AddressBook deletion successful for addressBook with ID: {}", addressBook.getId());
-                    return true;
+                }
+            }
+            if(addressBookOption.equals(DEFAULT_OPTION)) {
+                List<AddressBook> remainAddressBookList = addressBookRepository.findAllByUser(user);
+                if(remainAddressBookList.size() > 0){
+                    remainAddressBookList.get(0).setAddressBookOption(DEFAULT_OPTION);
+                    addressBookRepository.save(remainAddressBookList.get(0));
+                    log.info("remain address book with ID: {} to be DEFAULT_OPTION: ", remainAddressBookList.get(0).getId());
                 }
             }
             return true;
