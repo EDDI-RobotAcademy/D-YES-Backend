@@ -718,7 +718,7 @@ public class UserServiceImpl implements UserService {
             for (AddressBook addressBook : addressBookList) {
                 if (addressBook.getId().equals(addressBookId)) {
                     if (addressBookOption.equals(DEFAULT_OPTION)) {
-                        Optional<AddressBook> maybeAddressBook = addressBookRepository.findByAddressBookOption(DEFAULT_OPTION);
+                        Optional<AddressBook> maybeAddressBook = addressBookRepository.findByAddressBookOptionAndUser(DEFAULT_OPTION, user);
                         if (maybeAddressBook.isPresent()) {
                             AddressBook addressBookDefaultOption = maybeAddressBook.get();
                             addressBookDefaultOption.setAddressBookOption(NON_DEFAULT_OPTION);
