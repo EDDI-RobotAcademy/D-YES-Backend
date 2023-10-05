@@ -13,4 +13,5 @@ public interface AddressBookRepository extends JpaRepository<AddressBook, String
     List<AddressBook> findAllByUser(User user);
 
     Optional<AddressBook> findByAddressBookOption(AddressBookOption defaultOption);
+    Optional<AddressBook> findByAddressBookOptionAndUser(AddressBookOption defaultOption, User user);
 }
