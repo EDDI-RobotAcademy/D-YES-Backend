@@ -7,6 +7,8 @@ import com.dyes.backend.domain.farm.repository.FarmRepresentativeInfoRepository;
 import com.dyes.backend.domain.farm.service.response.FarmInfoResponseForUser;
 import com.dyes.backend.domain.farmproducePriceForecast.entity.*;
 import com.dyes.backend.domain.farmproducePriceForecast.repository.*;
+import com.dyes.backend.domain.farmproducePriceForecast.service.request.FarmProducePriceForecastData;
+import com.dyes.backend.domain.farmproducePriceForecast.service.response.FarmProducePriceForecastResponseForm;
 import com.dyes.backend.domain.product.entity.*;
 import com.dyes.backend.domain.product.repository.*;
 import com.dyes.backend.domain.product.service.user.response.*;
@@ -18,19 +20,16 @@ import com.dyes.backend.domain.review.entity.Review;
 import com.dyes.backend.domain.review.entity.ReviewRating;
 import com.dyes.backend.domain.review.repository.ReviewRatingRepository;
 import com.dyes.backend.domain.review.repository.ReviewRepository;
+import com.dyes.backend.utility.redis.RedisService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static com.dyes.backend.domain.product.entity.MaybeEventProduct.NO;
 import static com.dyes.backend.utility.number.NumberUtils.findMinValue;
@@ -57,6 +56,7 @@ public class UserProductServiceImpl implements UserProductService {
     final private YoungPumpkinPriceRepository youngPumpkinPriceRepository;
     final private ReviewRepository reviewRepository;
     final private ReviewRatingRepository reviewRatingRepository;
+    final private RedisService redisService;
 
     // 상품 읽기
     @Override
@@ -411,91 +411,195 @@ public class UserProductServiceImpl implements UserProductService {
 
             switch (produceType) {
                 case CABBAGE:
-                    Optional<CabbagePrice> maybeCabbagePrice = cabbagePriceRepository.findByDate(currentDate.toString());
-                    Optional<CabbagePrice> maybeCabbagePriceTwoWeeksLater = cabbagePriceRepository.findByDate((currentDate.plusDays(13)).toString());
-                    if (maybeCabbagePrice.isPresent() && maybeCabbagePriceTwoWeeksLater.isPresent()) {
-                        CabbagePrice currentPrice = maybeCabbagePrice.get();
-                        CabbagePrice twoWeeksLaterPrice = maybeCabbagePriceTwoWeeksLater.get();
+                    try {
+                        FarmProducePriceForecastData farmProducePriceForecastData
+                                = redisService.getFarmProducePriceForecastData("cabbage");
+                        Map<String, Integer> priceListByDay = farmProducePriceForecastData.getPriceListByDay();
 
-                        currentPriceValue = currentPrice.getPrice();
-                        twoWeeksLaterPriceValue = twoWeeksLaterPrice.getPrice();
+                        LocalDate after13daysDate = currentDate.plusDays(13);
+                        LocalDate tomorrowDate = currentDate.plusDays(1);
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                        String formattedTomorrowDate = tomorrowDate.format(formatter);
+                        log.info("tomorrow : " + formattedTomorrowDate);
+
+                        String formattedAfter13daysDate = after13daysDate.format(formatter);
+                        log.info("after 13days : " + formattedAfter13daysDate);
+
+                        priceListByDay.get(formattedAfter13daysDate);
+
+                        currentPriceValue = priceListByDay.get(formattedTomorrowDate);
+                        twoWeeksLaterPriceValue = priceListByDay.get(formattedAfter13daysDate);
+
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
                     }
                     break;
                 case CARROT:
-                    Optional<CarrotPrice> maybeCarrotPrice = carrotPriceRepository.findByDate(currentDate.toString());
-                    Optional<CarrotPrice> maybeCarrotPriceTwoWeeksLater = carrotPriceRepository.findByDate((currentDate.plusDays(13)).toString());
-                    if (maybeCarrotPrice.isPresent() && maybeCarrotPriceTwoWeeksLater.isPresent()) {
-                        CarrotPrice currentPrice = maybeCarrotPrice.get();
-                        CarrotPrice twoWeeksLaterPrice = maybeCarrotPriceTwoWeeksLater.get();
+                    try {
+                        FarmProducePriceForecastData farmProducePriceForecastData
+                                = redisService.getFarmProducePriceForecastData("carrot");
+                        Map<String, Integer> priceListByDay = farmProducePriceForecastData.getPriceListByDay();
 
-                        currentPriceValue = currentPrice.getPrice();
-                        twoWeeksLaterPriceValue = twoWeeksLaterPrice.getPrice();
+                        LocalDate after13daysDate = currentDate.plusDays(13);
+                        LocalDate tomorrowDate = currentDate.plusDays(1);
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                        String formattedTomorrowDate = tomorrowDate.format(formatter);
+                        log.info("tomorrow : " + formattedTomorrowDate);
+
+                        String formattedAfter13daysDate = after13daysDate.format(formatter);
+                        log.info("after 13days : " + formattedAfter13daysDate);
+
+                        priceListByDay.get(formattedAfter13daysDate);
+
+                        currentPriceValue = priceListByDay.get(formattedTomorrowDate);
+                        twoWeeksLaterPriceValue = priceListByDay.get(formattedAfter13daysDate);
+
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
                     }
                     break;
                 case CUCUMBER:
-                    Optional<CucumberPrice> maybeCucumberPrice = cucumberPriceRepository.findByDate(currentDate.toString());
-                    Optional<CucumberPrice> maybeCucumberPriceTwoWeeksLater = cucumberPriceRepository.findByDate((currentDate.plusDays(13)).toString());
-                    if (maybeCucumberPrice.isPresent() && maybeCucumberPriceTwoWeeksLater.isPresent()) {
-                        CucumberPrice currentPrice = maybeCucumberPrice.get();
-                        CucumberPrice twoWeeksLaterPrice = maybeCucumberPriceTwoWeeksLater.get();
+                    try {
+                        FarmProducePriceForecastData farmProducePriceForecastData
+                                = redisService.getFarmProducePriceForecastData("cucumber");
+                        Map<String, Integer> priceListByDay = farmProducePriceForecastData.getPriceListByDay();
 
-                        currentPriceValue = currentPrice.getPrice();
-                        twoWeeksLaterPriceValue = twoWeeksLaterPrice.getPrice();
+                        LocalDate after13daysDate = currentDate.plusDays(13);
+                        LocalDate tomorrowDate = currentDate.plusDays(1);
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                        String formattedTomorrowDate = tomorrowDate.format(formatter);
+                        log.info("tomorrow : " + formattedTomorrowDate);
+
+                        String formattedAfter13daysDate = after13daysDate.format(formatter);
+                        log.info("after 13days : " + formattedAfter13daysDate);
+
+                        priceListByDay.get(formattedAfter13daysDate);
+
+                        currentPriceValue = priceListByDay.get(formattedTomorrowDate);
+                        twoWeeksLaterPriceValue = priceListByDay.get(formattedAfter13daysDate);
+
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
                     }
                     break;
                 case KIMCHI_CABBAGE:
-                    Optional<KimchiCabbagePrice> maybeKimchiCabbagePrice = kimchiCabbagePriceRepository.findByDate(currentDate.toString());
-                    Optional<KimchiCabbagePrice> maybeKimchiCabbagePriceTwoWeeksLater = kimchiCabbagePriceRepository.findByDate((currentDate.plusDays(13)).toString());
-                    if (maybeKimchiCabbagePrice.isPresent() && maybeKimchiCabbagePriceTwoWeeksLater.isPresent()) {
-                        KimchiCabbagePrice currentPrice = maybeKimchiCabbagePrice.get();
-                        KimchiCabbagePrice twoWeeksLaterPrice = maybeKimchiCabbagePriceTwoWeeksLater.get();
+                    try {
+                        FarmProducePriceForecastData farmProducePriceForecastData
+                                = redisService.getFarmProducePriceForecastData("kimchiCabbage");
+                        Map<String, Integer> priceListByDay = farmProducePriceForecastData.getPriceListByDay();
 
-                        currentPriceValue = currentPrice.getPrice();
-                        twoWeeksLaterPriceValue = twoWeeksLaterPrice.getPrice();
+                        LocalDate after13daysDate = currentDate.plusDays(13);
+                        LocalDate tomorrowDate = currentDate.plusDays(1);
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                        String formattedTomorrowDate = tomorrowDate.format(formatter);
+                        log.info("tomorrow : " + formattedTomorrowDate);
+
+                        String formattedAfter13daysDate = after13daysDate.format(formatter);
+                        log.info("after 13days : " + formattedAfter13daysDate);
+
+                        priceListByDay.get(formattedAfter13daysDate);
+
+                        currentPriceValue = priceListByDay.get(formattedTomorrowDate);
+                        twoWeeksLaterPriceValue = priceListByDay.get(formattedAfter13daysDate);
+
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
                     }
                     break;
                 case ONION:
-                    Optional<OnionPrice> maybeOnionPrice = onionPriceRepository.findByDate(currentDate.toString());
-                    Optional<OnionPrice> maybeOnionPriceTwoWeeksLater = onionPriceRepository.findByDate((currentDate.plusDays(13)).toString());
-                    if (maybeOnionPrice.isPresent() && maybeOnionPriceTwoWeeksLater.isPresent()) {
-                        OnionPrice currentPrice = maybeOnionPrice.get();
-                        OnionPrice twoWeeksLaterPrice = maybeOnionPriceTwoWeeksLater.get();
+                    try {
+                        FarmProducePriceForecastData farmProducePriceForecastData
+                                = redisService.getFarmProducePriceForecastData("onion");
+                        Map<String, Integer> priceListByDay = farmProducePriceForecastData.getPriceListByDay();
 
-                        currentPriceValue = currentPrice.getPrice();
-                        twoWeeksLaterPriceValue = twoWeeksLaterPrice.getPrice();
+                        LocalDate after13daysDate = currentDate.plusDays(13);
+                        LocalDate tomorrowDate = currentDate.plusDays(1);
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                        String formattedTomorrowDate = tomorrowDate.format(formatter);
+                        log.info("tomorrow : " + formattedTomorrowDate);
+
+                        String formattedAfter13daysDate = after13daysDate.format(formatter);
+                        log.info("after 13days : " + formattedAfter13daysDate);
+
+                        priceListByDay.get(formattedAfter13daysDate);
+
+                        currentPriceValue = priceListByDay.get(formattedTomorrowDate);
+                        twoWeeksLaterPriceValue = priceListByDay.get(formattedAfter13daysDate);
+
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
                     }
                     break;
                 case POTATO:
-                    Optional<PotatoPrice> maybePotatoPrice = potatoPriceRepository.findByDate(currentDate.toString());
-                    Optional<PotatoPrice> maybePotatoPriceTwoWeeksLater = potatoPriceRepository.findByDate((currentDate.plusDays(13)).toString());
-                    if (maybePotatoPrice.isPresent() && maybePotatoPriceTwoWeeksLater.isPresent()) {
-                        PotatoPrice currentPrice = maybePotatoPrice.get();
-                        PotatoPrice twoWeeksLaterPrice = maybePotatoPriceTwoWeeksLater.get();
+                    try {
+                        FarmProducePriceForecastData farmProducePriceForecastData
+                                = redisService.getFarmProducePriceForecastData("potato");
+                        Map<String, Integer> priceListByDay = farmProducePriceForecastData.getPriceListByDay();
 
-                        currentPriceValue = currentPrice.getPrice();
-                        twoWeeksLaterPriceValue = twoWeeksLaterPrice.getPrice();
+                        LocalDate after13daysDate = currentDate.plusDays(13);
+                        LocalDate tomorrowDate = currentDate.plusDays(1);
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                        String formattedTomorrowDate = tomorrowDate.format(formatter);
+                        log.info("tomorrow : " + formattedTomorrowDate);
+
+                        String formattedAfter13daysDate = after13daysDate.format(formatter);
+                        log.info("after 13days : " + formattedAfter13daysDate);
+
+                        priceListByDay.get(formattedAfter13daysDate);
+
+                        currentPriceValue = priceListByDay.get(formattedTomorrowDate);
+                        twoWeeksLaterPriceValue = priceListByDay.get(formattedAfter13daysDate);
+
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
                     }
                     break;
                 case WELSH_ONION:
-                    Optional<WelshOnionPrice> maybeWelshOnionPrice = welshOnionPriceRepository.findByDate(currentDate.toString());
-                    Optional<WelshOnionPrice> maybeWelshOnionPriceTwoWeeksLater = welshOnionPriceRepository.findByDate((currentDate.plusDays(13)).toString());
-                    if (maybeWelshOnionPrice.isPresent() && maybeWelshOnionPriceTwoWeeksLater.isPresent()) {
-                        WelshOnionPrice currentPrice = maybeWelshOnionPrice.get();
-                        WelshOnionPrice twoWeeksLaterPrice = maybeWelshOnionPriceTwoWeeksLater.get();
+                    try {
+                        FarmProducePriceForecastData farmProducePriceForecastData
+                                = redisService.getFarmProducePriceForecastData("welshOnion");
+                        Map<String, Integer> priceListByDay = farmProducePriceForecastData.getPriceListByDay();
 
-                        currentPriceValue = currentPrice.getPrice();
-                        twoWeeksLaterPriceValue = twoWeeksLaterPrice.getPrice();
+                        LocalDate after13daysDate = currentDate.plusDays(13);
+                        LocalDate tomorrowDate = currentDate.plusDays(1);
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                        String formattedTomorrowDate = tomorrowDate.format(formatter);
+                        log.info("tomorrow : " + formattedTomorrowDate);
+
+                        String formattedAfter13daysDate = after13daysDate.format(formatter);
+                        log.info("after 13days : " + formattedAfter13daysDate);
+
+                        priceListByDay.get(formattedAfter13daysDate);
+
+                        currentPriceValue = priceListByDay.get(formattedTomorrowDate);
+                        twoWeeksLaterPriceValue = priceListByDay.get(formattedAfter13daysDate);
+
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
                     }
                     break;
                 case YOUNG_PUMPKIN:
-                    Optional<YoungPumpkinPrice> maybeYoungPumpkinPrice = youngPumpkinPriceRepository.findByDate(currentDate.toString());
-                    Optional<YoungPumpkinPrice> maybeYoungPumpkinPriceTwoWeeksLater = youngPumpkinPriceRepository.findByDate((currentDate.plusDays(13)).toString());
-                    if (maybeYoungPumpkinPrice.isPresent() && maybeYoungPumpkinPriceTwoWeeksLater.isPresent()) {
-                        YoungPumpkinPrice currentPrice = maybeYoungPumpkinPrice.get();
-                        YoungPumpkinPrice twoWeeksLaterPrice = maybeYoungPumpkinPriceTwoWeeksLater.get();
+                    try {
+                        FarmProducePriceForecastData farmProducePriceForecastData
+                                = redisService.getFarmProducePriceForecastData("youngPumpkin");
+                        Map<String, Integer> priceListByDay = farmProducePriceForecastData.getPriceListByDay();
 
-                        currentPriceValue = currentPrice.getPrice();
-                        twoWeeksLaterPriceValue = twoWeeksLaterPrice.getPrice();
+                        LocalDate after13daysDate = currentDate.plusDays(13);
+                        LocalDate tomorrowDate = currentDate.plusDays(1);
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                        String formattedTomorrowDate = tomorrowDate.format(formatter);
+                        log.info("tomorrow : " + formattedTomorrowDate);
+
+                        String formattedAfter13daysDate = after13daysDate.format(formatter);
+                        log.info("after 13days : " + formattedAfter13daysDate);
+
+                        priceListByDay.get(formattedAfter13daysDate);
+
+                        currentPriceValue = priceListByDay.get(formattedTomorrowDate);
+                        twoWeeksLaterPriceValue = priceListByDay.get(formattedAfter13daysDate);
+
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
                     }
                     break;
                 default:

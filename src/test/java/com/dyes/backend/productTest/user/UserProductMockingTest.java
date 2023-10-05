@@ -18,6 +18,7 @@ import com.dyes.backend.domain.review.repository.ReviewRatingRepository;
 import com.dyes.backend.domain.review.repository.ReviewRepository;
 import com.dyes.backend.domain.user.entity.Address;
 import com.dyes.backend.domain.user.entity.User;
+import com.dyes.backend.utility.redis.RedisService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -79,6 +80,8 @@ public class UserProductMockingTest {
     private ReviewRepository mockReviewRepository;
     @Mock
     private ReviewRatingRepository mockReviewRatingRepository;
+    @Mock
+    private RedisService mockRedisService;
     @InjectMocks
     private UserProductServiceImpl userProductService;
 
@@ -104,7 +107,8 @@ public class UserProductMockingTest {
                 welshOnionPriceRepository,
                 youngPumpkinPriceRepository,
                 mockReviewRepository,
-                mockReviewRatingRepository
+                mockReviewRatingRepository,
+                mockRedisService
                 );
     }
 
