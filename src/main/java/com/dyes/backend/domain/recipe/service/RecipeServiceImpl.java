@@ -209,6 +209,10 @@ public class RecipeServiceImpl implements RecipeService {
             for (RecipeSeasoningIngredient recipeSeasoningIngredient : recipeSeasoningIngredientList) {
                 recipeSeasoningIngredientRepository.delete(recipeSeasoningIngredient);
             }
+            List<RecipeComment> recipeCommentList = recipeCommentRepository.findAllByRecipe(deleteRecipe);
+            for(RecipeComment recipeComment : recipeCommentList) {
+                recipeCommentRepository.delete(recipeComment);
+            }
             recipeRepository.delete(deleteRecipe);
             log.info("Recipe deletion successful for recipe with ID: {}", recipeId);
             return true;
