@@ -414,12 +414,14 @@ public class RecipeServiceImpl implements RecipeService {
                 String nickName = "";
                 String commentContent;
                 LocalDate commentDate;
-                Boolean isDeleted;
+                Boolean isDeleted = null;
                 boolean isMyRecipeComment = false;
                 commentId = recipeComment.getCommentId();
                 commentContent = recipeComment.getCommentContent();
                 commentDate = recipeComment.getRegisteredDate();
-                isDeleted = recipeComment.getIsDeleted();
+                if(recipeComment.getIsDeleted() != null) {
+                    isDeleted = recipeComment.getIsDeleted();
+                }
 
                 User userByRecipeComment = recipeComment.getUser();
                 Optional<UserProfile> maybeUserProfile = userProfileRepository.findByUser(userByRecipeComment);
