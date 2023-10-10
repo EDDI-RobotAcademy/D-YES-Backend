@@ -1,12 +1,12 @@
 package com.dyes.backend.domain.admin.service;
 
-import com.dyes.backend.domain.admin.controller.form.AdminRegisterRequestForm;
 import com.dyes.backend.domain.admin.entity.Admin;
 import com.dyes.backend.domain.admin.repository.AdminRepository;
 import com.dyes.backend.domain.admin.service.request.AdminRegisterRequest;
 import com.dyes.backend.domain.authentication.service.AuthenticationService;
 import com.dyes.backend.domain.user.entity.User;
 import com.dyes.backend.domain.user.repository.UserRepository;
+import com.dyes.backend.domain.user.service.request.UserAuthenticationRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -26,50 +26,54 @@ public class AdminServiceImpl implements AdminService {
     final private UserRepository userRepository;
     final private AuthenticationService authenticationService;
 
+    // 일반 관리자 등록
     @Override
-    public boolean adminRegister(AdminRegisterRequestForm registerForm) {
+    public boolean adminRegister(UserAuthenticationRequest userAuthenticationRequest, AdminRegisterRequest adminRegisterRequest) {
+        log.info("Starting administrator registration");
 
-        final String mainAdminUserToken = registerForm.getUserToken();
-
-        if(!mainAdminUserToken.contains("mainadmin")) {
-            log.info("Registration Denied: Main Admin Access Only");
+        final String mainAdminUserToken = userAuthenticationRequest.getUserToken();
+        if (!mainAdminUserToken.contains("mainadmin")) {
+            log.warn("Registration Denied: Main Admin Access Only");
             return false;
         }
 
-        final AdminRegisterRequest registerRequest = registerForm.toAdminRegisterRequest();
+        final String registerRequestUserId = adminRegisterRequest.getId();
+        try {
+            Optional<User> maybeUser = userRepository.findByStringId(registerRequestUserId);
 
-        final String registerRequestUserId = registerRequest.getId();
-        Optional<User> maybeUser = userRepository.findByStringId(registerRequestUserId);
+            if (maybeUser.isEmpty()) {
+                log.warn("Can not find user: id - {}", registerRequestUserId);
+                return false;
+            }
+            final String registerRequestUserName = adminRegisterRequest.getName();
+            final User user = maybeUser.get();
+            final Admin admin = Admin.builder()
+                    .name(registerRequestUserName)
+                    .user(user)
+                    .roleType(NORMAL_ADMIN)
+                    .build();
 
-        if(maybeUser.isEmpty()) {
-            log.info("Cannot find User");
+            adminRepository.save(admin);
+            log.info("Registration completed successfully");
+            return true;
+
+        } catch (Exception e) {
+            log.error("An error occurred while registering admin at the database: " + e.getMessage());
             return false;
         }
-        final User user = maybeUser.get();
-        final String registerRequestUserName = registerRequest.getName();
-
-        final Admin admin = Admin.builder()
-                .name(registerRequestUserName)
-                .user(user)
-                .roleType(NORMAL_ADMIN)
-                .build();
-
-        adminRepository.save(admin);
-
-        return true;
     }
 
+    // 토큰으로 관리자 찾기
     @Override
     public Admin findAdminByUserToken(String userToken) {
         final User user = authenticationService.findUserByUserToken(userToken);
-        if(user == null) {
-            log.info("Can not find User");
+        if (user == null) {
             return null;
         }
 
         Optional<Admin> maybeAdmin = adminRepository.findByUser(user);
-        if(maybeAdmin.isEmpty()) {
-            log.info("Can not find Admin");
+        if (maybeAdmin.isEmpty()) {
+            log.warn("Can not find Admin");
             return null;
         }
 
