@@ -2,6 +2,8 @@ package com.dyes.backend.domain.order.repository;
 
 import com.dyes.backend.domain.order.entity.ProductOrder;
 import com.dyes.backend.domain.user.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -33,4 +35,7 @@ public interface OrderRepository extends JpaRepository<ProductOrder, Long> {
             "join fetch po.delivery " +
             "where po.orderStatus in ('PART_CANCEL_PAYMENT', 'CANCEL_PAYMENT', 'EVENT_PAYBACK')")
     List<ProductOrder> findAllWithUserAndOrderStatus();
+
+    @Query("select po FROM ProductOrder po join fetch po.user join fetch po.delivery")
+    Page<ProductOrder> findAllWithUserPageable(Pageable pageable);
 }

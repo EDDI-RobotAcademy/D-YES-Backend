@@ -43,20 +43,22 @@ public class AdminMockingTest {
 
     @Test
     @DisplayName("admin mocking test: normal admin register")
-    public void 메인관리자가_일반관리자를_등록합니다 () {
+    public void 메인관리자가_일반관리자를_등록합니다() {
         final String userId = "1234567890";
         final String userToken = "mainadmin-wwlkfej-4weth3eggwhg";
         final String name = "normaladmin";
-        User user = User.builder()
+        final User user = User.builder()
                 .id(userId)
                 .build();
 
         when(mockUserRepository.findByStringId(userId)).thenReturn(Optional.of(user));
 
-        AdminRegisterRequestForm requestForm
+        final AdminRegisterRequestForm adminRegisterRequestForm
                 = new AdminRegisterRequestForm(userToken, userId, name);
 
-        boolean result = mockAdminService.adminRegister(requestForm);
+        boolean result = mockAdminService.adminRegister(
+                adminRegisterRequestForm.toUserAuthenticationRequest(),
+                adminRegisterRequestForm.toAdminRegisterRequest());
         assertTrue(result);
 
         verify(mockAdminRepository, times(1)).save(any());

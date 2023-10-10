@@ -21,7 +21,7 @@ public interface OrderService {
                                      List<KakaoPaymentRefundProductOptionRequest> requestList);
     void orderProduct(PaymentTemporarySaveRequest saveRequest);
     OrderConfirmResponseFormForUser orderConfirm(OrderConfirmRequestForm requestForm);
-    List<OrderListResponseFormForAdmin> getOrderListForAdmin();
+    List<OrderListResponseFormForAdmin> getOrderListForAdmin(int page, int pageSize);
     OrderInfoResponseFormForDashBoardForAdmin getAllNewOrderListForAdmin();
     List<OrderListResponseFormForUser> getMyOrderListForUser(String userToken);
     OrderDetailDataResponseForAdminForm orderDetailDataCombineForAdmin(Long orderId);

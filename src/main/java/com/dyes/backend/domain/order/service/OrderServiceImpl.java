@@ -52,6 +52,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -252,15 +255,15 @@ public class OrderServiceImpl implements OrderService {
 
     // 관리자의 주문 내역 확인
     @Override
-    public List<OrderListResponseFormForAdmin> getOrderListForAdmin() {
+    public List<OrderListResponseFormForAdmin> getOrderListForAdmin(int page, int pageSize) {
 
         // 모든 주문 내역 가져오기
-        List<ProductOrder> orderList = orderRepository.findAllWithUser();
+        Pageable pageable = PageRequest.of(page, pageSize);
+        Page<ProductOrder> orderPage = orderRepository.findAllWithUserPageable(pageable);
+        Long totalOrderCount = orderRepository.count();
 
         List<OrderListResponseFormForAdmin> orderListResponseFormForAdmins = new ArrayList<>();
-
-        for (ProductOrder order : orderList) {
-
+        for (ProductOrder order : orderPage) {
             // 주문자 정보 가져오기
             User user = order.getUser();
             String userId = user.getId();
@@ -321,7 +324,7 @@ public class OrderServiceImpl implements OrderService {
             OrderDetailInfoResponse orderDetailInfoResponse
                     = new OrderDetailInfoResponse(productOrderId, totalPrice, orderedTime, deliveryStatus, orderStatus);
             OrderListResponseFormForAdmin orderListResponseFormForAdmin
-                    = new OrderListResponseFormForAdmin(orderUserInfoResponse, orderProductList, orderDetailInfoResponse);
+                    = new OrderListResponseFormForAdmin(totalOrderCount, orderUserInfoResponse, orderProductList, orderDetailInfoResponse);
             orderListResponseFormForAdmins.add(orderListResponseFormForAdmin);
         }
         return orderListResponseFormForAdmins;
