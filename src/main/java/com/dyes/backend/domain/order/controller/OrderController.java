@@ -51,8 +51,8 @@ public class OrderController {
 
     // 관리자의 주문 내역 확인
     @GetMapping("/admin/list")
-    public List<OrderListResponseFormForAdmin> getAllOrderListForAdmin() {
-        return orderService.getOrderListForAdmin();
+    public List<OrderListResponseFormForAdmin> getAllOrderListForAdmin(@RequestParam int page, @RequestParam int pageSize) {
+        return orderService.getOrderListForAdmin(page, pageSize);
     }
 
     // 관리자의 신규 주문 내역 확인

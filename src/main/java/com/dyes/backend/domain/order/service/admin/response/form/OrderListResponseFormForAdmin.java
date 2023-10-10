@@ -13,6 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderListResponseFormForAdmin {
+    private Long totalOrderCount;
     private OrderUserInfoResponse orderUserInfo;
     private List<OrderProductListResponse> orderProductList;
     private OrderDetailInfoResponse orderDetailInfoResponse;
