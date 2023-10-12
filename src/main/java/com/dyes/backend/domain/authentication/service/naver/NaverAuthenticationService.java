@@ -5,8 +5,8 @@ import com.dyes.backend.domain.user.controller.form.NaverUserLoginRequestForm;
 import com.dyes.backend.domain.user.entity.User;
 
 public interface NaverAuthenticationService {
-    NaverUserLoginRequestForm naverUserLogin(String code);
-    NaverOauthUserInfoResponse naverRequestUserInfoWithAccessToken(String AccessToken);
-    String expiredNaverAccessTokenRequester(User user);
-    User naverUserDisconnect(User user);
+    NaverUserLoginRequestForm naverLogin(String code);
+    NaverOauthUserInfoResponse requestUserInfoFromNaver(String AccessToken);
+    String refreshNaverAccessToken(User user);
+    User disconnectNaverUser(User user);
 }

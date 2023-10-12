@@ -3,8 +3,10 @@ package com.dyes.backend.domain.admin.controller.form;
 import com.dyes.backend.domain.admin.service.request.AdminRegisterRequest;
 import com.dyes.backend.domain.user.service.request.UserAuthenticationRequest;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 public class AdminRegisterRequestForm {
