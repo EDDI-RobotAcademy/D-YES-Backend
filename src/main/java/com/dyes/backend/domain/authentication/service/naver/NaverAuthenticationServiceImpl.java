@@ -9,7 +9,6 @@ import com.dyes.backend.utility.provider.NaverOauthSecretsProvider;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -22,9 +21,8 @@ import java.util.Optional;
 
 @Service
 @Slf4j
-@ToString
 @RequiredArgsConstructor
-public class NaverAuthenticationServiceImpl implements NaverAuthenticationService{
+public class NaverAuthenticationServiceImpl implements NaverAuthenticationService {
     final private NaverOauthSecretsProvider naverOauthSecretsProvider;
     final private UserRepository userRepository;
     final private RestTemplate restTemplate;
@@ -32,13 +30,13 @@ public class NaverAuthenticationServiceImpl implements NaverAuthenticationServic
 
     // 네이버 로그인
     @Override
-    public NaverUserLoginRequestForm naverUserLogin(String code) {
-        log.info("naverUserLogin start");
+    public NaverUserLoginRequestForm naverLogin(String code) {
+        log.info("naverLogin start");
 
-        final NaverOauthAccessTokenResponse tokenResponse = naverRequestAccessTokenWithAuthorizationCode(code);
+        final NaverOauthAccessTokenResponse tokenResponse = requestAccessTokenFromNaver(code);
 
         NaverOauthUserInfoResponse userInfoResponse =
-                naverRequestUserInfoWithAccessToken(tokenResponse.getAccessToken());
+                requestUserInfoFromNaver(tokenResponse.getAccessToken());
 
         NaverUserLoginRequestForm naverUserLoginRequestForm
                 = new NaverUserLoginRequestForm(
@@ -49,14 +47,13 @@ public class NaverAuthenticationServiceImpl implements NaverAuthenticationServic
                 userInfoResponse.getEmail(),
                 userInfoResponse.getProfile_image());
 
-        log.info("naverUserLogin end");
-
+        log.info("naverLogin end");
         return naverUserLoginRequestForm;
     }
 
-    // 네이버에서 인가 코드를 받으면 엑세스 코드 요청
-    public NaverOauthAccessTokenResponse naverRequestAccessTokenWithAuthorizationCode(String code) {
-        log.info("requestAccessToken start");
+    // 네이버에서 인가 코드를 받으면 액세스 토큰 요청
+    public NaverOauthAccessTokenResponse requestAccessTokenFromNaver(String code) {
+        log.info("requestAccessTokenFromNaver start");
 
         final String naverClientId = naverOauthSecretsProvider.getNAVER_AUTH_CLIENT_ID();
         final String naverRedirectUrl = naverOauthSecretsProvider.getNAVER_AUTH_REDIRECT_URL();
@@ -80,28 +77,30 @@ public class NaverAuthenticationServiceImpl implements NaverAuthenticationServic
                 = restTemplate.postForEntity(naverTokenRequestUrl, requestEntity, NaverOauthAccessTokenResponse.class);
         log.info("accessTokenRequest: " + accessTokenResponse);
 
-        if(accessTokenResponse.getStatusCode() == HttpStatus.OK){
-            log.info("requestAccessToken end");
+        if (accessTokenResponse.getStatusCode() == HttpStatus.OK) {
+            log.info("requestAccessTokenFromNaver end");
             return accessTokenResponse.getBody();
         }
-        log.info("requestAccessToken end");
+        log.info("requestAccessTokenFromNaver end");
         return null;
     }
 
-    // 네이버 엑세스 토큰으로 유저 정보 요청
+    // 네이버 액세스 토큰으로 유저 정보 요청
     @Override
-    public NaverOauthUserInfoResponse naverRequestUserInfoWithAccessToken(String accessToken) {
-        log.info("requestUserInfoWithAccessTokenForSignIn start");
+    public NaverOauthUserInfoResponse requestUserInfoFromNaver(String accessToken) {
+        log.info("requestUserInfoFromNaver start");
+
+        final String naverUserInfoRequestUrl = naverOauthSecretsProvider.getNAVER_USERINFO_REQUEST_URL();
 
         try {
             HttpHeaders headers = new HttpHeaders();
-            headers.add("Authorization","Bearer "+ accessToken);
+            headers.add("Authorization", "Bearer " + accessToken);
 
             HttpEntity<MultiValueMap<String, String>> request = new HttpEntity(headers);
             log.info("request: " + request);
 
-            ResponseEntity<JsonNode> response = restTemplate.exchange(
-                    naverOauthSecretsProvider.getNAVER_USERINFO_REQUEST_URL(), HttpMethod.GET, request, JsonNode.class);
+            ResponseEntity<JsonNode> response
+                    = restTemplate.exchange(naverUserInfoRequestUrl, HttpMethod.GET, request, JsonNode.class);
             log.info("response: " + response);
 
             JsonNode responseNode = response.getBody().get("response");
@@ -109,22 +108,23 @@ public class NaverAuthenticationServiceImpl implements NaverAuthenticationServic
             NaverOauthUserInfoResponse userInfoResponse =
                     objectMapper.convertValue(responseNode, NaverOauthUserInfoResponse.class);
 
-            log.info("requestUserInfoWithAccessTokenForSignIn end");
-
+            log.info("requestUserInfoFromNaver end");
             return userInfoResponse;
         } catch (RestClientException e) {
             HttpHeaders headers = new HttpHeaders();
-            log.error("Error during requestUserInfoWithAccessTokenForSignIn: " + e.getMessage());
+            log.error("Error during requestUserInfoFromNaver: " + e.getMessage());
+
             Optional<User> maybeUser = userRepository.findByAccessToken(accessToken);
             User user = maybeUser.get();
-            String responseAccessToken = expiredNaverAccessTokenRequester(user);
-            headers.add("Authorization","Bearer "+ responseAccessToken);
+
+            String responseAccessToken = refreshNaverAccessToken(user);
+            headers.add("Authorization", "Bearer " + responseAccessToken);
 
             HttpEntity<MultiValueMap<String, String>> request = new HttpEntity(headers);
             log.info("request: " + request);
 
-            ResponseEntity<JsonNode> response = restTemplate.exchange(
-                    naverOauthSecretsProvider.getNAVER_USERINFO_REQUEST_URL(), HttpMethod.GET, request, JsonNode.class);
+            ResponseEntity<JsonNode> response
+                    = restTemplate.exchange(naverUserInfoRequestUrl, HttpMethod.GET, request, JsonNode.class);
             log.info("response: " + response);
 
             JsonNode responseNode = response.getBody().get("response");
@@ -132,25 +132,22 @@ public class NaverAuthenticationServiceImpl implements NaverAuthenticationServic
             NaverOauthUserInfoResponse userInfoResponse =
                     objectMapper.convertValue(responseNode, NaverOauthUserInfoResponse.class);
 
-            log.info("requestUserInfoWithAccessTokenForSignIn end");
-
+            log.info("requestUserInfoFromNaver end");
             return userInfoResponse;
         }
-
     }
 
-    // 네이버 리프래쉬 토큰으로 엑세스 토큰 재발급 받은 후 유저 정보 요청
+    // 네이버 리프래쉬 토큰으로 액세스 토큰 재발급
     @Override
-    public String expiredNaverAccessTokenRequester(User user) {
-        log.info("expiredNaverAccessTokenRequester start");
+    public String refreshNaverAccessToken(User user) {
+        log.info("refreshNaverAccessToken start");
 
         String refreshToken = user.getRefreshToken();
-        log.info("기존 액세스 : " + user.getAccessToken());
-        log.info("기존 리프래쉬 : " + user.getRefreshToken());
 
         final String naverClientId = naverOauthSecretsProvider.getNAVER_AUTH_CLIENT_ID();
         final String naverClientSecret = naverOauthSecretsProvider.getNAVER_AUTH_SECRETS();
         final String naverRefreshTokenRequestUrl = naverOauthSecretsProvider.getNAVER_REFRESH_TOKEN_REQUEST_URL();
+
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
 
         body.add("refresh_token", refreshToken);
@@ -163,27 +160,29 @@ public class NaverAuthenticationServiceImpl implements NaverAuthenticationServic
 
         HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(body, headers);
 
-        ResponseEntity<NaverOauthAccessTokenResponse> accessTokenResponse = restTemplate.postForEntity(naverRefreshTokenRequestUrl, requestEntity, NaverOauthAccessTokenResponse.class);
-        log.info("새로운 액세스 : " + accessTokenResponse.getBody().getAccessToken());
-        log.info("새로운 리프래쉬 : " + accessTokenResponse.getBody().getRefreshToken());
+        ResponseEntity<NaverOauthAccessTokenResponse> accessTokenResponse
+                = restTemplate.postForEntity(naverRefreshTokenRequestUrl, requestEntity, NaverOauthAccessTokenResponse.class);
+        log.info("new accessToken : " + accessTokenResponse.getBody().getAccessToken());
+        log.info("new refreshToken : " + accessTokenResponse.getBody().getRefreshToken());
 
-        if(accessTokenResponse.getStatusCode() == HttpStatus.OK){
-            user.setAccessToken(accessTokenResponse.getBody().getAccessToken());
+        if (accessTokenResponse.getStatusCode() == HttpStatus.OK) {
+            user.updateAccessToken(accessTokenResponse.getBody().getAccessToken());
             userRepository.save(user);
-            log.info("DB에 변경된 액세스 : " + user.getAccessToken());
-            log.info("DB에 변경된 리프래쉬 : " + user.getRefreshToken());
-            log.info("expiredNaverAccessTokenRequester end");
 
+            log.info("Changed accessToken in the database : " + user.getAccessToken());
+            log.info("Changed refreshToken in the database : " + user.getRefreshToken());
+
+            log.info("refreshNaverAccessToken end");
             return user.getAccessToken();
         }
-        log.info("expiredNaverAccessTokenRequester end");
+        log.info("refreshNaverAccessToken end");
         return null;
     }
 
     // 네이버 회원 Oauth 연결 끊기
     @Override
-    public User naverUserDisconnect(User user) throws NullPointerException{
-        log.info("user.getAccessToken(): " + user.getAccessToken());
+    public User disconnectNaverUser(User user) throws NullPointerException {
+        log.info("disconnectNaverUser start");
 
         String accessToken = user.getAccessToken();
 
@@ -192,28 +191,37 @@ public class NaverAuthenticationServiceImpl implements NaverAuthenticationServic
         final String naverSecrets = naverOauthSecretsProvider.getNAVER_AUTH_SECRETS();
 
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+
         body.add("access_token", accessToken);
         body.add("client_id", naverClientId);
         body.add("client_secret", naverSecrets);
         body.add("grant_type", "delete");
         body.add("service_provider", "NAVER");
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
         HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(body, headers);
+
         try {
-            ResponseEntity<JsonNode> jsonNodeResponseEntity = restTemplate.postForEntity(naverRevokeUrl, requestEntity, JsonNode.class);
+            ResponseEntity<JsonNode> jsonNodeResponseEntity
+                    = restTemplate.postForEntity(naverRevokeUrl, requestEntity, JsonNode.class);
             JsonNode responseBody = jsonNodeResponseEntity.getBody();
+
             log.info("jsonNodeResponseEntity: " + responseBody);
+
             if (responseBody.has("error")) {
                 String error = responseBody.get("error").asText();
                 String errorDescription = responseBody.get("error_description").asText();
 
                 log.error("Error: " + error + ", Error Description: " + errorDescription);
+                log.info("disconnectNaverUser end");
                 return null;
             }
             return user;
-        }catch (Exception e){
-            log.error("Can't Delete User", e);
+        } catch (Exception e) {
+            log.error("Unable to disconnect Naver user", e);
+            log.info("disconnectNaverUser end");
             return null;
         }
     }

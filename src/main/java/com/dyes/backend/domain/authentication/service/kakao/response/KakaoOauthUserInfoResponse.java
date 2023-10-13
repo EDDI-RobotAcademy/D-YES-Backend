@@ -4,7 +4,7 @@ import lombok.Data;
 import lombok.Getter;
 
 @Getter
-public class KakaoUserInfoResponseForm {
+public class KakaoOauthUserInfoResponse {
     private String id;
     private String connected_at;
     private Properties properties;
