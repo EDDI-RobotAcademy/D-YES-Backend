@@ -293,8 +293,9 @@ public class PaymentMockingTest {
         KakaoPaymentRefundOrderAndTokenAndReasonRequest orderAndTokenAndReasonRequest = new KakaoPaymentRefundOrderAndTokenAndReasonRequest(userToken, orderId, refundReason);
         KakaoPaymentRefundRequestForm requestForm = new KakaoPaymentRefundRequestForm(orderAndTokenAndReasonRequest, List.of(optionRequest));
 
-        User user = new User();
-        user.setId("id");
+        User user = User.builder()
+                .id("id")
+                .build();
         when(mockAuthenticationService.findUserByUserToken(userToken)).thenReturn(user);
 
         final String tid = "tid";
