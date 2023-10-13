@@ -5,10 +5,7 @@ import com.dyes.backend.domain.farm.repository.FarmCustomerServiceInfoRepository
 import com.dyes.backend.domain.farm.repository.FarmIntroductionInfoRepository;
 import com.dyes.backend.domain.farm.repository.FarmRepresentativeInfoRepository;
 import com.dyes.backend.domain.farm.service.response.FarmInfoResponseForUser;
-import com.dyes.backend.domain.farmproducePriceForecast.entity.*;
-import com.dyes.backend.domain.farmproducePriceForecast.repository.*;
 import com.dyes.backend.domain.farmproducePriceForecast.service.request.FarmProducePriceForecastData;
-import com.dyes.backend.domain.farmproducePriceForecast.service.response.FarmProducePriceForecastResponseForm;
 import com.dyes.backend.domain.product.entity.*;
 import com.dyes.backend.domain.product.repository.*;
 import com.dyes.backend.domain.product.service.user.response.*;
@@ -31,6 +28,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
+import static com.dyes.backend.domain.farm.entity.ProduceType.*;
 import static com.dyes.backend.domain.product.entity.MaybeEventProduct.NO;
 import static com.dyes.backend.utility.number.NumberUtils.findMinValue;
 
@@ -46,14 +44,6 @@ public class UserProductServiceImpl implements UserProductService {
     final private FarmCustomerServiceInfoRepository farmCustomerServiceInfoRepository;
     final private FarmIntroductionInfoRepository farmIntroductionInfoRepository;
     final private FarmRepresentativeInfoRepository farmRepresentativeInfoRepository;
-    final private CabbagePriceRepository cabbagePriceRepository;
-    final private CarrotPriceRepository carrotPriceRepository;
-    final private CucumberPriceRepository cucumberPriceRepository;
-    final private KimchiCabbagePriceRepository kimchiCabbagePriceRepository;
-    final private OnionPriceRepository onionPriceRepository;
-    final private PotatoPriceRepository potatoPriceRepository;
-    final private WelshOnionPriceRepository welshOnionPriceRepository;
-    final private YoungPumpkinPriceRepository youngPumpkinPriceRepository;
     final private ReviewRepository reviewRepository;
     final private ReviewRatingRepository reviewRatingRepository;
     final private RedisService redisService;
@@ -83,7 +73,7 @@ public class UserProductServiceImpl implements UserProductService {
 
             List<Review> reviewList = reviewRepository.findAllByProduct(product);
             int totalReviewCount = 0;
-            double averageRating = 0;
+            double averageRating;
             int totalRating = 0;
             for (Review review : reviewList) {
                 totalReviewCount = totalReviewCount + 1;
@@ -108,7 +98,7 @@ public class UserProductServiceImpl implements UserProductService {
             ProductMainImageResponseForUser productMainImageResponseForUser
                     = new ProductMainImageResponseForUser().productMainImageResponse(productMainImage);
 
-            List<ProductDetailImagesResponseForUser> productDetailImagesResponsForUsers
+            List<ProductDetailImagesResponseForUser> productDetailImagesResponseForUsers
                     = new ProductDetailImagesResponseForUser().productDetailImagesResponseList(productDetailImages);
 
             FarmInfoResponseForUser farmInfoResponseForUser
@@ -122,7 +112,7 @@ public class UserProductServiceImpl implements UserProductService {
                     productResponseForUser,
                     productOptionResponseForUser,
                     productMainImageResponseForUser,
-                    productDetailImagesResponsForUsers,
+                    productDetailImagesResponseForUsers,
                     farmInfoResponseForUser,
                     productReviewResponseForUser);
 
@@ -178,7 +168,7 @@ public class UserProductServiceImpl implements UserProductService {
                 List<Long> optionPriceList = new ArrayList<>();
                 Long minOptionPrice = 0L;
                 String productMainImage = null;
-                Boolean isSoldOut = false;
+                boolean isSoldOut = false;
 
                 // 상품 옵션 최저가 및 재고 조회
                 List<ProductOption> productOptionList = productOptionRepository.findByProduct(product);
@@ -295,7 +285,7 @@ public class UserProductServiceImpl implements UserProductService {
                 Product product = productManagement.getProduct();
                 log.info("Is it Event Product? : {}", product.getMaybeEventProduct());
                 log.info("Product Id is : {}", product.getId());
-                if(product.getMaybeEventProduct().equals(NO)) {
+                if (product.getMaybeEventProduct().equals(NO)) {
                     log.info("This is not Event Product");
                     ProductListResponseFormForUser productListResponseFormForUser = createUserProductListResponseForm(product);
                     productListResponseFormListForUser.add(productListResponseFormForUser);
@@ -316,7 +306,7 @@ public class UserProductServiceImpl implements UserProductService {
         List<Long> optionPriceList = new ArrayList<>();
         Long minOptionPrice = 0L;
         int totalOptionStock = 0;
-        Boolean isSoldOut = false;
+        boolean isSoldOut = false;
         String productMainImage = null;
 
         // 상품 옵션 최저가 및 재고 조회
@@ -337,22 +327,11 @@ public class UserProductServiceImpl implements UserProductService {
 
         LocalDate currentDate = LocalDate.now();
         ProduceType produceType = product.getProduceType();
-        int roundedPriceChangePercentage = 0;
-        switch (produceType) {
-            case CABBAGE:
-            case CARROT:
-            case CUCUMBER:
-            case KIMCHI_CABBAGE:
-            case ONION:
-            case POTATO:
-            case WELSH_ONION:
-            case YOUNG_PUMPKIN:
-                roundedPriceChangePercentage = calculatePriceChangePercentage(currentDate, produceType);
-                break;
-            default:
-                roundedPriceChangePercentage = -999;
-                break;
-        }
+        int roundedPriceChangePercentage = switch (produceType) {
+            case CABBAGE, CARROT, CUCUMBER, KIMCHI_CABBAGE, ONION, POTATO, WELSH_ONION, YOUNG_PUMPKIN ->
+                    calculatePriceChangePercentage(currentDate, produceType);
+            default -> -999;
+        };
 
         Farm farm = product.getFarm();
         FarmIntroductionInfo farmIntroductionInfo = farmIntroductionInfoRepository.findByFarm(farm);
@@ -360,7 +339,7 @@ public class UserProductServiceImpl implements UserProductService {
 
         List<Review> reviewList = reviewRepository.findAllByProduct(product);
         int totalReviewCount = 0;
-        double averageRating = 0;
+        double averageRating;
         int totalRating = 0;
         for (Review review : reviewList) {
             totalReviewCount = totalReviewCount + 1;
@@ -405,206 +384,47 @@ public class UserProductServiceImpl implements UserProductService {
 
     private int calculatePriceChangePercentage(LocalDate currentDate, ProduceType produceType) {
         List<Product> productList = productRepository.findAllByProduceType(produceType);
-        if (productList.size() > 0) {
-            double currentPriceValue = 0;
-            double twoWeeksLaterPriceValue = 0;
+        if (productList.size() == 0) {
+            return -999;
+        }
 
-            switch (produceType) {
-                case CABBAGE:
-                    try {
-                        FarmProducePriceForecastData farmProducePriceForecastData
-                                = redisService.getFarmProducePriceForecastData("cabbage");
-                        Map<String, Integer> priceListByDay = farmProducePriceForecastData.getPriceListByDay();
+        double currentPriceValue = 0;
+        double twoWeeksLaterPriceValue = 0;
+        String produceTypeStr = produceType.toString().toLowerCase();
 
-                        LocalDate after13daysDate = currentDate.plusDays(13);
-                        LocalDate tomorrowDate = currentDate.plusDays(1);
-                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-                        String formattedTomorrowDate = tomorrowDate.format(formatter);
-                        log.info("tomorrow : " + formattedTomorrowDate);
+        if(produceType.equals(YOUNG_PUMPKIN)) {
+            produceTypeStr = "youngPumpkin";
+        } else if(produceType.equals(WELSH_ONION)) {
+            produceTypeStr = "welshOnion";
+        } else if(produceType.equals(KIMCHI_CABBAGE)) {
+            produceTypeStr = "kimchiCabbage";
+        }
 
-                        String formattedAfter13daysDate = after13daysDate.format(formatter);
-                        log.info("after 13days : " + formattedAfter13daysDate);
+        try {
+            FarmProducePriceForecastData farmProducePriceForecastData =
+                    redisService.getFarmProducePriceForecastData(produceTypeStr);
+            Map<String, Integer> priceListByDay = farmProducePriceForecastData.getPriceListByDay();
 
-                        priceListByDay.get(formattedAfter13daysDate);
+            LocalDate after13daysDate = currentDate.plusDays(13);
+            LocalDate tomorrowDate = currentDate.plusDays(1);
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            String formattedTomorrowDate = tomorrowDate.format(formatter);
+            log.info("내일: " + formattedTomorrowDate);
 
-                        currentPriceValue = priceListByDay.get(formattedTomorrowDate);
-                        twoWeeksLaterPriceValue = priceListByDay.get(formattedAfter13daysDate);
+            String formattedAfter13daysDate = after13daysDate.format(formatter);
+            log.info("13일 후: " + formattedAfter13daysDate);
 
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e);
-                    }
-                    break;
-                case CARROT:
-                    try {
-                        FarmProducePriceForecastData farmProducePriceForecastData
-                                = redisService.getFarmProducePriceForecastData("carrot");
-                        Map<String, Integer> priceListByDay = farmProducePriceForecastData.getPriceListByDay();
-
-                        LocalDate after13daysDate = currentDate.plusDays(13);
-                        LocalDate tomorrowDate = currentDate.plusDays(1);
-                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-                        String formattedTomorrowDate = tomorrowDate.format(formatter);
-                        log.info("tomorrow : " + formattedTomorrowDate);
-
-                        String formattedAfter13daysDate = after13daysDate.format(formatter);
-                        log.info("after 13days : " + formattedAfter13daysDate);
-
-                        priceListByDay.get(formattedAfter13daysDate);
-
-                        currentPriceValue = priceListByDay.get(formattedTomorrowDate);
-                        twoWeeksLaterPriceValue = priceListByDay.get(formattedAfter13daysDate);
-
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e);
-                    }
-                    break;
-                case CUCUMBER:
-                    try {
-                        FarmProducePriceForecastData farmProducePriceForecastData
-                                = redisService.getFarmProducePriceForecastData("cucumber");
-                        Map<String, Integer> priceListByDay = farmProducePriceForecastData.getPriceListByDay();
-
-                        LocalDate after13daysDate = currentDate.plusDays(13);
-                        LocalDate tomorrowDate = currentDate.plusDays(1);
-                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-                        String formattedTomorrowDate = tomorrowDate.format(formatter);
-                        log.info("tomorrow : " + formattedTomorrowDate);
-
-                        String formattedAfter13daysDate = after13daysDate.format(formatter);
-                        log.info("after 13days : " + formattedAfter13daysDate);
-
-                        priceListByDay.get(formattedAfter13daysDate);
-
-                        currentPriceValue = priceListByDay.get(formattedTomorrowDate);
-                        twoWeeksLaterPriceValue = priceListByDay.get(formattedAfter13daysDate);
-
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e);
-                    }
-                    break;
-                case KIMCHI_CABBAGE:
-                    try {
-                        FarmProducePriceForecastData farmProducePriceForecastData
-                                = redisService.getFarmProducePriceForecastData("kimchiCabbage");
-                        Map<String, Integer> priceListByDay = farmProducePriceForecastData.getPriceListByDay();
-
-                        LocalDate after13daysDate = currentDate.plusDays(13);
-                        LocalDate tomorrowDate = currentDate.plusDays(1);
-                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-                        String formattedTomorrowDate = tomorrowDate.format(formatter);
-                        log.info("tomorrow : " + formattedTomorrowDate);
-
-                        String formattedAfter13daysDate = after13daysDate.format(formatter);
-                        log.info("after 13days : " + formattedAfter13daysDate);
-
-                        priceListByDay.get(formattedAfter13daysDate);
-
-                        currentPriceValue = priceListByDay.get(formattedTomorrowDate);
-                        twoWeeksLaterPriceValue = priceListByDay.get(formattedAfter13daysDate);
-
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e);
-                    }
-                    break;
-                case ONION:
-                    try {
-                        FarmProducePriceForecastData farmProducePriceForecastData
-                                = redisService.getFarmProducePriceForecastData("onion");
-                        Map<String, Integer> priceListByDay = farmProducePriceForecastData.getPriceListByDay();
-
-                        LocalDate after13daysDate = currentDate.plusDays(13);
-                        LocalDate tomorrowDate = currentDate.plusDays(1);
-                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-                        String formattedTomorrowDate = tomorrowDate.format(formatter);
-                        log.info("tomorrow : " + formattedTomorrowDate);
-
-                        String formattedAfter13daysDate = after13daysDate.format(formatter);
-                        log.info("after 13days : " + formattedAfter13daysDate);
-
-                        priceListByDay.get(formattedAfter13daysDate);
-
-                        currentPriceValue = priceListByDay.get(formattedTomorrowDate);
-                        twoWeeksLaterPriceValue = priceListByDay.get(formattedAfter13daysDate);
-
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e);
-                    }
-                    break;
-                case POTATO:
-                    try {
-                        FarmProducePriceForecastData farmProducePriceForecastData
-                                = redisService.getFarmProducePriceForecastData("potato");
-                        Map<String, Integer> priceListByDay = farmProducePriceForecastData.getPriceListByDay();
-
-                        LocalDate after13daysDate = currentDate.plusDays(13);
-                        LocalDate tomorrowDate = currentDate.plusDays(1);
-                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-                        String formattedTomorrowDate = tomorrowDate.format(formatter);
-                        log.info("tomorrow : " + formattedTomorrowDate);
-
-                        String formattedAfter13daysDate = after13daysDate.format(formatter);
-                        log.info("after 13days : " + formattedAfter13daysDate);
-
-                        priceListByDay.get(formattedAfter13daysDate);
-
-                        currentPriceValue = priceListByDay.get(formattedTomorrowDate);
-                        twoWeeksLaterPriceValue = priceListByDay.get(formattedAfter13daysDate);
-
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e);
-                    }
-                    break;
-                case WELSH_ONION:
-                    try {
-                        FarmProducePriceForecastData farmProducePriceForecastData
-                                = redisService.getFarmProducePriceForecastData("welshOnion");
-                        Map<String, Integer> priceListByDay = farmProducePriceForecastData.getPriceListByDay();
-
-                        LocalDate after13daysDate = currentDate.plusDays(13);
-                        LocalDate tomorrowDate = currentDate.plusDays(1);
-                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-                        String formattedTomorrowDate = tomorrowDate.format(formatter);
-                        log.info("tomorrow : " + formattedTomorrowDate);
-
-                        String formattedAfter13daysDate = after13daysDate.format(formatter);
-                        log.info("after 13days : " + formattedAfter13daysDate);
-
-                        priceListByDay.get(formattedAfter13daysDate);
-
-                        currentPriceValue = priceListByDay.get(formattedTomorrowDate);
-                        twoWeeksLaterPriceValue = priceListByDay.get(formattedAfter13daysDate);
-
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e);
-                    }
-                    break;
-                case YOUNG_PUMPKIN:
-                    try {
-                        FarmProducePriceForecastData farmProducePriceForecastData
-                                = redisService.getFarmProducePriceForecastData("youngPumpkin");
-                        Map<String, Integer> priceListByDay = farmProducePriceForecastData.getPriceListByDay();
-
-                        LocalDate after13daysDate = currentDate.plusDays(13);
-                        LocalDate tomorrowDate = currentDate.plusDays(1);
-                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-                        String formattedTomorrowDate = tomorrowDate.format(formatter);
-                        log.info("tomorrow : " + formattedTomorrowDate);
-
-                        String formattedAfter13daysDate = after13daysDate.format(formatter);
-                        log.info("after 13days : " + formattedAfter13daysDate);
-
-                        priceListByDay.get(formattedAfter13daysDate);
-
-                        currentPriceValue = priceListByDay.get(formattedTomorrowDate);
-                        twoWeeksLaterPriceValue = priceListByDay.get(formattedAfter13daysDate);
-
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e);
-                    }
-                    break;
-                default:
-                    break;
+            Integer priceAfter13Days = priceListByDay.get(formattedAfter13daysDate);
+            if (priceAfter13Days != null) {
+                currentPriceValue = priceListByDay.get(formattedTomorrowDate);
+                twoWeeksLaterPriceValue = priceAfter13Days;
             }
+
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        if (currentPriceValue != 0 && twoWeeksLaterPriceValue != 0) {
             double priceChangePercentage = ((twoWeeksLaterPriceValue - currentPriceValue) / currentPriceValue) * 100;
             int roundedPriceChangePercentage = (int) Math.floor(priceChangePercentage);
             if (roundedPriceChangePercentage > 30) {
@@ -613,11 +433,11 @@ public class UserProductServiceImpl implements UserProductService {
                 roundedPriceChangePercentage = -30;
             }
 
-            log.info("The percentage change in prices: " + roundedPriceChangePercentage + "%");
+            log.info("가격 변동률: " + roundedPriceChangePercentage + "%");
 
             return roundedPriceChangePercentage;
+        } else {
+            return 0;
         }
-
-        return -999;
     }
 }
