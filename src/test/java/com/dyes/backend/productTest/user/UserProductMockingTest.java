@@ -3,7 +3,6 @@ package com.dyes.backend.productTest.user;
 import com.dyes.backend.domain.farm.entity.*;
 import com.dyes.backend.domain.farm.repository.*;
 import com.dyes.backend.domain.farm.service.response.FarmInfoResponseForUser;
-import com.dyes.backend.domain.farmproducePriceForecast.repository.*;
 import com.dyes.backend.domain.order.entity.ProductOrder;
 import com.dyes.backend.domain.product.entity.*;
 import com.dyes.backend.domain.product.repository.*;
@@ -61,22 +60,6 @@ public class UserProductMockingTest {
     @Mock
     private FarmRepresentativeInfoRepository mockFarmRepresentativeInfoRepository;
     @Mock
-    private CabbagePriceRepository cabbagePriceRepository;
-    @Mock
-    private CarrotPriceRepository carrotPriceRepository;
-    @Mock
-    private CucumberPriceRepository cucumberPriceRepository;
-    @Mock
-    private KimchiCabbagePriceRepository kimchiCabbagePriceRepository;
-    @Mock
-    private OnionPriceRepository onionPriceRepository;
-    @Mock
-    private PotatoPriceRepository potatoPriceRepository;
-    @Mock
-    private WelshOnionPriceRepository welshOnionPriceRepository;
-    @Mock
-    private YoungPumpkinPriceRepository youngPumpkinPriceRepository;
-    @Mock
     private ReviewRepository mockReviewRepository;
     @Mock
     private ReviewRatingRepository mockReviewRatingRepository;
@@ -98,14 +81,6 @@ public class UserProductMockingTest {
                 mockFarmCustomerServiceInfoRepository,
                 mockFarmIntroductionInfoRepository,
                 mockFarmRepresentativeInfoRepository,
-                cabbagePriceRepository,
-                carrotPriceRepository,
-                cucumberPriceRepository,
-                kimchiCabbagePriceRepository,
-                onionPriceRepository,
-                potatoPriceRepository,
-                welshOnionPriceRepository,
-                youngPumpkinPriceRepository,
                 mockReviewRepository,
                 mockReviewRatingRepository,
                 mockRedisService
